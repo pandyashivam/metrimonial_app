@@ -1,0 +1,11 @@
+{
+  "extends": "@shubhmilan/config/tsconfig/react-native",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["app/**/*", "src/**/*", "app.json"],
+  "exclude": ["node_modules", ".expo"]
+}

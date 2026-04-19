@@ -1,0 +1,15 @@
+import type { FastifyReply } from 'fastify';
+
+export function ok<T>(reply: FastifyReply, data: T, status = 200) {
+  return reply.status(status).send({ ok: true, data });
+}
+
+export function fail(
+  reply: FastifyReply,
+  status: number,
+  code: string,
+  message: string,
+  details?: Record<string, unknown>,
+) {
+  return reply.status(status).send({ ok: false, error: { code, message, details } });
+}

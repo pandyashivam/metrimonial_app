@@ -1,0 +1,36 @@
+{
+  "name": "shubhmilan",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ShubhMilan — Trusted Indian matrimonial platform (mobile + web + admin)",
+  "packageManager": "pnpm@9.12.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "dev:api": "turbo run dev --filter=@shubhmilan/api",
+    "dev:mobile": "turbo run dev --filter=@shubhmilan/mobile",
+    "dev:web": "turbo run dev --filter=@shubhmilan/web",
+    "dev:admin": "turbo run dev --filter=@shubhmilan/admin",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "db:up": "docker compose -f infra/docker/docker-compose.yml up -d",
+    "db:down": "docker compose -f infra/docker/docker-compose.yml down",
+    "db:migrate": "pnpm --filter @shubhmilan/api db:migrate",
+    "db:seed": "pnpm --filter @shubhmilan/api db:seed",
+    "db:studio": "pnpm --filter @shubhmilan/api db:studio",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\""
+  },
+  "devDependencies": {
+    "turbo": "^2.1.3",
+    "typescript": "^5.6.3",
+    "prettier": "^3.3.3",
+    "@types/node": "^20.14.0"
+  }
+}

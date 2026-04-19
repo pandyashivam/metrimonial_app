@@ -1,0 +1,4 @@
+{
+  "extends": "@shubhmilan/config/tsconfig/base",
+  "include": ["src/**/*"]
+}

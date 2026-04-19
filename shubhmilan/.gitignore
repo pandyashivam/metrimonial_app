@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.next/
+.expo/
+.turbo/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+
+# Testing
+coverage/
+.nyc_output/
+
+# Prisma
+server/api/prisma/*.db
+server/api/prisma/migrations/dev/
+
+# Expo
+.expo-shared/
+ios/Pods/
+android/.gradle/
+android/app/build/
+android/build/
+
+# Uploads / local storage
+uploads/
+data/minio/
+data/mysql/
+data/redis/

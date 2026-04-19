@@ -1,0 +1,20 @@
+{
+  "name": "@shubhmilan/types",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src",
+    "clean": "rm -rf dist .turbo"
+  },
+  "devDependencies": {
+    "@shubhmilan/config": "workspace:*",
+    "typescript": "^5.6.3"
+  }
+}
