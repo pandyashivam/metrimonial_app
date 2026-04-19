@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard · ShubhMilan</title>
+<link rel="stylesheet" href="css/styles.css">
+<script src="js/data.js" defer></script>
+<script src="js/app.js" defer></script>
+</head>
+<body>
+<div id="nav"></div>
+<div id="root"></div>
+<div id="footer"></div>
+
+<script>
+document.getElementById('nav').innerHTML=renderNav('dashboard');
+document.getElementById('footer').innerHTML=renderFooter();
+if(!requireLogin()) throw new Error('redirect');
+
+const s=Store.load();
+const me=s.profiles.find(x=>x.id===s.user.id)||s.profiles[0];
+
+const shortlistedProfiles=s.shortlist.map(id=>s.profiles.find(p=>p.id===id)).filter(Boolean);
+const sentProfiles=s.interestsSent.map(i=>({...i,profile:s.profiles.find(p=>p.id===i.to)})).filter(x=>x.profile);
+const recvProfiles=s.interestsReceived.map(i=>({...i,profile:s.profiles.find(p=>p.id===i.from)})).filter(x=>x.profile);
+
+// matches: opposite gender, same religion
+const matches=s.profiles.filter(p=>p.id!==me.id&&p.gender!==me.gender&&p.religion===me.religion).slice(0,4);
+
+document.getElementById('root').innerHTML=`
+<div class="container">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;margin-top:10px;">
+    <div>
+      <h1 style="color:var(--primary-dark);margin:0;">Welcome, ${me.name.split(' ')[0]} 🙏</h1>
+      <p class="muted" style="margin:4px 0 0;">Your free dashboard · ${new Date().toLocaleDateString('en-IN',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</p>
+    </div>
+    <div>
+      <a href="browse.html" class="btn btn-primary">Browse Matches</a>
+      <a href="my-profile.html" class="btn btn-outline-primary">Edit Profile</a>
+    </div>
+  </div>
+
+  <div class="grid grid-4 mt-3">
+    <div class="stat-tile"><div class="icon">👁️</div><div><div class="num">142</div><div class="lbl">Profile Views</div></div></div>
+    <div class="stat-tile"><div class="icon">💌</div><div><div class="num">${s.interestsSent.length}</div><div class="lbl">Interests Sent</div></div></div>
+    <div class="stat-tile"><div class="icon">📥</div><div><div class="num">${s.interestsReceived.length}</div><div class="lbl">Interests Received</div></div></div>
+    <div class="stat-tile"><div class="icon">⭐</div><div><div class="num">${s.shortlist.length}</div><div class="lbl">Shortlisted</div></div></div>
+  </div>
+
+  <!-- Daily matches -->
+  <h2 class="mt-3">✨ Today's Top Matches for You</h2>
+  <div class="grid grid-4">
+    ${matches.map(p=>`
+      <a class="profile-card" href="profile.html?id=${p.id}" style="color:inherit;text-decoration:none;">
+        <div class="photo">${p.photos&&p.photos[0]?`<img src="${p.photos[0]}" alt="">`:p.name[0]}${p.verified?'<span class="verified">✓</span>':''}</div>
+        <div class="info">
+          <h3>${p.name}, ${p.age}</h3>
+          <div class="meta">${p.height} · ${p.caste}</div>
+          <div class="meta">${p.profession} · ${p.city}</div>
+        </div>
+      </a>`).join('')}
+  </div>
+
+  <!-- Interests received -->
+  <h2 class="mt-3">📥 Interests Received</h2>
+  ${recvProfiles.length?`
+    <div class="grid grid-3">
+      ${recvProfiles.map(r=>`
+        <div class="card"><div class="card-body" style="display:flex;gap:12px;align-items:center;">
+          <div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#fce4ec,#f8bbd0);display:grid;place-items:center;color:var(--primary);font-weight:700;flex-shrink:0;overflow:hidden;">
+            ${r.profile.photos&&r.profile.photos[0]?`<img src="${r.profile.photos[0]}" style="width:100%;height:100%;object-fit:cover;">`:r.profile.name[0]}
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:600;">${r.profile.name}, ${r.profile.age}</div>
+            <div class="muted" style="font-size:13px;">${r.profile.profession} · ${r.profile.city}</div>
+            <div style="display:flex;gap:6px;margin-top:8px;">
+              <button class="btn btn-success btn-sm" onclick="acceptInterest('${r.from}')">✓ Accept</button>
+              <button class="btn btn-ghost btn-sm" onclick="toast('Declined')">✗ Decline</button>
+              <a href="profile.html?id=${r.from}" class="btn btn-outline-primary btn-sm">View</a>
+            </div>
+          </div>
+        </div></div>`).join('')}
+    </div>`:'<p class="muted">No interests received yet.</p>'}
+
+  <!-- Interests sent -->
+  <h2 class="mt-3">💌 Interests Sent</h2>
+  ${sentProfiles.length?`
+    <table class="data">
+      <tr><th>Profile</th><th>Sent On</th><th>Status</th><th></th></tr>
+      ${sentProfiles.map(x=>`
+        <tr>
+          <td><b>${x.profile.name}</b> · ${x.profile.id}</td>
+          <td>${x.date?new Date(x.date).toLocaleDateString():''}</td>
+          <td><span class="status-pill status-pending">Pending</span></td>
+          <td><a href="profile.html?id=${x.to}">View →</a></td>
+        </tr>`).join('')}
+    </table>`:'<p class="muted">No interests sent yet. Browse profiles and send your first interest.</p>'}
+
+  <!-- Shortlist -->
+  <h2 class="mt-3">⭐ My Shortlist</h2>
+  ${shortlistedProfiles.length?`
+    <div class="grid grid-4">
+      ${shortlistedProfiles.map(p=>`
+        <a class="profile-card" href="profile.html?id=${p.id}" style="color:inherit;text-decoration:none;">
+          <div class="photo">${p.photos&&p.photos[0]?`<img src="${p.photos[0]}">`:p.name[0]}</div>
+          <div class="info"><h3>${p.name}, ${p.age}</h3><div class="meta">${p.profession} · ${p.city}</div></div>
+        </a>`).join('')}
+    </div>`:'<p class="muted">Shortlist is empty. Tap ⭐ on any profile to save it for later.</p>'}
+</div>`;
+
+function acceptInterest(id){
+  const s=Store.load();
+  s.interestsReceived=s.interestsReceived.filter(x=>x.from!==id);
+  Store.save(s);
+  toast('✅ Accepted! Contact details have been shared.');
+  setTimeout(()=>location.href='inbox.html?to='+id,800);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Profile · ShubhMilan</title>
+<link rel="stylesheet" href="css/styles.css">
+<script src="js/data.js" defer></script>
+<script src="js/app.js" defer></script>
+</head>
+<body>
+<div id="nav"></div>
+
+<div id="root"></div>
+
+<div id="footer"></div>
+
+<script>
+document.getElementById('nav').innerHTML=renderNav('browse');
+document.getElementById('footer').innerHTML=renderFooter();
+
+const id=new URLSearchParams(location.search).get('id');
+const p=findProfile(id);
+
+if(!p){
+  document.getElementById('root').innerHTML='<div class="container"><div class="card"><div class="card-body"><h2>Profile not found</h2><p><a href="browse.html">← Back to browse</a></p></div></div></div>';
+} else {
+  document.getElementById('root').innerHTML=`
+  <div class="detail-hero">
+    <div class="wrap">
+      <div class="pic">${p.photos&&p.photos[0]?`<img src="${p.photos[0]}" style="width:100%;height:100%;object-fit:cover;">`:p.name[0]}</div>
+      <div style="flex:1;">
+        <h1>${escapeHtml(p.name)} ${p.verified?'<span class="status-pill status-verified">✓ Verified</span>':''}</h1>
+        <div class="sub">
+          <strong>${p.id}</strong> · ${p.age} yrs, ${p.height} · ${p.religion}/${p.caste}<br>
+          ${p.profession} at ${p.company} · ${p.city}, ${p.state}
+        </div>
+        <div class="actions">
+          <button class="btn btn-accent" onclick="sendInterest('${p.id}')">💌 Send Interest</button>
+          <button class="btn btn-outline" onclick="shortlist('${p.id}')">⭐ Shortlist</button>
+          <a class="btn btn-outline" href="inbox.html?to=${p.id}">💬 Send Message</a>
+          <button class="btn btn-outline" onclick="report()">⚠ Report</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="row">
+      <div class="col">
+        <div class="card mb-2"><div class="card-body">
+          <h2 class="section-title">📸 Photos</h2>
+          <div class="gallery">
+            ${(p.photos&&p.photos.length?p.photos:[null,null,null,null]).map(ph=>`
+              <div class="ph">${ph?`<img src="${ph}" alt="">`:'📷'}</div>`).join('')}
+          </div>
+        </div></div>
+
+        <div class="card mb-2"><div class="card-body">
+          <h2 class="section-title">📝 About ${p.name.split(' ')[0]}</h2>
+          <p>${escapeHtml(p.about)}</p>
+        </div></div>
+
+        <div class="card mb-2"><div class="card-body">
+          <h2 class="section-title">👤 Basic Details</h2>
+          <div class="kv">
+            <div class="k">Full Name</div><div class="v">${escapeHtml(p.name)}</div>
+            <div class="k">Profile ID</div><div class="v">${p.id}</div>
+            <div class="k">Gender</div><div class="v">${p.gender}</div>
+            <div class="k">Date of Birth</div><div class="v">${p.dob} (${p.age} years)</div>
+            <div class="k">Height</div><div class="v">${p.height}</div>
+            <div class="k">Marital Status</div><div class="v">Never Married</div>
+            <div class="k">Mother Tongue</div><div class="v">${p.motherTongue}</div>
+            <div class="k">Diet</div><div class="v">${p.diet}</div>
+            <div class="k">Drinking</div><div class="v">${p.drink}</div>
+            <div class="k">Smoking</div><div class="v">${p.smoke}</div>
+          </div>
+        </div></div>
+
+        <div class="card mb-2"><div class="card-body">
+          <h2 class="section-title">🕉️ Religion & Community</h2>
+          <div class="kv">
+            <div class="k">Religion</div><div class="v">${p.religion}</div>
+            <div class="k">Caste</div><div class="v">${p.caste}</div>
+            <div class="k">Sub-Caste</div><div class="v">${p.subCaste}</div>
+            <div class="k">Gotra</div><div class="v"><b>${p.gotra}</b></div>
+            <div class="k">Manglik</div><div class="v">${p.manglik}</div>
+            <div class="k">Rashi</div><div class="v">${p.rashi}</div>
+            <div class="k">Nakshatra</div><div class="v">${p.nakshatra}</div>
+          </div>
+        </div></div>
+
+        <div class="card mb-2"><div class="card-body">
+          <h2 class="section-title">🎓 Education & Career</h2>
+          <div class="kv">
+            <div class="k">Education</div><div class="v">${p.education}</div>
+            <div class="k">Profession</div><div class="v">${p.profession}</div>
+            <div class="k">Company</div><div class="v">${p.company}</div>
+            <div class="k">Annual Income</div><div class="v">${p.income}</div>
+          </div>
+        </div></div>
+
+        <div class="card mb-2"><div class="card-body">
+          <h2 class="section-title">👨‍👩‍👧 Family Details</h2>
+          <div class="kv">
+            <div class="k">Father's Name</div><div class="v">${escapeHtml(p.fatherName)}</div>
+            <div class="k">Father's Occupation</div><div class="v">${escapeHtml(p.fatherOccupation)}</div>
+            <div class="k">Mother's Name</div><div class="v">${escapeHtml(p.motherName)}</div>
+            <div class="k">Mother's Occupation</div><div class="v">${escapeHtml(p.motherOccupation)}</div>
+            <div class="k">Siblings</div><div class="v">${escapeHtml(p.siblings)}</div>
+            <div class="k">Family Type</div><div class="v">${p.familyType}</div>
+            <div class="k">Family Values</div><div class="v">${p.familyValues}</div>
+          </div>
+        </div></div>
+
+        <div class="card mb-2"><div class="card-body">
+          <h2 class="section-title">📍 Location</h2>
+          <div class="kv">
+            <div class="k">City</div><div class="v">${p.city}</div>
+            <div class="k">State</div><div class="v">${p.state}</div>
+            <div class="k">Country</div><div class="v">${p.country}</div>
+          </div>
+        </div></div>
+
+        <div class="card mb-2"><div class="card-body">
+          <h2 class="section-title">💑 Partner Preferences</h2>
+          <p>${escapeHtml(p.partnerPref)}</p>
+        </div></div>
+      </div>
+
+      <div style="flex:0 0 300px;">
+        <div class="card mb-2"><div class="card-body center">
+          <div style="font-size:40px;">📞</div>
+          <h3>Contact Details</h3>
+          <p class="muted" style="font-size:13px;">Send an interest first. Once accepted, contact details are shared.</p>
+          <button class="btn btn-primary btn-block" onclick="sendInterest('${p.id}')">💌 Send Interest</button>
+        </div></div>
+
+        <div class="card mb-2"><div class="card-body">
+          <h3 class="section-title">⭐ Quick Match</h3>
+          <div class="kv" style="grid-template-columns:1fr auto;">
+            <div class="k">Horoscope Match</div><div class="v">85%</div>
+            <div class="k">Preference Match</div><div class="v">92%</div>
+            <div class="k">Lifestyle Match</div><div class="v">78%</div>
+          </div>
+        </div></div>
+
+        <div class="card"><div class="card-body">
+          <h3 class="section-title">🔒 Privacy & Safety</h3>
+          <p class="muted" style="font-size:13px;">All profiles are verified. Never share money with anyone online. Report suspicious behaviour.</p>
+          <button class="btn btn-ghost btn-block" onclick="report()">⚠ Report This Profile</button>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- Similar profiles -->
+    <h2 class="mt-4">Similar Profiles You May Like</h2>
+    <div class="grid grid-4" id="similar"></div>
+  </div>`;
+
+  // similar profiles - same religion / opposite gender
+  const s=Store.load();
+  const similar=s.profiles.filter(x=>x.id!==p.id&&x.religion===p.religion&&x.gender!==p.gender).slice(0,4);
+  document.getElementById('similar').innerHTML=similar.map(q=>`
+    <a class="profile-card" href="profile.html?id=${q.id}" style="color:inherit;text-decoration:none;">
+      <div class="photo">
+        ${q.photos&&q.photos[0]?`<img src="${q.photos[0]}" alt="${q.name}">`:q.name[0]}
+        ${q.verified?'<span class="verified">✓ Verified</span>':''}
+      </div>
+      <div class="info">
+        <h3>${q.name}, ${q.age}</h3>
+        <div class="meta">${q.height} · ${q.caste}</div>
+        <div class="meta">${q.profession} · ${q.city}</div>
+      </div>
+    </a>`).join('') || '<p class="muted">No similar profiles right now.</p>';
+}
+
+function sendInterest(id){
+  if(!requireLogin())return;
+  const s=Store.load();
+  if(s.interestsSent.find(x=>x.to===id)){toast('Interest already sent.');return;}
+  s.interestsSent.push({to:id,status:'pending',date:new Date().toISOString()});
+  Store.save(s);toast('💌 Interest sent!');
+}
+function shortlist(id){
+  if(!requireLogin())return;
+  const s=Store.load();
+  if(s.shortlist.includes(id)){s.shortlist=s.shortlist.filter(x=>x!==id);toast('Removed from shortlist');}
+  else{s.shortlist.push(id);toast('⭐ Shortlisted');}
+  Store.save(s);
+}
+function report(){
+  if(!requireLogin())return;
+  const reason=prompt('Please describe the issue:');
+  if(reason){toast('Thank you. Our team will review this profile.');}
+}
+</script>
+</body>
+</html>

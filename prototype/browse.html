@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Browse Profiles · ShubhMilan</title>
+<link rel="stylesheet" href="css/styles.css">
+<script src="js/data.js" defer></script>
+<script src="js/app.js" defer></script>
+</head>
+<body>
+<div id="nav"></div>
+
+<div class="container">
+  <h1 style="color:var(--primary-dark);margin-top:0;">Browse Profiles</h1>
+  <p class="muted">Find your perfect match from thousands of verified profiles. <strong>All free, always.</strong></p>
+
+  <div class="row mt-2">
+    <!-- Filters -->
+    <div style="flex:0 0 270px;">
+      <div class="filters">
+        <h4>🔍 Filter Search</h4>
+        <div class="field">
+          <label>Looking For</label>
+          <select id="f-gender">
+            <option value="">Any</option>
+            <option>Female</option>
+            <option>Male</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Age Range</label>
+          <div class="range">
+            <input type="number" id="f-age-min" placeholder="Min" min="18" max="80">
+            <span>–</span>
+            <input type="number" id="f-age-max" placeholder="Max" min="18" max="80">
+          </div>
+        </div>
+        <div class="field">
+          <label>Religion</label>
+          <select id="f-religion"><option value="">Any</option></select>
+        </div>
+        <div class="field">
+          <label>Caste</label>
+          <select id="f-caste"><option value="">Any</option></select>
+        </div>
+        <div class="field">
+          <label>Mother Tongue</label>
+          <select id="f-mt"><option value="">Any</option></select>
+        </div>
+        <div class="field">
+          <label>State</label>
+          <select id="f-state"><option value="">Any</option></select>
+        </div>
+        <div class="field">
+          <label>Manglik</label>
+          <select id="f-manglik">
+            <option value="">Any</option><option>No</option><option>Yes</option><option>Anshik (Partial)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Diet</label>
+          <select id="f-diet">
+            <option value="">Any</option><option>Vegetarian</option><option>Non-Vegetarian</option><option>Eggetarian</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Verified Only</label>
+          <select id="f-verified"><option value="">Any</option><option>yes</option></select>
+        </div>
+        <button class="btn btn-primary btn-block" onclick="applyFilters()">Apply Filters</button>
+        <button class="btn btn-ghost btn-block mt-1" onclick="resetFilters()">Reset</button>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div class="col">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div id="count" class="muted"></div>
+        <select id="sort" onchange="render()" style="padding:8px;border-radius:8px;border:1px solid #ccc;">
+          <option value="newest">Newest First</option>
+          <option value="age">Age (low → high)</option>
+          <option value="age-d">Age (high → low)</option>
+          <option value="verified">Verified First</option>
+        </select>
+      </div>
+      <div class="grid grid-3" id="list"></div>
+      <p class="muted center mt-3">Showing all matching profiles · 100% free to view & connect</p>
+    </div>
+  </div>
+</div>
+
+<div id="footer"></div>
+
+<script>
+document.getElementById('nav').innerHTML=renderNav('browse');
+document.getElementById('footer').innerHTML=renderFooter();
+
+// populate dropdowns
+function fillSelect(id,arr){
+  const el=document.getElementById(id);
+  arr.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;el.appendChild(o);});
+}
+fillSelect('f-religion',OPTIONS.religion);
+fillSelect('f-caste',OPTIONS.caste);
+fillSelect('f-mt',OPTIONS.motherTongue);
+fillSelect('f-state',OPTIONS.state);
+
+// pre-fill from URL
+const qp=new URLSearchParams(location.search);
+['gender','religion','caste','mt','state','manglik','diet'].forEach(k=>{
+  const v=qp.get(k);if(v)document.getElementById('f-'+k).value=v;
+});
+
+function getFilters(){
+  return {
+    gender:document.getElementById('f-gender').value,
+    ageMin:+document.getElementById('f-age-min').value||0,
+    ageMax:+document.getElementById('f-age-max').value||99,
+    religion:document.getElementById('f-religion').value,
+    caste:document.getElementById('f-caste').value,
+    mt:document.getElementById('f-mt').value,
+    state:document.getElementById('f-state').value,
+    manglik:document.getElementById('f-manglik').value,
+    diet:document.getElementById('f-diet').value,
+    verified:document.getElementById('f-verified').value
+  };
+}
+
+function render(){
+  const s=Store.load();const f=getFilters();
+  let list=s.profiles.filter(p=>{
+    if(f.gender&&p.gender!==f.gender)return false;
+    if(p.age<f.ageMin||p.age>f.ageMax)return false;
+    if(f.religion&&p.religion!==f.religion)return false;
+    if(f.caste&&p.caste!==f.caste)return false;
+    if(f.mt&&p.motherTongue!==f.mt)return false;
+    if(f.state&&p.state!==f.state)return false;
+    if(f.manglik&&p.manglik!==f.manglik)return false;
+    if(f.diet&&p.diet!==f.diet)return false;
+    if(f.verified==='yes'&&!p.verified)return false;
+    return true;
+  });
+  const sort=document.getElementById('sort').value;
+  if(sort==='age')list.sort((a,b)=>a.age-b.age);
+  if(sort==='age-d')list.sort((a,b)=>b.age-a.age);
+  if(sort==='verified')list.sort((a,b)=>(b.verified?1:0)-(a.verified?1:0));
+  if(sort==='newest')list.sort((a,b)=>b.joined.localeCompare(a.joined));
+
+  document.getElementById('count').textContent=list.length+' profiles found';
+  document.getElementById('list').innerHTML=list.length?list.map(p=>`
+    <div class="profile-card">
+      <a href="profile.html?id=${p.id}" style="color:inherit;text-decoration:none;">
+        <div class="photo">
+          ${p.photos&&p.photos[0]?`<img src="${p.photos[0]}" alt="${p.name}">`:p.name[0]}
+          ${p.verified?'<span class="verified">✓ Verified</span>':''}
+        </div>
+        <div class="info">
+          <h3>${p.name}, ${p.age}</h3>
+          <div class="meta">${p.height} · ${p.religion} / ${p.caste}</div>
+          <div class="meta">${p.profession} · ${p.city}, ${p.state}</div>
+          <div class="meta">Gotra: <b>${p.gotra}</b> · Manglik: ${p.manglik}</div>
+          <div class="tags">
+            <span class="tag">${p.motherTongue}</span>
+            <span class="tag">${p.education.split(',')[0]}</span>
+            <span class="tag">${p.diet}</span>
+          </div>
+        </div>
+      </a>
+      <div class="actions" style="padding:0 14px 14px;">
+        <button class="btn btn-primary" onclick="sendInterest('${p.id}')">💌 Interest</button>
+        <button class="btn btn-ghost" onclick="shortlist('${p.id}')">⭐ Save</button>
+      </div>
+    </div>`).join(''):
+    `<div class="card" style="grid-column:1/-1;text-align:center;padding:40px;"><h3>No profiles match your filters</h3><p class="muted">Try widening your search criteria.</p></div>`;
+}
+
+function applyFilters(){render();}
+function resetFilters(){
+  ['f-gender','f-age-min','f-age-max','f-religion','f-caste','f-mt','f-state','f-manglik','f-diet','f-verified']
+    .forEach(id=>document.getElementById(id).value='');
+  render();
+}
+
+function sendInterest(id){
+  if(!requireLogin())return;
+  const s=Store.load();
+  if(s.interestsSent.find(x=>x.to===id)){toast('Interest already sent.');return;}
+  s.interestsSent.push({to:id,status:'pending',date:new Date().toISOString()});
+  Store.save(s);toast('💌 Interest sent successfully!');
+}
+function shortlist(id){
+  if(!requireLogin())return;
+  const s=Store.load();
+  if(s.shortlist.includes(id)){s.shortlist=s.shortlist.filter(x=>x!==id);toast('Removed from shortlist');}
+  else{s.shortlist.push(id);toast('⭐ Added to shortlist');}
+  Store.save(s);
+}
+
+render();
+</script>
+</body>
+</html>

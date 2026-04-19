@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin Panel · ShubhMilan</title>
+<link rel="stylesheet" href="css/styles.css">
+<script src="js/data.js" defer></script>
+<script src="js/app.js" defer></script>
+</head>
+<body>
+<div id="nav"></div>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <h5>Admin</h5>
+    <a href="#" class="active" onclick="switchTab('dash');return false;"><span class="ic">📊</span> Dashboard</a>
+    <a href="#" onclick="switchTab('pending');return false;"><span class="ic">⏳</span> Pending Approvals</a>
+    <a href="#" onclick="switchTab('profiles');return false;"><span class="ic">👥</span> All Profiles</a>
+    <a href="#" onclick="switchTab('reports');return false;"><span class="ic">🚩</span> Reports</a>
+    <a href="#" onclick="switchTab('success');return false;"><span class="ic">💑</span> Success Stories</a>
+    <h5>Content</h5>
+    <a href="#" onclick="switchTab('photos');return false;"><span class="ic">📷</span> Photo Moderation</a>
+    <a href="#" onclick="switchTab('messages');return false;"><span class="ic">💬</span> Flagged Messages</a>
+    <h5>Account</h5>
+    <a href="superadmin.html"><span class="ic">👑</span> Super Admin</a>
+    <a href="index.html"><span class="ic">🏠</span> Back to Site</a>
+  </aside>
+
+  <main class="main-area">
+    <div id="tab-content"></div>
+  </main>
+</div>
+
+<script>
+document.getElementById('nav').innerHTML=renderNav('admin');
+
+const tabs={
+  dash: renderDash,
+  pending: renderPending,
+  profiles: renderProfiles,
+  reports: renderReports,
+  success: renderSuccess,
+  photos: renderPhotos,
+  messages: renderMessages
+};
+
+function switchTab(name){
+  document.querySelectorAll('.sidebar a').forEach(a=>a.classList.remove('active'));
+  event.target.closest('a').classList.add('active');
+  tabs[name]();
+}
+
+function renderDash(){
+  const s=Store.load();
+  document.getElementById('tab-content').innerHTML=`
+    <h1 style="margin-top:0;">Admin Dashboard</h1>
+    <p class="muted">Welcome back · ${new Date().toLocaleString()}</p>
+
+    <div class="grid grid-4 mt-2">
+      <div class="stat-tile"><div class="icon">👥</div><div><div class="num">8,412</div><div class="lbl">Total Members</div></div></div>
+      <div class="stat-tile"><div class="icon">⏳</div><div><div class="num">${s.pendingApprovals.length}</div><div class="lbl">Pending Approvals</div></div></div>
+      <div class="stat-tile"><div class="icon">🚩</div><div><div class="num">${s.reports.length}</div><div class="lbl">Open Reports</div></div></div>
+      <div class="stat-tile"><div class="icon">💑</div><div><div class="num">1,238</div><div class="lbl">Success Stories</div></div></div>
+    </div>
+
+    <div class="grid grid-2 mt-3">
+      <div class="card"><div class="card-body">
+        <h3 class="section-title">📈 This Week</h3>
+        <table class="data" style="box-shadow:none;">
+          <tr><td>New Registrations</td><td><b>234</b></td></tr>
+          <tr><td>New Verified Profiles</td><td><b>187</b></td></tr>
+          <tr><td>Interests Sent</td><td><b>3,421</b></td></tr>
+          <tr><td>Messages Exchanged</td><td><b>12,802</b></td></tr>
+          <tr><td>Profile Matches Made</td><td><b>54</b></td></tr>
+        </table>
+      </div></div>
+
+      <div class="card"><div class="card-body">
+        <h3 class="section-title">🔔 Recent Activity</h3>
+        <ul style="padding-left:18px;line-height:2;font-size:14px;">
+          <li>Anjali Patel updated her photos <span class="muted">· 2 min ago</span></li>
+          <li>Rahul Verma sent interest to Priya Sharma <span class="muted">· 10 min ago</span></li>
+          <li>New report on SM10018 <span class="muted">· 34 min ago</span></li>
+          <li>5 profiles auto-flagged for review <span class="muted">· 1h ago</span></li>
+          <li>Daily success story posted by family <span class="muted">· 3h ago</span></li>
+        </ul>
+      </div></div>
+    </div>
+
+    <div class="card mt-3"><div class="card-body">
+      <h3 class="section-title">⚡ Quick Actions</h3>
+      <button class="btn btn-primary" onclick="switchTab('pending');document.querySelectorAll('.sidebar a')[1].classList.add('active');">Review Pending Approvals</button>
+      <button class="btn btn-accent" onclick="switchTab('reports');">Handle Reports</button>
+      <button class="btn btn-ghost">Export Members CSV</button>
+      <button class="btn btn-ghost">Send Broadcast Email</button>
+    </div></div>
+  `;
+}
+
+function renderPending(){
+  const s=Store.load();
+  document.getElementById('tab-content').innerHTML=`
+    <h1 style="margin-top:0;">⏳ Pending Profile Approvals</h1>
+    <p class="muted">Review and approve new profiles.</p>
+    <table class="data mt-2">
+      <tr><th>Profile ID</th><th>Name</th><th>City</th><th>Submitted</th><th>Status</th><th>Actions</th></tr>
+      ${s.pendingApprovals.map(p=>`
+        <tr>
+          <td><b>${p.id}</b></td>
+          <td>${p.name}</td>
+          <td>${p.city}</td>
+          <td>${p.submitted}</td>
+          <td><span class="status-pill status-pending">Pending</span></td>
+          <td>
+            <button class="btn btn-success btn-sm" onclick="approveProfile('${p.id}')">✓ Approve</button>
+            <button class="btn btn-danger btn-sm" onclick="rejectProfile('${p.id}')">✗ Reject</button>
+          </td>
+        </tr>`).join('')}
+    </table>
+    ${s.pendingApprovals.length===0?'<p class="muted center mt-2">✅ All caught up!</p>':''}
+  `;
+}
+function approveProfile(id){
+  const s=Store.load();
+  s.pendingApprovals=s.pendingApprovals.filter(p=>p.id!==id);
+  Store.save(s);toast('✅ Profile approved');renderPending();
+}
+function rejectProfile(id){
+  const s=Store.load();
+  s.pendingApprovals=s.pendingApprovals.filter(p=>p.id!==id);
+  Store.save(s);toast('❌ Profile rejected');renderPending();
+}
+
+function renderProfiles(){
+  const s=Store.load();
+  document.getElementById('tab-content').innerHTML=`
+    <h1 style="margin-top:0;">👥 All Profiles</h1>
+    <p class="muted">${s.profiles.length} registered members</p>
+
+    <div style="display:flex;gap:10px;margin:14px 0;flex-wrap:wrap;">
+      <input placeholder="Search by name / ID" style="flex:1;min-width:200px;padding:10px;border-radius:8px;border:1px solid #ccc;">
+      <select style="padding:10px;border-radius:8px;border:1px solid #ccc;"><option>All Genders</option><option>Male</option><option>Female</option></select>
+      <select style="padding:10px;border-radius:8px;border:1px solid #ccc;"><option>All Status</option><option>Active</option><option>Blocked</option></select>
+      <button class="btn btn-primary">Search</button>
+    </div>
+
+    <table class="data">
+      <tr><th>ID</th><th>Name</th><th>Age</th><th>Gender</th><th>Location</th><th>Joined</th><th>Status</th><th>Actions</th></tr>
+      ${s.profiles.map(p=>`
+        <tr>
+          <td><b>${p.id}</b></td>
+          <td>${p.name}</td>
+          <td>${p.age}</td>
+          <td>${p.gender}</td>
+          <td>${p.city}, ${p.state}</td>
+          <td>${p.joined}</td>
+          <td>${p.verified?'<span class="status-pill status-verified">✓ Verified</span>':'<span class="status-pill status-active">Active</span>'}</td>
+          <td>
+            <a href="profile.html?id=${p.id}" class="btn btn-ghost btn-sm">View</a>
+            <button class="btn btn-danger btn-sm" onclick="blockUser('${p.id}')">Block</button>
+          </td>
+        </tr>`).join('')}
+    </table>
+  `;
+}
+function blockUser(id){if(confirm('Block this user?'))toast('🚫 User blocked');}
+
+function renderReports(){
+  const s=Store.load();
+  document.getElementById('tab-content').innerHTML=`
+    <h1 style="margin-top:0;">🚩 User Reports</h1>
+    <p class="muted">Handle reports submitted by users.</p>
+    <table class="data mt-2">
+      <tr><th>Report ID</th><th>Reported by</th><th>Against</th><th>Reason</th><th>Date</th><th>Status</th><th>Actions</th></tr>
+      ${s.reports.map(r=>`
+        <tr>
+          <td><b>${r.id}</b></td>
+          <td>${r.reporter}</td>
+          <td>${r.against}</td>
+          <td>${r.reason}</td>
+          <td>${r.date}</td>
+          <td><span class="status-pill status-pending">${r.status}</span></td>
+          <td>
+            <button class="btn btn-primary btn-sm">Review</button>
+            <button class="btn btn-danger btn-sm">Block ${r.against}</button>
+            <button class="btn btn-ghost btn-sm">Dismiss</button>
+          </td>
+        </tr>`).join('')}
+    </table>
+  `;
+}
+
+function renderSuccess(){
+  document.getElementById('tab-content').innerHTML=`
+    <h1 style="margin-top:0;">💑 Success Stories</h1>
+    <p class="muted">1,238 happy couples found their match on ShubhMilan.</p>
+    <div class="grid grid-3 mt-2">
+      <div class="card"><div class="card-body">
+        <div style="display:flex;gap:10px;align-items:center;"><div style="width:50px;height:50px;border-radius:50%;background:var(--primary-light);display:grid;place-items:center;">💑</div><div><b>Priya & Aryan</b><div class="muted" style="font-size:12px;">Married in Feb 2026</div></div></div>
+        <p style="font-size:14px;margin-top:10px;">"We found each other within 2 weeks. Thank you ShubhMilan!"</p>
+        <button class="btn btn-ghost btn-sm">Review</button>
+      </div></div>
+      <div class="card"><div class="card-body">
+        <div style="display:flex;gap:10px;align-items:center;"><div style="width:50px;height:50px;border-radius:50%;background:var(--primary-light);display:grid;place-items:center;">💑</div><div><b>Neha & Karan</b><div class="muted" style="font-size:12px;">Engaged in Mar 2026</div></div></div>
+        <p style="font-size:14px;margin-top:10px;">"Horoscope match was 92%. Getting married in November!"</p>
+        <button class="btn btn-ghost btn-sm">Review</button>
+      </div></div>
+      <div class="card"><div class="card-body">
+        <div style="display:flex;gap:10px;align-items:center;"><div style="width:50px;height:50px;border-radius:50%;background:var(--primary-light);display:grid;place-items:center;">💑</div><div><b>Anjali & Vikram</b><div class="muted" style="font-size:12px;">Wed in Jan 2026</div></div></div>
+        <p style="font-size:14px;margin-top:10px;">"So happy we chose a free, trusted platform."</p>
+        <button class="btn btn-ghost btn-sm">Review</button>
+      </div></div>
+    </div>
+  `;
+}
+
+function renderPhotos(){
+  document.getElementById('tab-content').innerHTML=`
+    <h1 style="margin-top:0;">📷 Photo Moderation</h1>
+    <p class="muted">Review newly uploaded photos (AI flagged 12 for review).</p>
+    <div class="grid grid-4 mt-2">
+      ${Array.from({length:8}).map(()=>`
+        <div class="card"><div class="card-body" style="padding:8px;">
+          <div style="aspect-ratio:1;background:linear-gradient(135deg,#fce4ec,#f8bbd0);border-radius:8px;display:grid;place-items:center;font-size:40px;">📷</div>
+          <div style="display:flex;gap:4px;margin-top:8px;">
+            <button class="btn btn-success btn-sm" style="flex:1;">✓</button>
+            <button class="btn btn-danger btn-sm" style="flex:1;">✗</button>
+          </div>
+        </div></div>`).join('')}
+    </div>
+  `;
+}
+
+function renderMessages(){
+  document.getElementById('tab-content').innerHTML=`
+    <h1 style="margin-top:0;">💬 Flagged Messages</h1>
+    <p class="muted">Messages auto-flagged for review (profanity, phone numbers, suspicious links).</p>
+    <table class="data mt-2">
+      <tr><th>From</th><th>To</th><th>Message</th><th>Reason</th><th>Actions</th></tr>
+      <tr><td>SM10018</td><td>SM10005</td><td>"Call me on 98******21"</td><td>Shared phone number</td><td><button class="btn btn-danger btn-sm">Warn</button> <button class="btn btn-ghost btn-sm">Dismiss</button></td></tr>
+      <tr><td>SM10021</td><td>SM10007</td><td>"Send me ₹5000 for..."</td><td>Money request</td><td><button class="btn btn-danger btn-sm">Block</button> <button class="btn btn-ghost btn-sm">Dismiss</button></td></tr>
+    </table>
+  `;
+}
+
+renderDash();
+</script>
+</body>
+</html>

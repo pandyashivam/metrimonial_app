@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>My Profile · ShubhMilan</title>
+<link rel="stylesheet" href="css/styles.css">
+<script src="js/data.js" defer></script>
+<script src="js/app.js" defer></script>
+</head>
+<body>
+<div id="nav"></div>
+<div id="root"></div>
+<div id="footer"></div>
+
+<script>
+document.getElementById('nav').innerHTML=renderNav('my');
+document.getElementById('footer').innerHTML=renderFooter();
+if(!requireLogin()) throw new Error('redirect');
+
+const s=Store.load();
+const p=s.profiles.find(x=>x.id===s.user.id)||s.profiles[0];
+
+document.getElementById('root').innerHTML=`
+<div class="container">
+  <h1 style="color:var(--primary-dark);margin-top:12px;">My Profile</h1>
+  <p class="muted">Keep your profile updated to get better matches · <a href="profile.html?id=${p.id}">View public profile ↗</a></p>
+
+  <div class="alert alert-success"><b>Profile Completion: 92%</b> — Add a few more photos to reach 100%.</div>
+
+  <div class="row mt-2">
+    <div style="flex:0 0 260px;">
+      <div class="card mb-2"><div class="card-body center">
+        <div style="width:140px;height:140px;border-radius:50%;overflow:hidden;margin:0 auto;background:linear-gradient(135deg,#fce4ec,#f8bbd0);display:grid;place-items:center;font-size:50px;color:var(--primary);">
+          ${p.photos&&p.photos[0]?`<img src="${p.photos[0]}" style="width:100%;height:100%;object-fit:cover;">`:p.name[0]}
+        </div>
+        <h3 style="margin:10px 0 4px;">${p.name}</h3>
+        <div class="muted" style="font-size:13px;">${p.id} · ${p.verified?'✓ Verified':'Not Verified'}</div>
+        <button class="btn btn-primary btn-block mt-2">📷 Change Photo</button>
+      </div></div>
+
+      <div class="card"><div class="card-body">
+        <h4 style="margin:0 0 10px;">Settings</h4>
+        <a href="#basic">Basic Details</a><br>
+        <a href="#religion">Religion</a><br>
+        <a href="#education">Education & Career</a><br>
+        <a href="#family">Family</a><br>
+        <a href="#preferences">Partner Preferences</a><br>
+        <a href="#privacy">Privacy & Visibility</a>
+      </div></div>
+    </div>
+
+    <div class="col">
+      <div class="card mb-2"><div class="card-body">
+        <h3 class="section-title" id="basic">👤 Basic Details</h3>
+        <div class="form-row">
+          <div class="field"><label>Full Name</label><input type="text" value="${escapeHtml(p.name)}"></div>
+          <div class="field"><label>Date of Birth</label><input type="date" value="${p.dob}"></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Height</label><input type="text" value="${p.height}"></div>
+          <div class="field"><label>Mother Tongue</label><input type="text" value="${p.motherTongue}"></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Diet</label><input type="text" value="${p.diet}"></div>
+          <div class="field"><label>City</label><input type="text" value="${p.city}"></div>
+        </div>
+        <div class="field"><label>About Me</label><textarea>${escapeHtml(p.about)}</textarea></div>
+      </div></div>
+
+      <div class="card mb-2"><div class="card-body">
+        <h3 class="section-title" id="religion">🕉️ Religion & Community</h3>
+        <div class="form-row">
+          <div class="field"><label>Religion</label><input type="text" value="${p.religion}"></div>
+          <div class="field"><label>Caste</label><input type="text" value="${p.caste}"></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Sub-Caste</label><input type="text" value="${p.subCaste}"></div>
+          <div class="field"><label>Gotra</label><input type="text" value="${p.gotra}"></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Manglik</label><input type="text" value="${p.manglik}"></div>
+          <div class="field"><label>Rashi</label><input type="text" value="${p.rashi}"></div>
+        </div>
+      </div></div>
+
+      <div class="card mb-2"><div class="card-body">
+        <h3 class="section-title" id="education">🎓 Education & Career</h3>
+        <div class="form-row">
+          <div class="field"><label>Education</label><input type="text" value="${p.education}"></div>
+          <div class="field"><label>Profession</label><input type="text" value="${p.profession}"></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Company</label><input type="text" value="${p.company}"></div>
+          <div class="field"><label>Income</label><input type="text" value="${p.income}"></div>
+        </div>
+      </div></div>
+
+      <div class="card mb-2"><div class="card-body">
+        <h3 class="section-title" id="family">👨‍👩‍👧 Family Details</h3>
+        <div class="form-row">
+          <div class="field"><label>Father's Name</label><input type="text" value="${escapeHtml(p.fatherName)}"></div>
+          <div class="field"><label>Father's Occupation</label><input type="text" value="${escapeHtml(p.fatherOccupation)}"></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Mother's Name</label><input type="text" value="${escapeHtml(p.motherName)}"></div>
+          <div class="field"><label>Mother's Occupation</label><input type="text" value="${escapeHtml(p.motherOccupation)}"></div>
+        </div>
+        <div class="field"><label>Siblings</label><input type="text" value="${escapeHtml(p.siblings)}"></div>
+      </div></div>
+
+      <div class="card mb-2"><div class="card-body">
+        <h3 class="section-title" id="preferences">💑 Partner Preferences</h3>
+        <div class="form-row">
+          <div class="field"><label>Age Range</label><input type="text" value="27 - 32"></div>
+          <div class="field"><label>Height Range</label><input type="text" value="5'6\" - 6'2\""></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Preferred Caste</label><input type="text" value="Brahmin"></div>
+          <div class="field"><label>Preferred City</label><input type="text" value="Any metro city"></div>
+        </div>
+        <div class="field"><label>Additional Preferences</label><textarea>${escapeHtml(p.partnerPref)}</textarea></div>
+      </div></div>
+
+      <div class="card mb-2"><div class="card-body">
+        <h3 class="section-title" id="privacy">🔒 Privacy & Visibility</h3>
+        <div class="field"><label><input type="checkbox" checked> Show my photos to verified members only</label></div>
+        <div class="field"><label><input type="checkbox" checked> Hide my contact details until I accept interest</label></div>
+        <div class="field"><label><input type="checkbox"> Show my horoscope publicly</label></div>
+        <div class="field"><label><input type="checkbox" checked> Notify me of new matches via email</label></div>
+      </div></div>
+
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button class="btn btn-ghost">Cancel</button>
+        <button class="btn btn-primary" onclick="toast('✅ Profile updated successfully');">💾 Save All Changes</button>
+      </div>
+    </div>
+  </div>
+</div>`;
+</script>
+</body>
+</html>

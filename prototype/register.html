@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Register Free · ShubhMilan</title>
+<link rel="stylesheet" href="css/styles.css">
+<script src="js/data.js" defer></script>
+<script src="js/app.js" defer></script>
+</head>
+<body>
+<div id="nav"></div>
+
+<div class="container" style="max-width:780px;">
+  <div class="card mt-3">
+    <div class="card-body">
+      <h2 style="color:var(--primary-dark);margin-top:0;text-align:center;">Create Your Free Profile</h2>
+      <p class="muted center">Takes less than 5 minutes · Always 100% free</p>
+
+      <div class="steps mt-2">
+        <div class="step active" id="s1">1. Account</div>
+        <div class="step" id="s2">2. Personal</div>
+        <div class="step" id="s3">3. Religious</div>
+        <div class="step" id="s4">4. Education & Career</div>
+        <div class="step" id="s5">5. Family</div>
+        <div class="step" id="s6">6. Photos</div>
+      </div>
+
+      <!-- STEP 1 -->
+      <div class="step-panel" id="p1">
+        <h3>Account Details</h3>
+        <div class="form-row">
+          <div class="field"><label>Profile For *</label>
+            <select required><option>Self</option><option>Son</option><option>Daughter</option><option>Brother</option><option>Sister</option><option>Friend</option><option>Relative</option></select></div>
+          <div class="field"><label>Gender *</label>
+            <select required><option>Male</option><option>Female</option></select></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Full Name *</label><input type="text" placeholder="Your full name" required></div>
+          <div class="field"><label>Date of Birth *</label><input type="date" required></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Mobile *</label><input type="tel" placeholder="+91 ..." required></div>
+          <div class="field"><label>Email *</label><input type="email" placeholder="you@example.com" required></div>
+        </div>
+        <div class="field"><label>Create Password *</label><input type="password" placeholder="At least 8 characters" required></div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="step-panel" id="p2" style="display:none;">
+        <h3>Personal Details</h3>
+        <div class="form-row">
+          <div class="field"><label>Marital Status</label>
+            <select id="r-marital"></select></div>
+          <div class="field"><label>Height</label>
+            <select id="r-height"></select></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Diet</label><select id="r-diet"></select></div>
+          <div class="field"><label>Mother Tongue</label><select id="r-mt"></select></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Drinking</label><select id="r-drink"></select></div>
+          <div class="field"><label>Smoking</label><select id="r-smoke"></select></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>City</label><input type="text" placeholder="e.g. Jaipur"></div>
+          <div class="field"><label>State</label><select id="r-state"></select></div>
+        </div>
+        <div class="field"><label>About Yourself</label>
+          <textarea placeholder="Tell us a bit about your nature, hobbies and aspirations..."></textarea></div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="step-panel" id="p3" style="display:none;">
+        <h3>Religion & Community</h3>
+        <div class="form-row">
+          <div class="field"><label>Religion</label><select id="r-religion"></select></div>
+          <div class="field"><label>Caste</label><select id="r-caste"></select></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Sub-Caste</label><input type="text" placeholder="e.g. Gaur, Leuva Patel"></div>
+          <div class="field"><label>Gotra</label><input type="text" placeholder="e.g. Kashyap, Bharadwaja"></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Manglik Status</label><select id="r-manglik"></select></div>
+          <div class="field"><label>Rashi (Moon Sign)</label><select id="r-rashi"></select></div>
+        </div>
+        <div class="field"><label>Nakshatra</label>
+          <input type="text" placeholder="e.g. Rohini, Pushya"></div>
+      </div>
+
+      <!-- STEP 4 -->
+      <div class="step-panel" id="p4" style="display:none;">
+        <h3>Education & Career</h3>
+        <div class="form-row">
+          <div class="field"><label>Highest Education</label><select id="r-edu"></select></div>
+          <div class="field"><label>Profession</label><select id="r-prof"></select></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Company / Organization</label><input type="text" placeholder="e.g. Infosys"></div>
+          <div class="field"><label>Annual Income</label><select id="r-income"></select></div>
+        </div>
+        <div class="field"><label>Designation / Job Title</label><input type="text" placeholder="e.g. Senior Engineer"></div>
+      </div>
+
+      <!-- STEP 5 -->
+      <div class="step-panel" id="p5" style="display:none;">
+        <h3>Family Details</h3>
+        <div class="form-row">
+          <div class="field"><label>Father's Name</label><input type="text"></div>
+          <div class="field"><label>Father's Occupation</label><input type="text"></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Mother's Name</label><input type="text"></div>
+          <div class="field"><label>Mother's Occupation</label><input type="text"></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>No. of Brothers</label><input type="number" min="0" value="0"></div>
+          <div class="field"><label>No. of Sisters</label><input type="number" min="0" value="0"></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Family Type</label><select id="r-family"></select></div>
+          <div class="field"><label>Family Values</label><select id="r-values"></select></div>
+        </div>
+      </div>
+
+      <!-- STEP 6 -->
+      <div class="step-panel" id="p6" style="display:none;">
+        <h3>Upload Photos</h3>
+        <p class="muted">Add up to 6 photos. Profiles with photos get 5x more responses.</p>
+        <div class="grid grid-3 mt-2">
+          ${[1,2,3,4,5,6].map(()=>'').join('')}
+          <div class="ph" style="aspect-ratio:1;border:2px dashed #d6d6d6;border-radius:12px;display:grid;place-items:center;cursor:pointer;color:var(--muted);"><div style="text-align:center;"><div style="font-size:30px;">📷</div><div style="font-size:12px;">Add Photo</div></div></div>
+          <div class="ph" style="aspect-ratio:1;border:2px dashed #d6d6d6;border-radius:12px;display:grid;place-items:center;cursor:pointer;color:var(--muted);"><div style="text-align:center;"><div style="font-size:30px;">📷</div><div style="font-size:12px;">Add Photo</div></div></div>
+          <div class="ph" style="aspect-ratio:1;border:2px dashed #d6d6d6;border-radius:12px;display:grid;place-items:center;cursor:pointer;color:var(--muted);"><div style="text-align:center;"><div style="font-size:30px;">📷</div><div style="font-size:12px;">Add Photo</div></div></div>
+        </div>
+        <div class="alert alert-success mt-3" style="font-size:13px;">
+          🎉 Almost done! Your profile is free and will be reviewed within 24 hours.
+        </div>
+        <div class="field mt-2">
+          <label style="font-weight:400;font-size:13px;">
+            <input type="checkbox" checked> I agree to the <a href="#">Terms of Use</a> and <a href="#">Privacy Policy</a>.
+          </label>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;margin-top:20px;">
+        <button class="btn btn-ghost" onclick="prev()" id="btn-prev">← Back</button>
+        <button class="btn btn-primary" onclick="next()" id="btn-next">Next →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="footer"></div>
+
+<script>
+document.getElementById('nav').innerHTML=renderNav('register');
+document.getElementById('footer').innerHTML=renderFooter();
+
+// fill selects
+function fillSelect(id,arr){const el=document.getElementById(id);if(!el)return;arr.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;el.appendChild(o);});}
+fillSelect('r-marital',OPTIONS.maritalStatus);
+fillSelect('r-height',OPTIONS.height);
+fillSelect('r-diet',OPTIONS.diet);
+fillSelect('r-mt',OPTIONS.motherTongue);
+fillSelect('r-drink',OPTIONS.drink);
+fillSelect('r-smoke',OPTIONS.smoke);
+fillSelect('r-state',OPTIONS.state);
+fillSelect('r-religion',OPTIONS.religion);
+fillSelect('r-caste',OPTIONS.caste);
+fillSelect('r-manglik',OPTIONS.manglik);
+fillSelect('r-rashi',OPTIONS.rashi);
+fillSelect('r-edu',OPTIONS.education);
+fillSelect('r-prof',OPTIONS.profession);
+fillSelect('r-income',OPTIONS.income);
+fillSelect('r-family',OPTIONS.familyType);
+fillSelect('r-values',OPTIONS.familyValues);
+
+let step=1;const total=6;
+function show(){
+  for(let i=1;i<=total;i++){
+    document.getElementById('p'+i).style.display=(i===step?'block':'none');
+    const s=document.getElementById('s'+i);
+    s.classList.remove('active','done');
+    if(i<step)s.classList.add('done');
+    if(i===step)s.classList.add('active');
+  }
+  document.getElementById('btn-prev').style.visibility=step===1?'hidden':'visible';
+  document.getElementById('btn-next').textContent=step===total?'Submit & Register ✓':'Next →';
+}
+function next(){
+  if(step<total){step++;show();window.scrollTo(0,0);}
+  else{
+    toast('🎉 Registration submitted! Your profile is being verified.');
+    setTimeout(()=>{loginAsDemo();},1200);
+  }
+}
+function prev(){if(step>1){step--;show();window.scrollTo(0,0);}}
+function loginAsDemo(){
+  const s=Store.load();
+  s.user={id:'SM10001',name:'Priya Sharma',role:'member'};
+  Store.save(s);location.href='dashboard.html';
+}
+show();
+</script>
+</body>
+</html>

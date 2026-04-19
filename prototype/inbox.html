@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Inbox · ShubhMilan</title>
+<link rel="stylesheet" href="css/styles.css">
+<script src="js/data.js" defer></script>
+<script src="js/app.js" defer></script>
+</head>
+<body>
+<div id="nav"></div>
+<div id="root"></div>
+<div id="footer"></div>
+
+<script>
+document.getElementById('nav').innerHTML=renderNav('inbox');
+document.getElementById('footer').innerHTML=renderFooter();
+if(!requireLogin()) throw new Error('redirect');
+
+const s=Store.load();
+const chatIds=Object.keys(s.messages);
+let activeId=new URLSearchParams(location.search).get('to')||chatIds[0];
+
+// Ensure an empty conversation exists if coming from another page
+if(activeId && !s.messages[activeId]){s.messages[activeId]=[];Store.save(s);}
+const allChatIds=Object.keys(Store.load().messages);
+
+function renderPage(){
+  const state=Store.load();
+  const activeProfile=state.profiles.find(p=>p.id===activeId);
+  const otherIds=Object.keys(state.messages);
+
+  document.getElementById('root').innerHTML=`
+  <div class="container">
+    <h1 style="color:var(--primary-dark);margin:10px 0;">💬 My Inbox</h1>
+    <p class="muted">Conversations with your connections · All free, always</p>
+
+    <div class="chat-wrap mt-2">
+      <div class="chat-list">
+        ${otherIds.map(id=>{
+          const p=state.profiles.find(x=>x.id===id);
+          if(!p)return'';
+          const msgs=state.messages[id]||[];
+          const last=msgs[msgs.length-1];
+          return `
+          <div class="item ${id===activeId?'active':''}" onclick="switchChat('${id}')">
+            <div class="avatar">${p.photos&&p.photos[0]?`<img src="${p.photos[0]}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`:p.name[0]}</div>
+            <div style="flex:1;min-width:0;">
+              <div class="name">${p.name.split(' ')[0]} ${p.name.split(' ').slice(1).join(' ')}</div>
+              <div class="preview">${last?escapeHtml(last.text):'Say hello 👋'}</div>
+            </div>
+          </div>`;
+        }).join('')||'<p class="muted center" style="padding:20px;">No conversations yet</p>'}
+      </div>
+
+      <div class="chat-window">
+        ${activeProfile?`
+          <div class="chat-header" style="display:flex;align-items:center;gap:10px;">
+            <div class="avatar" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#fce4ec,#f8bbd0);display:grid;place-items:center;color:var(--primary);font-weight:700;overflow:hidden;">
+              ${activeProfile.photos&&activeProfile.photos[0]?`<img src="${activeProfile.photos[0]}" style="width:100%;height:100%;object-fit:cover;">`:activeProfile.name[0]}
+            </div>
+            <div style="flex:1;">
+              <div>${activeProfile.name}</div>
+              <div class="muted" style="font-size:12px;font-weight:400;">Online · ${activeProfile.city}</div>
+            </div>
+            <a href="profile.html?id=${activeProfile.id}" class="btn btn-ghost btn-sm">View Profile</a>
+          </div>
+          <div class="chat-body" id="chat-body">
+            ${(state.messages[activeId]||[]).map(m=>`
+              <div class="chat-msg ${m.from}">${escapeHtml(m.text)}<div style="font-size:10px;opacity:.7;margin-top:4px;text-align:right;">${m.t||''}</div></div>
+            `).join('')}
+          </div>
+          <div class="chat-input">
+            <input type="text" id="msg" placeholder="Write a message..." onkeydown="if(event.key==='Enter')sendMsg()">
+            <button class="btn btn-primary" onclick="sendMsg()">Send</button>
+          </div>
+        `:`<div style="padding:40px;text-align:center;color:var(--muted);">Select a conversation or start one from a profile page.</div>`}
+      </div>
+    </div>
+
+    <div class="alert alert-warn mt-3" style="font-size:13px;">
+      🛡️ <b>Stay Safe:</b> Never share money, bank details or OTPs with anyone you meet here. Report suspicious behaviour.
+    </div>
+  </div>`;
+
+  setTimeout(()=>{const c=document.getElementById('chat-body');if(c)c.scrollTop=c.scrollHeight;},50);
+}
+
+function switchChat(id){activeId=id;renderPage();history.replaceState({},'','inbox.html?to='+id);}
+
+function sendMsg(){
+  const input=document.getElementById('msg');
+  const text=input.value.trim();
+  if(!text)return;
+  const s=Store.load();
+  s.messages[activeId]=s.messages[activeId]||[];
+  const now=new Date();
+  const t=now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  s.messages[activeId].push({from:'me',text,t});
+  Store.save(s);input.value='';renderPage();
+  // simulate reply
+  setTimeout(()=>{
+    const s2=Store.load();
+    s2.messages[activeId].push({from:'them',text:'Thank you for your message 🙏 I will respond shortly.',t:new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})});
+    Store.save(s2);renderPage();
+  },1200);
+}
+
+renderPage();
+</script>
+</body>
+</html>

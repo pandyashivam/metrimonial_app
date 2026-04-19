@@ -1,0 +1,2434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ShubhMilan — Trusted Matrimony, Free for Everyone</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+/* ============ Professional design system ============ */
+:root{
+  --primary:#8b1e3f;          /* deep wine/maroon */
+  --primary-dark:#5f1029;
+  --primary-50:#fdf3f6;
+  --primary-100:#f8dce5;
+  --accent:#c8a45c;            /* muted gold */
+  --accent-dark:#9e7f3f;
+  --ink:#1a1a1a;
+  --text:#2e2e33;
+  --muted:#6e6e78;
+  --line:#e7e5ea;
+  --bg:#fafafa;
+  --card:#ffffff;
+  --success:#1e8a5f;
+  --success-50:#e6f5ee;
+  --danger:#c0392b;
+  --danger-50:#fbecea;
+  --warn:#b57a00;
+  --warn-50:#fff6e0;
+  --info:#1e5fa8;
+  --info-50:#e7f0fa;
+  --radius-sm:8px;
+  --radius:12px;
+  --radius-lg:18px;
+  --shadow-xs:0 1px 2px rgba(15,15,20,.04);
+  --shadow:0 4px 14px rgba(20,20,30,.06);
+  --shadow-lg:0 16px 40px rgba(20,20,30,.10);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--text);background:var(--bg);font-size:15px;line-height:1.55}
+h1,h2,h3,h4{font-family:'Playfair Display','Inter',serif;color:var(--ink);letter-spacing:-.01em;font-weight:700;margin:0 0 10px}
+h1{font-size:34px;line-height:1.15}
+h2{font-size:26px;line-height:1.2}
+h3{font-size:18px;line-height:1.3;font-family:'Inter',sans-serif;font-weight:700}
+p{margin:0 0 12px}
+a{color:var(--primary);text-decoration:none}
+a:hover{color:var(--primary-dark)}
+img{max-width:100%;display:block}
+.hidden{display:none!important}
+.muted{color:var(--muted)}
+.center{text-align:center}
+.mt-1{margin-top:10px}.mt-2{margin-top:18px}.mt-3{margin-top:28px}.mt-4{margin-top:40px}
+.mb-1{margin-bottom:10px}.mb-2{margin-bottom:18px}.mb-3{margin-bottom:28px}
+
+/* Top bar */
+.topbar{background:#fff;border-bottom:1px solid var(--line);padding:0 28px;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;gap:10px;min-height:68px}
+.topbar .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;cursor:pointer;color:var(--primary-dark);font-family:'Playfair Display',serif;letter-spacing:-.01em}
+.topbar .brand .logo{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;display:grid;place-items:center;font-size:16px;box-shadow:0 2px 8px rgba(139,30,63,.3)}
+.topbar nav{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.topbar nav a{color:var(--text);font-weight:500;cursor:pointer;padding:8px 14px;border-radius:8px;font-size:14px;display:inline-flex;align-items:center;gap:7px}
+.topbar nav a i{color:var(--muted);font-size:13px}
+.topbar nav a:hover{background:var(--primary-50);color:var(--primary)}
+.topbar nav a:hover i{color:var(--primary)}
+.topbar nav a.active{background:var(--primary-50);color:var(--primary-dark);font-weight:600}
+.topbar nav a.active i{color:var(--primary)}
+.topbar .actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.chip-free{background:var(--success-50);color:var(--success);font-weight:600;padding:5px 11px;border-radius:20px;font-size:12px;display:inline-flex;align-items:center;gap:6px;border:1px solid #c2e5d4}
+@media (max-width:980px){.topbar{padding:0 14px}.topbar nav a{padding:6px 10px;font-size:13px}.topbar nav a span{display:none}.topbar nav a i{font-size:16px;color:var(--text)}}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:10px 18px;border-radius:8px;border:1px solid transparent;font-weight:600;cursor:pointer;font-size:14px;transition:all .18s;font-family:inherit;white-space:nowrap}
+.btn:hover{transform:translateY(-1px)}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-dark);color:#fff;box-shadow:0 6px 16px rgba(139,30,63,.28)}
+.btn-accent{background:var(--accent);color:#fff}.btn-accent:hover{background:var(--accent-dark);color:#fff}
+.btn-outline{background:transparent;border:1.5px solid #fff;color:#fff}.btn-outline:hover{background:#fff;color:var(--primary)}
+.btn-outline-primary{background:transparent;border:1.5px solid var(--primary);color:var(--primary)}
+.btn-outline-primary:hover{background:var(--primary);color:#fff}
+.btn-ghost{background:#f2f2f5;color:var(--text);border:1px solid #eaeaf0}.btn-ghost:hover{background:#e8e8ee}
+.btn-sm{padding:6px 12px;font-size:12.5px;gap:5px}
+.btn-lg{padding:13px 26px;font-size:15px}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-success{background:var(--success);color:#fff}
+.btn-block{display:flex;width:100%}
+.btn-icon{padding:9px 11px}
+
+/* Layout */
+.container{max-width:1200px;margin:0 auto;padding:28px 24px}
+.row{display:flex;flex-wrap:wrap;gap:20px}
+.col{flex:1;min-width:0}
+.grid{display:grid;gap:20px}
+.grid-2{grid-template-columns:repeat(2,1fr)}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+@media (max-width:900px){.grid-3,.grid-4{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:600px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr}}
+
+/* Cards */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-xs);overflow:hidden;transition:.2s}
+.card:hover{box-shadow:var(--shadow)}
+.card-body{padding:20px}
+.card-title{margin:0 0 6px;font-size:18px;font-family:'Inter',sans-serif}
+
+/* Forms */
+.field{margin-bottom:14px}
+.field label{display:block;font-weight:600;margin-bottom:6px;font-size:13px;color:var(--ink)}
+.field label .req{color:var(--danger);margin-left:2px}
+.field input,.field select,.field textarea{width:100%;padding:11px 13px;border:1px solid #d8d8df;border-radius:var(--radius-sm);font-size:14px;background:#fff;font-family:inherit;color:var(--ink);transition:.15s}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(139,30,63,.1)}
+.field textarea{min-height:90px;resize:vertical}
+.field .hint{font-size:12px;color:var(--muted);margin-top:4px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-row-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media (max-width:640px){.form-row,.form-row-3{grid-template-columns:1fr}}
+.input-icon{position:relative}
+.input-icon i{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px}
+.input-icon input{padding-left:38px}
+
+/* Hero */
+.hero{background:linear-gradient(135deg,var(--primary-dark) 0%,var(--primary) 55%,#a83157 100%);color:#fff;padding:90px 24px 100px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 20% 30%,rgba(200,164,92,.22),transparent 50%),radial-gradient(ellipse at 80% 70%,rgba(255,255,255,.08),transparent 50%);pointer-events:none}
+.hero > *{position:relative;z-index:1}
+.hero .kicker{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);backdrop-filter:blur(6px);padding:7px 16px;border-radius:30px;font-size:13px;font-weight:500;margin-bottom:20px;border:1px solid rgba(255,255,255,.2)}
+.hero h1{font-size:54px;margin:0 0 14px;color:#fff;font-weight:700;line-height:1.1;max-width:820px;margin-left:auto;margin-right:auto}
+.hero .sub{font-size:18px;opacity:.9;max-width:620px;margin:0 auto 30px;font-weight:400}
+.hero .cta-row{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
+.hero .trust{margin-top:36px;display:flex;gap:28px;justify-content:center;flex-wrap:wrap;font-size:14px;opacity:.85}
+.hero .trust div{display:flex;align-items:center;gap:7px}
+.hero .trust i{color:var(--accent)}
+@media (max-width:700px){.hero{padding:60px 20px 70px}.hero h1{font-size:36px}.hero .sub{font-size:16px}}
+
+/* Hero search */
+.hero-search{max-width:760px;margin:28px auto 0;background:#fff;border-radius:16px;padding:14px;box-shadow:0 20px 60px rgba(0,0,0,.25);display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:8px;align-items:end}
+.hero-search .field{margin:0;text-align:left}
+.hero-search .field label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
+.hero-search .field select{border:none;padding:6px 2px;font-weight:600;color:var(--ink);background:transparent;font-size:14px}
+.hero-search .field:not(:last-child){border-right:1px solid var(--line);padding:6px 12px}
+@media (max-width:700px){.hero-search{grid-template-columns:1fr 1fr;gap:14px}.hero-search .field:not(:last-child){border-right:none;padding:0}.hero-search button{grid-column:1 / -1}}
+
+/* Profile cards */
+.profile-card{background:#fff;border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-xs);border:1px solid var(--line);display:flex;flex-direction:column;cursor:pointer;transition:.25s}
+.profile-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);border-color:var(--primary-100)}
+.profile-card .photo{width:100%;aspect-ratio:3/4;background:linear-gradient(135deg,#f4e7eb,#ead2db);display:grid;place-items:center;color:var(--primary);font-size:54px;font-weight:700;position:relative;overflow:hidden}
+.profile-card .photo img{width:100%;height:100%;object-fit:cover}
+.profile-card .verified{position:absolute;top:10px;right:10px;background:rgba(30,138,95,.95);color:#fff;padding:4px 9px;border-radius:20px;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:4px;backdrop-filter:blur(4px)}
+.profile-card .online{position:absolute;top:10px;left:10px;background:rgba(255,255,255,.92);color:var(--success);padding:4px 9px;border-radius:20px;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:5px}
+.profile-card .online::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--success);display:inline-block}
+.profile-card .info{padding:14px 16px;flex:1;display:flex;flex-direction:column}
+.profile-card .info h3{margin:0 0 4px;font-size:16px;color:var(--ink);font-weight:700}
+.profile-card .info .meta{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.profile-card .info .meta i{font-size:11px;width:12px;color:var(--primary);opacity:.7}
+.profile-card .info .tags{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}
+.profile-card .info .tag{background:var(--primary-50);color:var(--primary-dark);padding:3px 9px;border-radius:12px;font-size:11px;font-weight:600}
+.profile-card .pc-actions{display:flex;gap:6px;margin-top:auto;padding:10px 14px 14px;border-top:1px solid var(--line)}
+.profile-card .pc-actions .btn{flex:1;font-size:12px;padding:7px}
+
+/* Tables */
+table.data{width:100%;border-collapse:collapse;background:#fff;border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-xs);border:1px solid var(--line)}
+table.data th,table.data td{padding:13px 16px;text-align:left;border-bottom:1px solid var(--line);font-size:14px;vertical-align:middle}
+table.data th{background:#f7f6f9;color:var(--ink);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.7px}
+table.data tr:last-child td{border-bottom:0}
+table.data tr:hover td{background:#fcfbfd}
+
+/* Pills / badges */
+.status-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 11px;border-radius:20px;font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.status-active{background:var(--success-50);color:var(--success)}
+.status-pending{background:var(--warn-50);color:var(--warn)}
+.status-inactive{background:#f0f0f4;color:var(--muted)}
+.status-banned{background:var(--danger-50);color:var(--danger)}
+.status-verified{background:var(--info-50);color:var(--info)}
+
+/* Alerts */
+.alert{padding:14px 18px;border-radius:var(--radius);margin:14px 0;font-size:14px;border:1px solid;display:flex;gap:12px;align-items:flex-start}
+.alert i{font-size:18px;margin-top:1px;flex-shrink:0}
+.alert-info{background:var(--info-50);border-color:#c9ddef;color:#1e5fa8}
+.alert-info i{color:var(--info)}
+.alert-warn{background:var(--warn-50);border-color:#f1dfae;color:#7c5403}
+.alert-warn i{color:var(--warn)}
+.alert-success{background:var(--success-50);border-color:#b9e0cd;color:#0f6f4a}
+.alert-success i{color:var(--success)}
+
+/* Footer */
+footer{background:#1a1a1f;color:#c6c6d0;padding:56px 24px 28px;margin-top:60px}
+footer .fwrap{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:40px}
+@media (max-width:800px){footer .fwrap{grid-template-columns:1fr 1fr}}
+@media (max-width:500px){footer .fwrap{grid-template-columns:1fr}}
+footer h4{color:#fff;margin:0 0 14px;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;font-family:'Inter',sans-serif}
+footer a{color:#c6c6d0;display:block;padding:4px 0;font-size:14px}
+footer a:hover{color:var(--accent)}
+footer .brand-f{font-family:'Playfair Display',serif;font-size:22px;color:#fff;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:10px}
+footer .brand-f .logo{width:34px;height:34px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;font-size:15px}
+footer .copy{text-align:center;padding-top:28px;margin-top:36px;border-top:1px solid #2a2a33;color:#8a8a95;font-size:13px;max-width:1200px;margin-left:auto;margin-right:auto}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.25);z-index:2000;font-size:14px;transition:transform .25s;display:flex;align-items:center;gap:10px}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast i{color:var(--accent)}
+
+/* Profile detail */
+.prof-hero{background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-xs);margin-bottom:20px}
+.prof-hero .pwrap{display:grid;grid-template-columns:320px 1fr;gap:0}
+@media (max-width:760px){.prof-hero .pwrap{grid-template-columns:1fr}}
+.prof-hero .photo-main{aspect-ratio:1/1;background:linear-gradient(135deg,#f4e7eb,#ead2db);display:grid;place-items:center;color:var(--primary);font-size:90px;font-weight:700;overflow:hidden}
+.prof-hero .photo-main img{width:100%;height:100%;object-fit:cover}
+.prof-hero .prof-info{padding:26px 28px}
+.prof-hero .prof-info h1{font-size:30px;margin:0 0 4px}
+.prof-hero .badge-row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 16px}
+.prof-hero .badge-row .bg{background:var(--primary-50);color:var(--primary-dark);padding:5px 11px;border-radius:20px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:5px}
+.prof-hero .badge-row .bg.verified{background:var(--success-50);color:var(--success)}
+.prof-hero .kv-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px 20px;margin:18px 0}
+@media (max-width:500px){.prof-hero .kv-grid{grid-template-columns:1fr}}
+.prof-hero .kv-grid .kv{display:flex;align-items:flex-start;gap:10px}
+.prof-hero .kv-grid .kv i{width:28px;height:28px;background:var(--primary-50);color:var(--primary);border-radius:50%;display:grid;place-items:center;font-size:12px;flex-shrink:0}
+.prof-hero .kv-grid .kv .kv-l{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.prof-hero .kv-grid .kv .kv-v{font-size:14px;color:var(--ink);font-weight:500}
+.prof-hero .prof-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;padding-top:18px;border-top:1px solid var(--line)}
+
+.section{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:22px 26px;margin-bottom:18px;box-shadow:var(--shadow-xs)}
+.section h2{margin:0 0 14px;font-size:18px;font-family:'Inter',sans-serif;color:var(--ink);display:flex;align-items:center;gap:10px}
+.section h2 i{color:var(--primary);font-size:15px;width:30px;height:30px;background:var(--primary-50);border-radius:8px;display:grid;place-items:center}
+.dl-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px 30px}
+@media (max-width:500px){.dl-grid{grid-template-columns:1fr}}
+.dl-grid .dl-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed var(--line);font-size:14px}
+.dl-grid .dl-row .dl-l{color:var(--muted);font-weight:500}
+.dl-grid .dl-row .dl-v{color:var(--ink);font-weight:600;text-align:right}
+.photos-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media (max-width:500px){.photos-strip{grid-template-columns:repeat(2,1fr)}}
+.photos-strip .p{aspect-ratio:1/1;background:linear-gradient(135deg,#f4e7eb,#ead2db);border-radius:var(--radius-sm);display:grid;place-items:center;color:var(--primary);overflow:hidden;font-size:30px}
+.photos-strip .p img{width:100%;height:100%;object-fit:cover}
+
+/* Dashboard */
+.stat-tile{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:20px;display:flex;align-items:center;gap:16px;box-shadow:var(--shadow-xs);transition:.2s}
+.stat-tile:hover{box-shadow:var(--shadow);transform:translateY(-2px)}
+.stat-tile .icon{width:52px;height:52px;border-radius:12px;background:var(--primary-50);color:var(--primary);display:grid;place-items:center;font-size:20px;flex-shrink:0}
+.stat-tile .num{font-size:28px;font-weight:700;color:var(--ink);line-height:1;font-family:'Playfair Display',serif}
+.stat-tile .lbl{font-size:13px;color:var(--muted);margin-top:4px;font-weight:500}
+
+/* Filter sidebar */
+.filter-side{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow-xs);position:sticky;top:90px;align-self:flex-start}
+.filter-side h3{font-size:15px;margin:0 0 14px;display:flex;align-items:center;gap:8px;color:var(--ink);padding-bottom:12px;border-bottom:1px solid var(--line)}
+.filter-side h3 i{color:var(--primary)}
+
+/* Tabs (admin) */
+.admin-wrap{display:grid;grid-template-columns:260px 1fr;gap:24px}
+@media (max-width:900px){.admin-wrap{grid-template-columns:1fr}}
+.admin-side{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:8px;box-shadow:var(--shadow-xs);position:sticky;top:90px;align-self:flex-start;height:max-content}
+.admin-side h4{padding:12px 14px 4px;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.7px;margin:0;font-family:'Inter',sans-serif;font-weight:600}
+.admin-side a{display:flex;align-items:center;gap:10px;padding:10px 13px;border-radius:8px;color:var(--text);font-size:14px;font-weight:500;cursor:pointer;margin-bottom:2px}
+.admin-side a i{width:18px;text-align:center;color:var(--muted);font-size:14px}
+.admin-side a:hover{background:var(--primary-50);color:var(--primary)}
+.admin-side a:hover i{color:var(--primary)}
+.admin-side a.active{background:var(--primary);color:#fff}
+.admin-side a.active i{color:#fff}
+.admin-main{min-width:0}
+.page-head{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px 22px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;box-shadow:var(--shadow-xs)}
+.page-head h2{margin:0;font-size:22px}
+.page-head .sub{color:var(--muted);font-size:13px;margin-top:2px}
+
+/* Chat */
+.chat-wrap{display:grid;grid-template-columns:320px 1fr;gap:0;background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;height:calc(100vh - 200px);min-height:500px;box-shadow:var(--shadow-xs)}
+@media (max-width:800px){.chat-wrap{grid-template-columns:1fr;height:auto}}
+.chat-list{border-right:1px solid var(--line);overflow-y:auto}
+.chat-list .item{padding:14px 16px;border-bottom:1px solid var(--line);cursor:pointer;display:flex;gap:12px;align-items:center;transition:.15s}
+.chat-list .item:hover{background:var(--primary-50)}
+.chat-list .item.active{background:var(--primary-50);border-left:3px solid var(--primary)}
+.chat-list .avatar{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#f4e7eb,#ead2db);display:grid;place-items:center;color:var(--primary);font-weight:700;flex-shrink:0;overflow:hidden;font-size:16px}
+.chat-list .avatar img{width:100%;height:100%;object-fit:cover}
+.chat-list .name{font-weight:600;font-size:14px;color:var(--ink)}
+.chat-list .preview{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.chat-window{display:flex;flex-direction:column;min-width:0}
+.chat-header{padding:14px 20px;border-bottom:1px solid var(--line);font-weight:600;color:var(--ink);display:flex;align-items:center;gap:12px;background:#fbfbfd}
+.chat-body{flex:1;overflow-y:auto;padding:20px;background:#fafafa;display:flex;flex-direction:column;gap:10px}
+.chat-msg{max-width:72%;padding:9px 14px;border-radius:14px;font-size:14px;line-height:1.45}
+.chat-msg.me{background:var(--primary);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.chat-msg.them{background:#fff;color:var(--ink);align-self:flex-start;border:1px solid var(--line);border-bottom-left-radius:4px}
+.chat-input{padding:14px 16px;border-top:1px solid var(--line);display:flex;gap:10px;background:#fff}
+.chat-input input{flex:1;padding:10px 14px;border:1px solid var(--line);border-radius:24px;font-size:14px;font-family:inherit}
+.chat-input input:focus{outline:none;border-color:var(--primary)}
+
+/* Steps (register) */
+.steps{display:flex;justify-content:space-between;margin-bottom:26px;position:relative;max-width:600px;margin-left:auto;margin-right:auto}
+.steps::before{content:"";position:absolute;top:20px;left:40px;right:40px;height:2px;background:var(--line);z-index:0}
+.steps .s{display:flex;flex-direction:column;align-items:center;gap:6px;position:relative;z-index:1;flex:1}
+.steps .s .dot{width:40px;height:40px;border-radius:50%;background:#fff;border:2px solid var(--line);display:grid;place-items:center;color:var(--muted);font-weight:700;font-size:14px;transition:.2s}
+.steps .s.active .dot{background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:0 0 0 4px rgba(139,30,63,.15)}
+.steps .s.done .dot{background:var(--success);color:#fff;border-color:var(--success)}
+.steps .s .label{font-size:12px;color:var(--muted);font-weight:600}
+.steps .s.active .label{color:var(--primary-dark)}
+
+/* Sections on home */
+.feature{display:flex;gap:16px;padding:20px;background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-xs);transition:.2s}
+.feature:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);border-color:var(--primary-100)}
+.feature .ic{width:52px;height:52px;border-radius:12px;background:var(--primary-50);color:var(--primary);display:grid;place-items:center;font-size:20px;flex-shrink:0}
+.feature h3{margin:0 0 6px;font-size:16px;color:var(--ink)}
+.feature p{font-size:13.5px;color:var(--muted);margin:0;line-height:1.5}
+
+.how-step{text-align:center;padding:20px}
+.how-step .n{width:56px;height:56px;background:var(--primary);color:#fff;border-radius:50%;display:grid;place-items:center;margin:0 auto 14px;font-weight:700;font-size:22px;font-family:'Playfair Display',serif;box-shadow:0 4px 16px rgba(139,30,63,.3)}
+.how-step h3{margin:0 0 6px;font-size:16px}
+.how-step p{font-size:13.5px;color:var(--muted);margin:0}
+
+.section-title{text-align:center;margin:0 auto 34px;max-width:600px}
+.section-title .kicker{color:var(--primary);font-weight:600;font-size:13px;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:6px;display:block}
+.section-title h2{font-size:32px;margin:0 0 10px}
+.section-title p{color:var(--muted);font-size:15px;margin:0}
+
+.testimonial{background:#fff;padding:24px;border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-xs)}
+.testimonial .quote{font-size:14px;color:var(--text);line-height:1.6;margin-bottom:14px;font-style:italic}
+.testimonial .who{display:flex;align-items:center;gap:12px}
+.testimonial .who .av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#f4e7eb,#ead2db);color:var(--primary);display:grid;place-items:center;font-weight:700}
+.testimonial .who .n{font-weight:600;color:var(--ink);font-size:14px}
+.testimonial .who .m{font-size:12px;color:var(--muted)}
+
+.stars{color:var(--accent);margin-bottom:10px;font-size:13px}
+
+/* Auth box */
+.auth-card{max-width:460px;margin:50px auto;background:#fff;border-radius:var(--radius-lg);padding:40px;box-shadow:var(--shadow-lg);border:1px solid var(--line)}
+.auth-card h1{text-align:center;font-size:28px;margin:0 0 6px}
+.auth-card .sub{text-align:center;color:var(--muted);margin-bottom:26px;font-size:14px}
+.demo-note{background:var(--info-50);border:1px solid #c9ddef;padding:10px 14px;border-radius:10px;font-size:12.5px;color:var(--info);margin-top:14px}
+
+/* Subtle divider */
+.div{height:1px;background:var(--line);margin:18px 0}
+
+/* Utility */
+.tag-sm{display:inline-flex;align-items:center;gap:4px;background:var(--primary-50);color:var(--primary-dark);padding:3px 9px;border-radius:12px;font-size:11px;font-weight:600}
+.ic-lg{font-size:40px;color:var(--primary);opacity:.85}
+.flex{display:flex}
+.flex-between{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+
+/* AI Match score */
+.ai-score{position:absolute;top:10px;left:10px;background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:#fff;padding:5px 10px;border-radius:20px;font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:5px;box-shadow:0 4px 12px rgba(109,40,217,.35);z-index:2}
+.ai-score i{font-size:10px}
+.ai-chip{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#f3e8ff,#ede9fe);color:#6d28d9;padding:4px 11px;border-radius:16px;font-size:12px;font-weight:700;border:1px solid #ddd6fe}
+.ai-chip i{color:#7c3aed}
+.ai-widget{background:linear-gradient(135deg,#faf5ff,#f3e8ff);border:1px solid #ddd6fe;border-radius:var(--radius);padding:20px;margin-bottom:18px}
+.ai-widget .head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.ai-widget .head i{width:38px;height:38px;background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:#fff;border-radius:10px;display:grid;place-items:center;font-size:16px}
+.ai-widget h3{margin:0;font-size:15px;color:#4c1d95;font-family:'Inter',sans-serif}
+.ai-widget .score-circle{float:right;width:72px;height:72px;border-radius:50%;background:conic-gradient(#6d28d9 var(--deg,324deg),#ede9fe 0);display:grid;place-items:center;position:relative;margin-left:14px}
+.ai-widget .score-circle::before{content:"";position:absolute;inset:6px;background:#fff;border-radius:50%}
+.ai-widget .score-circle span{position:relative;font-weight:800;font-size:18px;color:#6d28d9;font-family:'Playfair Display',serif}
+.ai-reasons{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:6px}
+.ai-reasons li{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:#4c1d95}
+.ai-reasons li i{color:#7c3aed;margin-top:3px;font-size:11px}
+
+/* Trust / verification */
+.trust-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.trust-badge{display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid var(--line);color:var(--muted);padding:4px 9px;border-radius:20px;font-size:11.5px;font-weight:600}
+.trust-badge i{font-size:10px}
+.trust-badge.ok{background:var(--success-50);border-color:#b9e0cd;color:#0f6f4a}
+.trust-badge.ok i{color:var(--success)}
+.trust-badge.gold{background:linear-gradient(135deg,#fef3c7,#fde68a);border-color:#f59e0b;color:#78350f}
+.trust-badge.gold i{color:#d97706}
+.trust-donut{width:100px;height:100px;border-radius:50%;display:grid;place-items:center;position:relative}
+.trust-donut::before{content:"";position:absolute;inset:8px;background:#fff;border-radius:50%;box-shadow:inset 0 0 0 1px var(--line)}
+.trust-donut .val{position:relative;font-weight:800;font-size:22px;color:var(--ink);font-family:'Playfair Display',serif}
+.trust-donut .lbl{position:relative;font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-top:-2px}
+.verif-tier{padding:4px 9px;border-radius:6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;display:inline-flex;align-items:center;gap:4px}
+.verif-tier.basic{background:#eef1f6;color:#6b7280}
+.verif-tier.verified{background:#dbeafe;color:#1e40af}
+.verif-tier.premium{background:linear-gradient(135deg,#fef3c7,#fde68a);color:#78350f}
+.verif-tier.trust{background:linear-gradient(135deg,#ede9fe,#ddd6fe);color:#5b21b6}
+
+/* Verification center */
+.verif-step{display:flex;gap:14px;padding:18px;border:1px solid var(--line);border-radius:var(--radius);background:#fff;margin-bottom:12px;align-items:flex-start;transition:.2s}
+.verif-step:hover{border-color:var(--primary-100)}
+.verif-step.done{background:linear-gradient(90deg,var(--success-50),#fff);border-color:#b9e0cd}
+.verif-step .ic{width:52px;height:52px;border-radius:12px;background:var(--primary-50);color:var(--primary);display:grid;place-items:center;font-size:20px;flex-shrink:0}
+.verif-step.done .ic{background:var(--success);color:#fff}
+.verif-step .cnt{flex:1;min-width:0}
+.verif-step .cnt h3{margin:0 0 4px;font-size:15px}
+.verif-step .cnt p{margin:0;font-size:13px;color:var(--muted);line-height:1.5}
+.verif-step .check{flex-shrink:0;display:flex;gap:8px;align-items:center}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:18px;overflow-x:auto;background:#fff;border-radius:var(--radius) var(--radius) 0 0;padding:6px 6px 0}
+.tabs a{padding:11px 16px;font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;display:inline-flex;align-items:center;gap:7px}
+.tabs a i{font-size:13px}
+.tabs a:hover{color:var(--primary)}
+.tabs a.active{color:var(--primary-dark);border-bottom-color:var(--primary)}
+
+/* Kundli */
+.guna-ring{width:160px;height:160px;border-radius:50%;background:conic-gradient(var(--success) var(--deg,280deg),#eee 0);display:grid;place-items:center;position:relative;margin:0 auto}
+.guna-ring::before{content:"";position:absolute;inset:12px;background:#fff;border-radius:50%;box-shadow:inset 0 0 0 1px var(--line)}
+.guna-ring .v{position:relative;font-family:'Playfair Display',serif;font-size:42px;font-weight:700;color:var(--success)}
+.guna-ring .l{position:relative;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:-8px}
+.guna-table{width:100%;border-collapse:collapse}
+.guna-table th,.guna-table td{padding:9px 12px;font-size:13px;border-bottom:1px solid var(--line);text-align:left}
+.guna-table th{background:#fafafa;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px;font-weight:700}
+.guna-table .good{color:var(--success);font-weight:700}
+.guna-table .avg{color:var(--warn);font-weight:700}
+
+/* Photo privacy */
+.photo-blurred{filter:blur(14px);transition:.3s}
+.photo-locked{position:relative;overflow:hidden;aspect-ratio:1/1;background:linear-gradient(135deg,#f4e7eb,#ead2db);border-radius:var(--radius-sm);display:grid;place-items:center;color:var(--primary)}
+.photo-locked .lock-overlay{position:absolute;inset:0;background:rgba(0,0,0,.45);color:#fff;display:grid;place-items:center;font-size:13px;text-align:center;padding:10px}
+.photo-locked .lock-overlay i{font-size:26px;margin-bottom:6px;display:block}
+
+/* Activity indicators */
+.last-seen{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);font-weight:500}
+.last-seen .dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.last-seen.online .dot{background:var(--success);box-shadow:0 0 0 3px rgba(30,138,95,.2)}
+.last-seen.online{color:var(--success)}
+.response-bar{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.response-bar .fill{height:5px;background:var(--line);border-radius:10px;flex:1;overflow:hidden}
+.response-bar .fill > span{display:block;height:100%;background:linear-gradient(90deg,var(--success),#5cc694);border-radius:10px}
+
+/* Events */
+.event-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-xs);transition:.2s;display:flex;gap:16px;padding:16px}
+.event-card:hover{box-shadow:var(--shadow);transform:translateY(-2px);border-color:var(--primary-100)}
+.event-card .date-box{width:70px;flex-shrink:0;background:var(--primary);color:#fff;border-radius:10px;text-align:center;padding:10px 4px}
+.event-card .date-box .d{font-size:24px;font-weight:800;line-height:1;font-family:'Playfair Display',serif}
+.event-card .date-box .m{font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+
+/* Stats counter */
+.counter-row{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:26px;margin:30px 0;box-shadow:var(--shadow-xs)}
+@media (max-width:700px){.counter-row{grid-template-columns:repeat(2,1fr)}}
+.counter-row .c{text-align:center;padding:8px}
+.counter-row .c .n{font-family:'Playfair Display',serif;font-size:36px;font-weight:700;color:var(--primary);line-height:1}
+.counter-row .c .l{font-size:13px;color:var(--muted);margin-top:6px;font-weight:500}
+
+/* City chips */
+.city-chip{padding:20px 14px;background:#fff;border:1px solid var(--line);border-radius:var(--radius);text-align:center;cursor:pointer;transition:.2s;display:block;color:var(--text)}
+.city-chip:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:var(--primary-100);color:var(--primary)}
+.city-chip i{font-size:22px;color:var(--primary);margin-bottom:8px;display:block}
+.city-chip .n{font-weight:700;font-size:14px;color:var(--ink)}
+.city-chip .c{font-size:11.5px;color:var(--muted);margin-top:2px}
+
+/* Progress ring (profile completeness) */
+.progress-ring{width:80px;height:80px;border-radius:50%;background:conic-gradient(var(--primary) var(--deg,306deg),var(--primary-50) 0);display:grid;place-items:center;position:relative;flex-shrink:0}
+.progress-ring::before{content:"";position:absolute;inset:7px;background:#fff;border-radius:50%}
+.progress-ring .v{position:relative;font-weight:800;font-size:18px;color:var(--primary-dark);font-family:'Playfair Display',serif}
+
+/* Family tree */
+.family-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.fam-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:16px;text-align:center}
+.fam-card .av{width:56px;height:56px;border-radius:50%;background:var(--primary-50);color:var(--primary);display:grid;place-items:center;font-size:20px;margin:0 auto 8px}
+.fam-card .n{font-weight:700;font-size:14px;color:var(--ink)}
+.fam-card .r{font-size:12px;color:var(--muted);margin-top:2px}
+
+/* Modal */
+.modal-backdrop{position:fixed;inset:0;background:rgba(10,10,16,.55);z-index:3000;display:grid;place-items:center;padding:20px;backdrop-filter:blur(4px)}
+.modal{background:#fff;border-radius:var(--radius-lg);max-width:520px;width:100%;padding:30px;box-shadow:var(--shadow-lg);max-height:90vh;overflow-y:auto}
+.modal h3{margin:0 0 10px;font-size:22px;font-family:'Playfair Display',serif}
+
+/* Shimmer for loading AI */
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.shimmer-text{background:linear-gradient(90deg,#6d28d9,#ec4899,#f59e0b,#6d28d9);background-size:200% 100%;animation:shimmer 3s linear infinite;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:700}
+
+/* Success stories */
+.story-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-xs);transition:.2s}
+.story-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-3px)}
+.story-card .s-photo{aspect-ratio:4/3;background:linear-gradient(135deg,#f4e7eb,#ead2db);overflow:hidden}
+.story-card .s-photo img{width:100%;height:100%;object-fit:cover}
+.story-card .s-body{padding:18px}
+.story-card .s-body h3{margin:0 0 4px;font-size:16px;color:var(--ink)}
+.story-card .s-body .when{font-size:12px;color:var(--muted)}
+.story-card .s-body p{margin:10px 0 0;font-size:13.5px;color:var(--text);line-height:1.55}
+
+/* Divider with text */
+.hr-text{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:12px;margin:18px 0;text-transform:uppercase;letter-spacing:1.2px;font-weight:600}
+.hr-text::before,.hr-text::after{content:"";flex:1;height:1px;background:var(--line)}
+
+/* Tag inputs */
+.chip-input{display:flex;flex-wrap:wrap;gap:6px;padding:6px;border:1px solid #d8d8df;border-radius:var(--radius-sm)}
+.chip-input .c{background:var(--primary-50);color:var(--primary-dark);padding:4px 10px;border-radius:14px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:5px}
+
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+<div id="toast-host"></div>
+
+<script>
+/* ========================= Data layer ========================= */
+const STORE_KEY='shubhmilan_v3';
+const OPTIONS={
+  religion:['Hindu','Muslim','Sikh','Christian','Jain','Buddhist','Parsi','Jewish','Other'],
+  motherTongue:['Hindi','English','Gujarati','Marathi','Tamil','Telugu','Kannada','Malayalam','Bengali','Punjabi','Urdu','Odia','Assamese','Sindhi','Konkani'],
+  caste:['Brahmin','Kshatriya','Vaishya','Jat','Patel','Agarwal','Khatri','Rajput','Maratha','Reddy','Iyer','Iyengar','Nair','Syed','Sheikh','Arora','Maheshwari','Kayastha','Gupta','Yadav','Other'],
+  manglik:['Yes','No','Anshik','Dont know'],
+  maritalStatus:['Never Married','Divorced','Widowed','Awaiting Divorce'],
+  bodyType:['Slim','Athletic','Average','Heavy'],
+  complexion:['Very Fair','Fair','Wheatish','Wheatish Brown','Dark'],
+  diet:['Vegetarian','Non-Vegetarian','Eggetarian','Vegan','Jain Vegetarian'],
+  drinking:['No','Occasionally','Yes'],
+  smoking:['No','Occasionally','Yes'],
+  education:['High School','Diploma','Bachelors','Masters','Doctorate','Post-Doctorate','Professional'],
+  income:['< 3 LPA','3-5 LPA','5-10 LPA','10-20 LPA','20-50 LPA','50 LPA+','1 Cr+'],
+  profession:['Software Engineer','Doctor','CA/CS','Teacher/Professor','Business Owner','Civil Services','Bank Officer','Lawyer','Architect','Designer','Marketing','Consultant','Student','Other'],
+  familyType:['Nuclear','Joint'],
+  familyStatus:['Middle Class','Upper Middle Class','Rich','Affluent'],
+  familyValues:['Traditional','Moderate','Liberal'],
+  rashi:['Mesh (Aries)','Vrishabh (Taurus)','Mithun (Gemini)','Kark (Cancer)','Simha (Leo)','Kanya (Virgo)','Tula (Libra)','Vrischik (Scorpio)','Dhanu (Sagittarius)','Makar (Capricorn)','Kumbh (Aquarius)','Meen (Pisces)']
+};
+
+const SAMPLE_PROFILES=[
+  {id:'SM10001',name:'Priya Sharma',age:26,gender:'Female',dob:'1999-03-14',height:'5\'4"',weight:'54 kg',bodyType:'Slim',complexion:'Fair',
+   city:'Mumbai',state:'Maharashtra',country:'India',religion:'Hindu',caste:'Brahmin',subcaste:'Kanyakubja',gotra:'Kashyap',motherTongue:'Hindi',
+   maritalStatus:'Never Married',manglik:'No',rashi:'Kark (Cancer)',nakshatra:'Pushya',education:'Masters',educationDetails:'MBA, IIM Bangalore',
+   profession:'Marketing',designation:'Marketing Manager',company:'HDFC Bank',income:'10-20 LPA',
+   diet:'Vegetarian',drinking:'No',smoking:'No',
+   fatherName:'Rajesh Sharma',fatherOccupation:'Retired Govt Officer',motherName:'Sunita Sharma',motherOccupation:'Homemaker',
+   siblings:'1 Brother (Married)',familyType:'Nuclear',familyStatus:'Upper Middle Class',familyValues:'Traditional',nativePlace:'Kanpur',
+   aboutMe:'I am a family-oriented person who values both tradition and modernity. I love reading, classical music, and traveling with family.',
+   partnerExpectation:'Looking for an educated, caring life partner from a similar cultural background who respects family values.',
+   hobbies:['Reading','Music','Travel','Cooking','Yoga'],languages:['Hindi','English','Marathi'],
+   verified:true,photos:['https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=600&q=80','https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=600&q=80'],status:'active',
+   verification:{email:true,phone:true,aadhaar:true,selfie:true,video:true,background:false,premium:false},
+   trustScore:88,tier:'Verified',lastActive:'2 min ago',online:true,responseRate:94,profileViews:142,
+   horoscope:{birthPlace:'Kanpur, UP',birthTime:'06:20 AM',gunas:30,doshas:['None'],charan:'2'},
+   aiTraits:['family-oriented','traditional','career-driven','health-conscious','non-smoker'],photosPrivacy:'public',
+   preference:{ageFrom:27,ageTo:33,heightFrom:"5'7\"",religion:'Hindu',diet:'Vegetarian'}},
+
+  {id:'SM10002',name:'Rahul Verma',age:29,gender:'Male',dob:'1996-07-22',height:'5\'10"',weight:'72 kg',bodyType:'Athletic',complexion:'Wheatish',
+   city:'Bengaluru',state:'Karnataka',country:'India',religion:'Hindu',caste:'Kshatriya',subcaste:'Rajput',gotra:'Chauhan',motherTongue:'Hindi',
+   maritalStatus:'Never Married',manglik:'No',rashi:'Tula (Libra)',nakshatra:'Swati',education:'Masters',educationDetails:'M.Tech, IIT Delhi',
+   profession:'Software Engineer',designation:'Senior SDE',company:'Google India',income:'20-50 LPA',
+   diet:'Non-Vegetarian',drinking:'Occasionally',smoking:'No',
+   fatherName:'Anil Verma',fatherOccupation:'Business Owner',motherName:'Geeta Verma',motherOccupation:'School Principal',
+   siblings:'1 Sister (Unmarried)',familyType:'Nuclear',familyStatus:'Rich',familyValues:'Moderate',nativePlace:'Jaipur',
+   aboutMe:'Tech professional who enjoys trekking, photography, and fitness. Believe in balancing career with family life.',
+   partnerExpectation:'Seeking an independent, ambitious woman who values relationships and has a positive outlook on life.',
+   hobbies:['Trekking','Photography','Gym','Cricket','Reading'],languages:['Hindi','English','Kannada'],
+   verified:true,photos:['https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80','https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600&q=80'],status:'active',
+   verification:{email:true,phone:true,aadhaar:true,selfie:true,video:true,background:true,premium:true},
+   trustScore:96,tier:'Premium Trust',lastActive:'Online now',online:true,responseRate:98,profileViews:287,
+   horoscope:{birthPlace:'Jaipur, RJ',birthTime:'11:45 PM',gunas:32,doshas:['None'],charan:'3'},
+   aiTraits:['ambitious','outdoorsy','tech-savvy','family-first','fitness-focused'],photosPrivacy:'public',
+   preference:{ageFrom:24,ageTo:29,heightFrom:"5'2\"",religion:'Hindu',diet:'Any'}},
+
+  {id:'SM10003',name:'Anjali Patel',age:25,gender:'Female',dob:'2000-11-05',height:'5\'3"',weight:'52 kg',bodyType:'Slim',complexion:'Fair',
+   city:'Ahmedabad',state:'Gujarat',country:'India',religion:'Hindu',caste:'Patel',subcaste:'Leuva Patel',gotra:'Vashistha',motherTongue:'Gujarati',
+   maritalStatus:'Never Married',manglik:'Anshik',rashi:'Vrischik (Scorpio)',nakshatra:'Anuradha',education:'Masters',educationDetails:'MBBS, MD (Pediatrics)',
+   profession:'Doctor',designation:'Pediatrician',company:'Apollo Hospitals',income:'10-20 LPA',
+   diet:'Vegetarian',drinking:'No',smoking:'No',
+   fatherName:'Mahesh Patel',fatherOccupation:'Businessman',motherName:'Kailash Patel',motherOccupation:'Homemaker',
+   siblings:'2 Brothers (1 Married)',familyType:'Joint',familyStatus:'Rich',familyValues:'Traditional',nativePlace:'Anand',
+   aboutMe:'Passionate doctor who loves to serve. Family is my priority and I enjoy spending time with nieces and nephews.',
+   partnerExpectation:'Looking for a well-educated, Gujarati-speaking groom who values family traditions.',
+   hobbies:['Dance','Music','Volunteer Work','Cooking'],languages:['Gujarati','Hindi','English'],
+   verified:true,photos:['https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600&q=80'],status:'active',
+   verification:{email:true,phone:true,aadhaar:true,selfie:true,video:false,background:true,premium:false},
+   trustScore:84,tier:'Verified',lastActive:'15 min ago',online:false,responseRate:89,profileViews:198,
+   horoscope:{birthPlace:'Anand, GJ',birthTime:'03:10 PM',gunas:26,doshas:['Anshik Manglik'],charan:'4'},
+   aiTraits:['compassionate','career-driven','family-oriented','artistic','health-professional'],photosPrivacy:'request',
+   preference:{ageFrom:26,ageTo:32,heightFrom:"5'6\"",religion:'Hindu',diet:'Vegetarian'}},
+
+  {id:'SM10004',name:'Arjun Singh',age:31,gender:'Male',dob:'1994-01-18',height:'6\'0"',weight:'80 kg',bodyType:'Athletic',complexion:'Wheatish',
+   city:'Delhi',state:'Delhi',country:'India',religion:'Sikh',caste:'Khatri',subcaste:'Arora',gotra:'—',motherTongue:'Punjabi',
+   maritalStatus:'Never Married',manglik:'No',rashi:'Makar (Capricorn)',nakshatra:'Shravan',education:'Masters',educationDetails:'CA, ICAI',
+   profession:'CA/CS',designation:'Senior Manager - Finance',company:'Deloitte',income:'20-50 LPA',
+   diet:'Non-Vegetarian',drinking:'Occasionally',smoking:'No',
+   fatherName:'Manjit Singh',fatherOccupation:'Doctor',motherName:'Harpreet Kaur',motherOccupation:'Teacher',
+   siblings:'1 Sister (Married)',familyType:'Nuclear',familyStatus:'Upper Middle Class',familyValues:'Moderate',nativePlace:'Amritsar',
+   aboutMe:'Finance professional. Passionate about cricket, good food and family time. Looking for a life partner to share happiness.',
+   partnerExpectation:'A caring, educated woman who values family and has her own ambitions.',
+   hobbies:['Cricket','Movies','Food','Travel'],languages:['Punjabi','Hindi','English'],
+   verified:true,photos:['https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600&q=80'],status:'active',
+   verification:{email:true,phone:true,aadhaar:true,selfie:true,video:false,background:false,premium:false},
+   trustScore:75,tier:'Verified',lastActive:'1 hour ago',online:false,responseRate:78,profileViews:156,
+   horoscope:{birthPlace:'Amritsar, PB',birthTime:'08:30 AM',gunas:24,doshas:['None'],charan:'1'},
+   aiTraits:['family-oriented','professional','foodie','grounded'],photosPrivacy:'public',
+   preference:{ageFrom:25,ageTo:30,heightFrom:"5'2\"",religion:'Sikh',diet:'Any'}},
+
+  {id:'SM10005',name:'Meera Iyer',age:27,gender:'Female',dob:'1998-05-30',height:'5\'5"',weight:'56 kg',bodyType:'Average',complexion:'Wheatish',
+   city:'Chennai',state:'Tamil Nadu',country:'India',religion:'Hindu',caste:'Iyer',subcaste:'Vadama',gotra:'Bharadwaj',motherTongue:'Tamil',
+   maritalStatus:'Never Married',manglik:'No',rashi:'Kanya (Virgo)',nakshatra:'Hasta',education:'Doctorate',educationDetails:'PhD, Stanford University',
+   profession:'Teacher/Professor',designation:'Assistant Professor',company:'IIT Madras',income:'10-20 LPA',
+   diet:'Vegetarian',drinking:'No',smoking:'No',
+   fatherName:'Ramanathan Iyer',fatherOccupation:'Retired Professor',motherName:'Lakshmi Iyer',motherOccupation:'Classical Singer',
+   siblings:'1 Brother (Married)',familyType:'Nuclear',familyStatus:'Middle Class',familyValues:'Traditional',nativePlace:'Thanjavur',
+   aboutMe:'Academic and researcher. Love Carnatic music, Sanskrit literature and mountain hiking.',
+   partnerExpectation:'An educated, culturally rooted partner who supports my academic career.',
+   hobbies:['Classical Music','Reading','Hiking','Yoga','Sanskrit'],languages:['Tamil','English','Hindi','Sanskrit'],
+   verified:true,photos:['https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&q=80'],status:'active',
+   verification:{email:true,phone:true,aadhaar:true,selfie:true,video:true,background:true,premium:false},
+   trustScore:91,tier:'Verified',lastActive:'Online now',online:true,responseRate:92,profileViews:221,
+   horoscope:{birthPlace:'Thanjavur, TN',birthTime:'04:55 AM',gunas:28,doshas:['None'],charan:'2'},
+   aiTraits:['academic','culturally-rooted','outdoorsy','spiritual','introvert'],photosPrivacy:'public',
+   preference:{ageFrom:28,ageTo:35,heightFrom:"5'8\"",religion:'Hindu',diet:'Vegetarian'}},
+
+  {id:'SM10006',name:'Vikram Reddy',age:30,gender:'Male',dob:'1995-09-12',height:'5\'11"',weight:'76 kg',bodyType:'Athletic',complexion:'Wheatish Brown',
+   city:'Hyderabad',state:'Telangana',country:'India',religion:'Hindu',caste:'Reddy',subcaste:'Kapu Reddy',gotra:'Gautama',motherTongue:'Telugu',
+   maritalStatus:'Never Married',manglik:'No',rashi:'Kanya (Virgo)',nakshatra:'Chitra',education:'Masters',educationDetails:'MBA, ISB Hyderabad',
+   profession:'Business Owner',designation:'Director',company:'Reddy Agro Industries',income:'50 LPA+',
+   diet:'Non-Vegetarian',drinking:'Occasionally',smoking:'No',
+   fatherName:'Sreenivas Reddy',fatherOccupation:'Businessman',motherName:'Padma Reddy',motherOccupation:'Homemaker',
+   siblings:'1 Brother (Married), 1 Sister (Married)',familyType:'Joint',familyStatus:'Affluent',familyValues:'Traditional',nativePlace:'Warangal',
+   aboutMe:'Family business. Love travel, horses, and good literature. Rooted in values but forward-thinking.',
+   partnerExpectation:'An intelligent, culturally aware partner who can balance tradition with modern life.',
+   hobbies:['Equestrian','Travel','Literature','Business'],languages:['Telugu','Hindi','English'],
+   verified:true,photos:['https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=600&q=80'],status:'active',
+   verification:{email:true,phone:true,aadhaar:true,selfie:true,video:true,background:true,premium:true},
+   trustScore:94,tier:'Premium Trust',lastActive:'30 min ago',online:false,responseRate:86,profileViews:312,
+   horoscope:{birthPlace:'Warangal, TS',birthTime:'10:15 AM',gunas:30,doshas:['None'],charan:'1'},
+   aiTraits:['entrepreneur','traditional','cultured','affluent','ambitious'],photosPrivacy:'public',
+   preference:{ageFrom:24,ageTo:30,heightFrom:"5'3\"",religion:'Hindu',diet:'Any'}},
+
+  {id:'SM10007',name:'Fatima Khan',age:26,gender:'Female',dob:'1999-02-09',height:'5\'4"',weight:'55 kg',bodyType:'Average',complexion:'Fair',
+   city:'Lucknow',state:'Uttar Pradesh',country:'India',religion:'Muslim',caste:'Sheikh',subcaste:'—',gotra:'—',motherTongue:'Urdu',
+   maritalStatus:'Never Married',manglik:'Dont know',rashi:'Kumbh (Aquarius)',nakshatra:'Dhanishta',education:'Masters',educationDetails:'LLB, Aligarh Muslim University',
+   profession:'Lawyer',designation:'Associate Advocate',company:'Singh & Associates',income:'5-10 LPA',
+   diet:'Non-Vegetarian',drinking:'No',smoking:'No',
+   fatherName:'Ashraf Khan',fatherOccupation:'Doctor',motherName:'Nasreen Khan',motherOccupation:'Teacher',
+   siblings:'1 Brother (Unmarried)',familyType:'Nuclear',familyStatus:'Upper Middle Class',familyValues:'Moderate',nativePlace:'Lucknow',
+   aboutMe:'Lawyer by profession. I love Urdu poetry, traveling and trying new cuisines.',
+   partnerExpectation:'An educated, progressive Muslim groom who values both career and family.',
+   hobbies:['Poetry','Reading','Travel','Cooking'],languages:['Urdu','Hindi','English'],
+   verified:false,photos:[],status:'active',
+   verification:{email:true,phone:true,aadhaar:false,selfie:false,video:false,background:false,premium:false},
+   trustScore:42,tier:'Basic',lastActive:'2 days ago',online:false,responseRate:65,profileViews:68,
+   horoscope:{birthPlace:'Lucknow, UP',birthTime:'—',gunas:0,doshas:[],charan:'—'},
+   aiTraits:['educated','progressive','cultured','introspective'],photosPrivacy:'request',
+   preference:{ageFrom:26,ageTo:32,heightFrom:"5'6\"",religion:'Muslim',diet:'Any'}},
+
+  {id:'SM10008',name:'Nikhil Joshi',age:28,gender:'Male',dob:'1997-06-25',height:'5\'9"',weight:'70 kg',bodyType:'Average',complexion:'Fair',
+   city:'Pune',state:'Maharashtra',country:'India',religion:'Hindu',caste:'Brahmin',subcaste:'Deshastha',gotra:'Vishwamitra',motherTongue:'Marathi',
+   maritalStatus:'Never Married',manglik:'Yes',rashi:'Mithun (Gemini)',nakshatra:'Ardra',education:'Bachelors',educationDetails:'B.Arch, VNIT Nagpur',
+   profession:'Architect',designation:'Principal Architect',company:'Joshi Design Studio (own firm)',income:'10-20 LPA',
+   diet:'Vegetarian',drinking:'No',smoking:'No',
+   fatherName:'Suresh Joshi',fatherOccupation:'Chartered Accountant',motherName:'Rekha Joshi',motherOccupation:'Homemaker',
+   siblings:'1 Sister (Married)',familyType:'Nuclear',familyStatus:'Middle Class',familyValues:'Traditional',nativePlace:'Pune',
+   aboutMe:'Architect running my own studio. Passionate about sustainable design, trekking and Marathi literature.',
+   partnerExpectation:'A family-oriented, Marathi-speaking partner who understands creative professions.',
+   hobbies:['Architecture','Trekking','Literature','Classical Music'],languages:['Marathi','Hindi','English'],
+   verified:true,photos:['https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=600&q=80'],status:'active',
+   verification:{email:true,phone:true,aadhaar:true,selfie:true,video:false,background:false,premium:false},
+   trustScore:78,tier:'Verified',lastActive:'5 hours ago',online:false,responseRate:82,profileViews:134,
+   horoscope:{birthPlace:'Pune, MH',birthTime:'07:40 PM',gunas:22,doshas:['Manglik'],charan:'4'},
+   aiTraits:['creative','entrepreneur','outdoorsy','traditional','artistic'],photosPrivacy:'public',
+   preference:{ageFrom:24,ageTo:29,heightFrom:"5'1\"",religion:'Hindu',diet:'Vegetarian'}}
+];
+
+const DEFAULT_STATE={
+  user:null,
+  profiles:SAMPLE_PROFILES,
+  shortlist:[],
+  interestsSent:[{to:'SM10003',date:'2025-04-10'}],
+  interestsReceived:[{from:'SM10006',date:'2025-04-12'},{from:'SM10008',date:'2025-04-14'}],
+  messages:{
+    'SM10002':[
+      {from:'them',text:'Hello Priya, nice to connect!',t:'10:15 AM'},
+      {from:'me',text:'Hi Rahul, thank you for reaching out 🙏',t:'10:22 AM'}
+    ]
+  },
+  reports:[{id:'R001',by:'SM10001',against:'SM10007',reason:'Fake photos',date:'2025-04-10',status:'pending'}],
+  plans:[
+    {id:'free',name:'Free Forever',price:0,features:['Browse unlimited profiles','Send unlimited interests','Unlimited chat','All filters','Profile verification'],active:true,default:true},
+    {id:'gold',name:'Gold',price:1999,features:['Priority in search','View contact details','Highlighted profile','Relationship Manager'],active:false},
+    {id:'platinum',name:'Platinum',price:4999,features:['All Gold benefits','Dedicated RM','Horoscope matching','Profile boost 10x','Verified contact sharing'],active:false}
+  ],
+  admins:[
+    {id:'A001',name:'Admin User',email:'admin@shubhmilan.com',role:'Super Admin',status:'active'},
+    {id:'A002',name:'Sita Verma',email:'sita@shubhmilan.com',role:'Moderator',status:'active'},
+    {id:'A003',name:'Ram Kumar',email:'ram@shubhmilan.com',role:'Support',status:'active'}
+  ],
+  settings:{
+    siteName:'ShubhMilan',
+    tagline:'Trusted Matrimony, Free for Everyone',
+    supportEmail:'support@shubhmilan.com',
+    supportPhone:'+91-1800-123-4567',
+    logoColor:'#8b1e3f',
+    membershipModel:'free',
+    commissionPct:0,
+    autoVerify:false,
+    twoFA:true,
+    maintenance:false
+  },
+  successStories:[
+    {id:1,names:'Pooja & Karan',city:'Delhi',married:'Nov 2024',photo:'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&q=80',quote:'We matched in August 2024 via ShubhMilan\'s AI suggestions. Our horoscopes scored 32/36, and the rest felt written in the stars.'},
+    {id:2,names:'Rhea & Sameer',city:'Mumbai',married:'Feb 2025',photo:'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=600&q=80',quote:'Verified profiles and video calls gave both families confidence. We met in person once, and knew.'},
+    {id:3,names:'Vidya & Arjun',city:'Bengaluru',married:'Dec 2024',photo:'https://images.unsplash.com/photo-1606490194859-07c18c9f0968?w=600&q=80',quote:'Completely free, zero ads, 100% focused on match quality. ShubhMilan changed how we think about matrimony.'},
+    {id:4,names:'Anita & Rohan',city:'Pune',married:'Jan 2025',photo:'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=600&q=80',quote:'The Guna Milan matching and family involvement features made every conversation with our parents easier.'}
+  ],
+  events:[
+    {id:'E1',name:'Mumbai Matrimonial Meet',city:'Mumbai',date:'2026-05-10',time:'11:00 AM',venue:'The Trident, BKC',attending:142,type:'In-person'},
+    {id:'E2',name:'Virtual Mixer: Punjabi Community',city:'Online',date:'2026-04-28',time:'7:30 PM',venue:'Zoom',attending:89,type:'Virtual'},
+    {id:'E3',name:'South Indian Family Meetup',city:'Bengaluru',date:'2026-05-18',time:'10:00 AM',venue:'ITC Gardenia',attending:76,type:'In-person'},
+    {id:'E4',name:'Parents Kundli Workshop',city:'Online',date:'2026-05-05',time:'6:00 PM',venue:'Zoom',attending:210,type:'Virtual'}
+  ],
+  blogPosts:[
+    {id:1,title:'How to Write a Compelling Matrimonial Bio',category:'Profile Tips',readTime:'4 min',date:'Apr 12, 2026'},
+    {id:2,title:'Understanding Manglik Dosha: Facts vs Myths',category:'Astrology',readTime:'6 min',date:'Apr 8, 2026'},
+    {id:3,title:'Safety First: Meeting Matches Responsibly',category:'Safety',readTime:'5 min',date:'Apr 2, 2026'}
+  ]
+};
+
+const Store={
+  load(){
+    try{
+      const raw=localStorage.getItem(STORE_KEY);
+      const saved=raw?JSON.parse(raw):null;
+      const def=JSON.parse(JSON.stringify(DEFAULT_STATE));
+      if(!saved)return def;
+      // Forward-compatible merge: any keys missing from saved state inherit defaults
+      const merged={...def,...saved};
+      // Ensure critical arrays/objects are never undefined
+      merged.profiles=saved.profiles&&saved.profiles.length?saved.profiles:def.profiles;
+      merged.successStories=saved.successStories||def.successStories;
+      merged.events=saved.events||def.events;
+      merged.blogPosts=saved.blogPosts||def.blogPosts;
+      merged.plans=saved.plans||def.plans;
+      merged.admins=saved.admins||def.admins;
+      merged.settings={...def.settings,...(saved.settings||{})};
+      merged.shortlist=saved.shortlist||[];
+      merged.interestsSent=saved.interestsSent||[];
+      merged.interestsReceived=saved.interestsReceived||[];
+      merged.messages=saved.messages||{};
+      merged.reports=saved.reports||[];
+      return merged;
+    }catch(e){return JSON.parse(JSON.stringify(DEFAULT_STATE));}
+  },
+  save(s){localStorage.setItem(STORE_KEY,JSON.stringify(s));},
+  reset(){localStorage.removeItem(STORE_KEY);}
+};
+// Always re-save merged state so new fields are persisted
+Store.save(Store.load());
+
+/* ========================= Utilities ========================= */
+function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function toast(msg,icon='fa-circle-check'){const t=document.createElement('div');t.className='toast';t.innerHTML=`<i class="fa-solid ${icon}"></i><span>${msg}</span>`;document.getElementById('toast-host').appendChild(t);setTimeout(()=>t.classList.add('show'),10);setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),300);},2400);}
+function religionIcon(rel){const m={'Hindu':'fa-om','Sikh':'fa-khanda','Muslim':'fa-star-and-crescent','Christian':'fa-cross','Jewish':'fa-star-of-david','Jain':'fa-hands-praying','Buddhist':'fa-dharmachakra','Parsi':'fa-fire'};return m[rel]||'fa-place-of-worship';}
+function qs(key){return new URLSearchParams(location.hash.split('?')[1]||'').get(key);}
+function go(page,params={}){const q=Object.keys(params).length?'?'+new URLSearchParams(params).toString():'';location.hash='#'+page+q;}
+function getPage(){const h=location.hash||'#home';return h.slice(1).split('?')[0]||'home';}
+
+/* ========================= AI Match engine ========================= */
+function aiMatchScore(me,p){
+  if(!me||!p||me.id===p.id)return 0;
+  let score=55; const reasons=[];
+  // Religion (high weight)
+  if(me.religion===p.religion){score+=10;reasons.push({ic:'fa-om',t:`Same religion — ${p.religion}`});}
+  // Mother tongue
+  if(me.motherTongue===p.motherTongue){score+=5;reasons.push({ic:'fa-language',t:`Both speak ${p.motherTongue}`});}
+  // Diet compatibility
+  if(me.diet===p.diet){score+=4;reasons.push({ic:'fa-utensils',t:`Shared diet preference — ${p.diet}`});}
+  // Similar education tier
+  const eduRank=['High School','Diploma','Bachelors','Masters','Doctorate','Post-Doctorate','Professional'];
+  const meE=eduRank.indexOf(me.education),pE=eduRank.indexOf(p.education);
+  if(Math.abs(meE-pE)<=1){score+=6;reasons.push({ic:'fa-graduation-cap',t:`Similar education levels`});}
+  // Shared hobbies
+  const shared=(me.hobbies||[]).filter(h=>(p.hobbies||[]).includes(h));
+  if(shared.length>=2){score+=6;reasons.push({ic:'fa-heart',t:`${shared.length} shared interests: ${shared.slice(0,2).join(', ')}`});}
+  else if(shared.length===1){score+=3;reasons.push({ic:'fa-heart',t:`Shared interest: ${shared[0]}`});}
+  // Caste
+  if(me.caste===p.caste){score+=4;reasons.push({ic:'fa-users-line',t:`Same community — ${p.caste}`});}
+  // Manglik compatibility
+  if(me.manglik===p.manglik||(me.manglik==='No'&&p.manglik==='No')){score+=3;reasons.push({ic:'fa-star',t:`Compatible manglik status`});}
+  // AI traits overlap
+  const traits=(me.aiTraits||[]).filter(t=>(p.aiTraits||[]).includes(t));
+  if(traits.length){score+=Math.min(traits.length*2,6);reasons.push({ic:'fa-wand-magic-sparkles',t:`Personality match: ${traits.slice(0,2).join(', ')}`});}
+  // Trust bonus
+  if(p.trustScore>=85){score+=3;reasons.push({ic:'fa-shield-halved',t:`Highly verified profile (${p.trustScore}% trust)`});}
+  // Family values
+  if(me.familyValues===p.familyValues){score+=2;reasons.push({ic:'fa-house-user',t:`Aligned family values — ${p.familyValues}`});}
+  return {score:Math.min(score,98),reasons:reasons.slice(0,5)};
+}
+function getMe(s){return s.user?(s.profiles.find(x=>x.id===s.user.id)||s.profiles[0]):s.profiles[0];}
+function tierIcon(t){return{'Basic':'fa-circle-half-stroke','Verified':'fa-circle-check','Premium Trust':'fa-shield-halved'}[t]||'fa-circle';}
+function verifCount(v){if(!v)return 0;return Object.values(v).filter(Boolean).length;}
+
+/* ========================= Router ========================= */
+function render(){
+  const page=getPage();
+  const s=Store.load();
+  const requiresAuth=['dashboard','my-profile','inbox','admin','super'].includes(page);
+  if(requiresAuth && !s.user){go('login');return;}
+  const fn=PAGES[page]||PAGES.home;
+  document.getElementById('app').innerHTML=renderNav(page)+fn(s)+renderFooter();
+  window.scrollTo(0,0);
+}
+window.addEventListener('hashchange',render);
+
+/* ========================= Nav / Footer ========================= */
+function renderNav(active){
+  const s=Store.load();
+  const loggedIn=!!s.user;
+  return `
+  <header class="topbar">
+    <div class="brand" onclick="go('home')">
+      <div class="logo"><i class="fa-solid fa-heart"></i></div>
+      <span>ShubhMilan</span>
+    </div>
+    <nav>
+      <a class="${active==='home'?'active':''}" onclick="go('home')"><i class="fa-solid fa-house"></i><span>Home</span></a>
+      <a class="${active==='browse'?'active':''}" onclick="go('browse')"><i class="fa-solid fa-magnifying-glass"></i><span>Browse</span></a>
+      ${loggedIn?`
+        <a class="${active==='ai-matches'?'active':''}" onclick="go('ai-matches')"><i class="fa-solid fa-wand-magic-sparkles"></i><span>AI Matches</span></a>
+        <a class="${active==='dashboard'?'active':''}" onclick="go('dashboard')"><i class="fa-solid fa-gauge-high"></i><span>Dashboard</span></a>
+        <a class="${active==='inbox'?'active':''}" onclick="go('inbox')"><i class="fa-solid fa-comments"></i><span>Inbox</span></a>
+        <a class="${active==='my-profile'?'active':''}" onclick="go('my-profile')"><i class="fa-solid fa-user"></i><span>My Profile</span></a>
+        <a class="${active==='verify'?'active':''}" onclick="go('verify')"><i class="fa-solid fa-shield-halved"></i><span>Verify</span></a>
+      `:''}
+      ${s.user && s.user.role==='admin'?`<a class="${active==='admin'?'active':''}" onclick="go('admin')"><i class="fa-solid fa-shield-halved"></i><span>Admin</span></a>`:''}
+      ${s.user && s.user.role==='super'?`<a class="${active==='super'?'active':''}" onclick="go('super')"><i class="fa-solid fa-crown"></i><span>Super Admin</span></a>`:''}
+    </nav>
+    <div class="actions">
+      <span class="chip-free"><i class="fa-solid fa-gift"></i>100% Free</span>
+      ${loggedIn?`
+        <button class="btn btn-ghost btn-sm" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i>Logout</button>
+      `:`
+        <button class="btn btn-ghost btn-sm" onclick="go('login')"><i class="fa-solid fa-right-to-bracket"></i>Login</button>
+        <button class="btn btn-primary btn-sm" onclick="go('register')"><i class="fa-solid fa-user-plus"></i>Register Free</button>
+      `}
+    </div>
+  </header>`;
+}
+function renderFooter(){
+  return `
+  <footer>
+    <div class="fwrap">
+      <div>
+        <div class="brand-f"><div class="logo"><i class="fa-solid fa-heart"></i></div> ShubhMilan</div>
+        <p style="font-size:13.5px;color:#9a9aa4;margin:0 0 14px;">Trusted matrimony, completely free. Built with Indian values and modern technology to help families find the right match.</p>
+        <div style="display:flex;gap:12px;">
+          <a onclick="toast('Social coming soon')"><i class="fa-brands fa-facebook-f" style="font-size:18px"></i></a>
+          <a onclick="toast('Social coming soon')"><i class="fa-brands fa-instagram" style="font-size:18px"></i></a>
+          <a onclick="toast('Social coming soon')"><i class="fa-brands fa-youtube" style="font-size:18px"></i></a>
+          <a onclick="toast('Social coming soon')"><i class="fa-brands fa-x-twitter" style="font-size:18px"></i></a>
+        </div>
+      </div>
+      <div><h4>Discover</h4><a onclick="go('browse')">Browse Profiles</a><a onclick="go('ai-matches')">AI Matches</a><a onclick="go('kundli')">Kundli Matching</a><a onclick="go('events')">Community Events</a><a onclick="go('stories')">Success Stories</a></div>
+      <div><h4>Trust & Safety</h4><a onclick="go('verify')">Get Verified</a><a onclick="go('safety')">Safety Center</a><a onclick="go('safety')">Report a Profile</a><a>Help Center</a></div>
+      <div><h4>Company</h4><a>About Us</a><a>Careers</a><a>Blog</a><a>Privacy Policy</a><a>Terms of Service</a></div>
+    </div>
+    <div class="copy">© ${new Date().getFullYear()} ShubhMilan Matrimony · Made with <i class="fa-solid fa-heart" style="color:#c0392b"></i> in India</div>
+  </footer>`;
+}
+function logout(){const s=Store.load();s.user=null;Store.save(s);toast('Signed out');go('home');}
+
+/* ========================= Pages ========================= */
+const PAGES={};
+
+PAGES.home=function(s){
+  const featured=s.profiles.filter(p=>p.verified).slice(0,4);
+  return `
+  <section class="hero">
+    <div class="kicker"><i class="fa-solid fa-gift"></i> Free for lifetime · No hidden fees</div>
+    <h1>Find Your Perfect Life Partner</h1>
+    <p class="sub">India's most trusted matrimony platform — rooted in values, built for today. Browse verified profiles, send unlimited interests, and start your journey home.</p>
+    <div class="cta-row">
+      <button class="btn btn-accent btn-lg" onclick="go('register')"><i class="fa-solid fa-user-plus"></i> Register Free</button>
+      <button class="btn btn-outline btn-lg" onclick="go('browse')"><i class="fa-solid fa-magnifying-glass"></i> Browse Profiles</button>
+    </div>
+    <div class="hero-search">
+      <div class="field"><label>Looking For</label><select><option>Bride</option><option>Groom</option></select></div>
+      <div class="field"><label>Age</label><select><option>21 - 28</option><option>25 - 32</option><option>28 - 35</option><option>35+</option></select></div>
+      <div class="field"><label>Religion</label><select>${OPTIONS.religion.map(r=>`<option>${r}</option>`).join('')}</select></div>
+      <div class="field"><label>Mother Tongue</label><select>${OPTIONS.motherTongue.map(m=>`<option>${m}</option>`).join('')}</select></div>
+      <button class="btn btn-primary" onclick="go('browse')"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+    </div>
+    <div class="trust">
+      <div><i class="fa-solid fa-shield-halved"></i> Verified Profiles</div>
+      <div><i class="fa-solid fa-users"></i> 5,00,000+ Members</div>
+      <div><i class="fa-solid fa-ring"></i> 25,000+ Matches</div>
+      <div><i class="fa-solid fa-lock"></i> Privacy Protected</div>
+    </div>
+  </section>
+
+  <div class="container">
+    <div class="section-title mt-3">
+      <span class="kicker">Why ShubhMilan</span>
+      <h2>Matrimony, done the right way</h2>
+      <p>A platform built on trust, tradition, and zero cost to our members.</p>
+    </div>
+    <div class="grid grid-3">
+      <div class="feature"><div class="ic"><i class="fa-solid fa-shield-halved"></i></div><div><h3>Verified Profiles</h3><p>Every profile goes through document and photo verification before going live.</p></div></div>
+      <div class="feature"><div class="ic"><i class="fa-solid fa-om"></i></div><div><h3>Traditional Match Factors</h3><p>Gotra, manglik status, rashi, nakshatra, and horoscope matching — all supported.</p></div></div>
+      <div class="feature"><div class="ic"><i class="fa-solid fa-comments"></i></div><div><h3>Direct Messaging</h3><p>Chat freely with families and prospects. No credits, no paywalls, no interruptions.</p></div></div>
+      <div class="feature"><div class="ic"><i class="fa-solid fa-sliders"></i></div><div><h3>Advanced Filters</h3><p>Filter by caste, sub-caste, education, income, family type, diet, and 20+ more.</p></div></div>
+      <div class="feature"><div class="ic"><i class="fa-solid fa-lock"></i></div><div><h3>Privacy Controls</h3><p>Hide your profile, mask your name, share photos only with accepted connections.</p></div></div>
+      <div class="feature"><div class="ic"><i class="fa-solid fa-headset"></i></div><div><h3>24/7 Support</h3><p>Real humans, real help. Our team is available in 10+ Indian languages.</p></div></div>
+    </div>
+
+    <div class="section-title mt-4">
+      <span class="kicker">How It Works</span>
+      <h2>Your journey in 4 simple steps</h2>
+    </div>
+    <div class="grid grid-4">
+      <div class="how-step"><div class="n">1</div><h3>Register Free</h3><p>Create your profile with photos and family details in 5 minutes.</p></div>
+      <div class="how-step"><div class="n">2</div><h3>Get Verified</h3><p>Upload ID proof for a trusted verified badge.</p></div>
+      <div class="how-step"><div class="n">3</div><h3>Find Matches</h3><p>Discover profiles that match your preferences and values.</p></div>
+      <div class="how-step"><div class="n">4</div><h3>Connect & Meet</h3><p>Send interest, chat with families, arrange to meet.</p></div>
+    </div>
+
+    <div class="section-title mt-4">
+      <span class="kicker">Featured Profiles</span>
+      <h2>Hand-picked matches for you</h2>
+      <p>A glimpse of the verified members on ShubhMilan today.</p>
+    </div>
+    <div class="grid grid-4">
+      ${featured.map(p=>profileCardHTML(p)).join('')}
+    </div>
+    <div class="center mt-3"><button class="btn btn-primary" onclick="go('browse')"><i class="fa-solid fa-arrow-right"></i> View All Profiles</button></div>
+
+    <div class="counter-row">
+      <div class="c"><div class="n">5L+</div><div class="l">Active Members</div></div>
+      <div class="c"><div class="n">25K+</div><div class="l">Happy Marriages</div></div>
+      <div class="c"><div class="n">98%</div><div class="l">Verified Profiles</div></div>
+      <div class="c"><div class="n">₹0</div><div class="l">Forever Free</div></div>
+    </div>
+
+    <!-- AI highlight section -->
+    <div class="card mt-4" style="background:linear-gradient(135deg,#faf5ff,#f3e8ff);border:1px solid #ddd6fe;padding:40px;display:grid;grid-template-columns:1fr 1fr;gap:30px;align-items:center">
+      <div>
+        <span class="ai-chip" style="margin-bottom:12px"><i class="fa-solid fa-wand-magic-sparkles"></i> AI-Powered</span>
+        <h2 style="margin-top:8px;font-size:30px">Smart matches that actually fit</h2>
+        <p style="color:#5b21b6;margin:10px 0 20px;font-size:15px;line-height:1.6">Our AI evaluates 40+ signals — religion, horoscope, education, lifestyle, family values, even personality traits — to suggest matches with a compatibility score. No endless swiping.</p>
+        <ul class="ai-reasons" style="margin-bottom:18px">
+          <li><i class="fa-solid fa-check-double"></i> Compatibility % scored on each profile you view</li>
+          <li><i class="fa-solid fa-check-double"></i> "Why this match" explanations for every suggestion</li>
+          <li><i class="fa-solid fa-check-double"></i> Learns from your preferences over time</li>
+        </ul>
+        <button class="btn btn-primary" onclick="go('ai-matches')" style="background:#6d28d9"><i class="fa-solid fa-wand-magic-sparkles"></i> See Your AI Matches</button>
+      </div>
+      <div style="text-align:center">
+        <div class="ai-widget" style="margin:0;background:#fff;box-shadow:var(--shadow-lg)">
+          <div class="head"><i class="fa-solid fa-wand-magic-sparkles"></i><div><h3>Compatibility</h3><div class="muted" style="font-size:12px">Priya × Rahul</div></div><div class="score-circle" style="--deg:331.2deg"><span>92%</span></div></div>
+          <ul class="ai-reasons"><li><i class="fa-solid fa-check"></i>Same religion, shared values</li><li><i class="fa-solid fa-check"></i>Both masters-educated, career-focused</li><li><i class="fa-solid fa-check"></i>3 shared interests: reading, travel, cricket</li><li><i class="fa-solid fa-check"></i>Horoscope match: 30/36 gunas</li></ul>
+        </div>
+      </div>
+    </div>
+    <style>@media(max-width:800px){.card[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}}</style>
+
+    <!-- Verification / trust promise -->
+    <div class="section-title mt-4">
+      <span class="kicker">Trust & Verification</span>
+      <h2>Every profile, rigorously verified</h2>
+      <p>Five layers of identity verification stop fake profiles before they reach you.</p>
+    </div>
+    <div class="grid grid-4">
+      <div class="feature"><div class="ic"><i class="fa-solid fa-mobile-screen-button"></i></div><div><h3>Phone & Email</h3><p>OTP verification on every account — no anonymous signups.</p></div></div>
+      <div class="feature"><div class="ic"><i class="fa-solid fa-id-card"></i></div><div><h3>Aadhaar / Govt ID</h3><p>Matched against official records for real-identity assurance.</p></div></div>
+      <div class="feature"><div class="ic"><i class="fa-solid fa-camera"></i></div><div><h3>Selfie Liveness</h3><p>AI-powered face match confirms the photo is really you.</p></div></div>
+      <div class="feature"><div class="ic"><i class="fa-solid fa-video"></i></div><div><h3>Video Verification</h3><p>Optional live call with our team — earns the Premium Trust badge.</p></div></div>
+      <div class="feature"><div class="ic"><i class="fa-solid fa-briefcase"></i></div><div><h3>Background Check</h3><p>Education, employment and criminal record checks via partner agencies.</p></div></div>
+      <div class="feature"><div class="ic"><i class="fa-solid fa-shield-halved"></i></div><div><h3>Trust Score</h3><p>Every profile has a 0–100 trust score based on verification depth.</p></div></div>
+      <div class="feature"><div class="ic"><i class="fa-solid fa-user-lock"></i></div><div><h3>Photo Privacy</h3><p>Keep photos blurred until you accept someone's interest.</p></div></div>
+      <div class="feature"><div class="ic"><i class="fa-solid fa-flag"></i></div><div><h3>One-Tap Report</h3><p>Report any suspicious profile — reviewed within 4 hours.</p></div></div>
+    </div>
+    <div class="center mt-3"><button class="btn btn-outline-primary" onclick="go('verify')"><i class="fa-solid fa-shield-halved"></i> Start Verification</button></div>
+
+    <!-- Cities -->
+    <div class="section-title mt-4">
+      <span class="kicker">By City</span>
+      <h2>Find your match across India</h2>
+    </div>
+    <div class="grid grid-4">
+      <a class="city-chip" onclick="go('browse')"><i class="fa-solid fa-location-dot"></i><div class="n">Mumbai</div><div class="c">42,184 profiles</div></a>
+      <a class="city-chip" onclick="go('browse')"><i class="fa-solid fa-location-dot"></i><div class="n">Delhi NCR</div><div class="c">38,502 profiles</div></a>
+      <a class="city-chip" onclick="go('browse')"><i class="fa-solid fa-location-dot"></i><div class="n">Bengaluru</div><div class="c">31,284 profiles</div></a>
+      <a class="city-chip" onclick="go('browse')"><i class="fa-solid fa-location-dot"></i><div class="n">Hyderabad</div><div class="c">24,918 profiles</div></a>
+      <a class="city-chip" onclick="go('browse')"><i class="fa-solid fa-location-dot"></i><div class="n">Chennai</div><div class="c">22,445 profiles</div></a>
+      <a class="city-chip" onclick="go('browse')"><i class="fa-solid fa-location-dot"></i><div class="n">Pune</div><div class="c">18,230 profiles</div></a>
+      <a class="city-chip" onclick="go('browse')"><i class="fa-solid fa-location-dot"></i><div class="n">Ahmedabad</div><div class="c">16,782 profiles</div></a>
+      <a class="city-chip" onclick="go('browse')"><i class="fa-solid fa-location-dot"></i><div class="n">Kolkata</div><div class="c">15,104 profiles</div></a>
+    </div>
+
+    <!-- Success Stories -->
+    <div class="section-title mt-4">
+      <span class="kicker">Success Stories</span>
+      <h2>Hearts matched, families united</h2>
+      <p>Real couples, real weddings — thousands of matches every month.</p>
+    </div>
+    <div class="grid grid-4">
+      ${(s.successStories||[]).map(st=>`
+        <div class="story-card">
+          <div class="s-photo"><img src="${st.photo}" alt="${escapeHtml(st.names)}"></div>
+          <div class="s-body">
+            <h3>${escapeHtml(st.names)}</h3>
+            <div class="when"><i class="fa-solid fa-ring" style="color:var(--accent)"></i> Married ${escapeHtml(st.married)} · ${escapeHtml(st.city)}</div>
+            <p>"${escapeHtml(st.quote)}"</p>
+          </div>
+        </div>`).join('')}
+    </div>
+    <div class="center mt-3"><button class="btn btn-ghost" onclick="go('stories')">View all success stories <i class="fa-solid fa-arrow-right"></i></button></div>
+
+    <div class="card mt-4" style="background:linear-gradient(135deg,var(--primary-dark),var(--primary));color:#fff;border:none;text-align:center;padding:50px 24px">
+      <h2 style="color:#fff;font-size:30px">Ready to begin your journey?</h2>
+      <p style="opacity:.9;margin:8px auto 22px;max-width:500px">Join thousands of families finding the right match, every day — and it's on us.</p>
+      <button class="btn btn-accent btn-lg" onclick="go('register')"><i class="fa-solid fa-user-plus"></i> Create Your Free Profile</button>
+    </div>
+  </div>`;
+};
+
+function profileCardHTML(p,opts={}){
+  const s=Store.load();
+  const me=getMe(s);
+  const ai=me&&me.id!==p.id?aiMatchScore(me,p):null;
+  const firstPhoto=p.photos&&p.photos[0];
+  const blur=p.photosPrivacy==='request'&&!opts.unlocked;
+  return `
+  <div class="profile-card" onclick="go('profile',{id:'${p.id}'})">
+    <div class="photo">
+      ${firstPhoto?`<img src="${firstPhoto}" alt="${escapeHtml(p.name)}" class="${blur?'photo-blurred':''}">`:`<i class="fa-solid fa-user-large" style="font-size:46px;opacity:.5"></i>`}
+      ${ai?`<span class="ai-score" title="AI Compatibility Score"><i class="fa-solid fa-wand-magic-sparkles"></i> ${ai.score}%</span>`:''}
+      ${p.verified?`<span class="verified"><i class="fa-solid ${tierIcon(p.tier)}"></i> ${escapeHtml(p.tier||'Verified')}</span>`:''}
+      ${p.online?`<span class="online" style="top:${ai?'48px':'10px'}">Online</span>`:''}
+    </div>
+    <div class="info">
+      <h3>${escapeHtml(p.name)}, ${p.age}</h3>
+      <div class="meta"><i class="fa-solid fa-location-dot"></i>${escapeHtml(p.city)}, ${escapeHtml(p.state)}</div>
+      <div class="meta"><i class="fa-solid fa-briefcase"></i>${escapeHtml(p.profession)}</div>
+      <div class="meta"><i class="fa-solid fa-ruler-vertical"></i>${escapeHtml(p.height)} · ${escapeHtml(p.caste)}</div>
+      <div class="tags">
+        <span class="tag"><i class="fa-solid ${religionIcon(p.religion)}"></i> ${p.religion}</span>
+        <span class="tag">${escapeHtml(p.motherTongue)}</span>
+      </div>
+      <div class="last-seen ${p.online?'online':''}" style="margin-top:6px"><span class="dot"></span>${p.online?'Active now':(p.lastActive||'Recently')}</div>
+    </div>
+    <div class="pc-actions">
+      <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();sendInterest('${p.id}')"><i class="fa-solid fa-paper-plane"></i> Interest</button>
+      <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();toggleShortlist('${p.id}')" title="Shortlist"><i class="fa-solid fa-star"></i></button>
+      <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();go('inbox',{to:'${p.id}'})" title="Message"><i class="fa-solid fa-comment"></i></button>
+    </div>
+  </div>`;
+}
+
+PAGES.browse=function(s){
+  const q=qs('q')||'';
+  const religion=qs('religion')||'';
+  const gender=qs('gender')||'';
+  const maxAge=parseInt(qs('maxAge')||'99');
+  const minAge=parseInt(qs('minAge')||'18');
+  let list=s.profiles.filter(p=>p.id!==(s.user&&s.user.id));
+  if(q)list=list.filter(p=>(p.name+' '+p.city+' '+p.profession+' '+p.caste).toLowerCase().includes(q.toLowerCase()));
+  if(religion)list=list.filter(p=>p.religion===religion);
+  if(gender)list=list.filter(p=>p.gender===gender);
+  list=list.filter(p=>p.age>=minAge&&p.age<=maxAge);
+
+  return `
+  <div class="container">
+    <div class="page-head">
+      <div>
+        <h2>Browse Profiles</h2>
+        <div class="sub">${list.length} profiles matching your search</div>
+      </div>
+      <div class="input-icon" style="min-width:280px">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="q-search" placeholder="Search by name, city, profession..." value="${escapeHtml(q)}"
+          onkeydown="if(event.key==='Enter')applyBrowse()">
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:260px 1fr;gap:24px">
+      <aside class="filter-side">
+        <h3><i class="fa-solid fa-sliders"></i> Filters</h3>
+        <div class="field"><label>Looking For</label>
+          <select id="f-gender"><option value="">Any</option><option value="Female" ${gender==='Female'?'selected':''}>Bride</option><option value="Male" ${gender==='Male'?'selected':''}>Groom</option></select>
+        </div>
+        <div class="field"><label>Religion</label>
+          <select id="f-religion"><option value="">Any</option>${OPTIONS.religion.map(r=>`<option ${religion===r?'selected':''}>${r}</option>`).join('')}</select>
+        </div>
+        <div class="field"><label>Age Range</label>
+          <div style="display:flex;gap:8px">
+            <input type="number" id="f-minAge" min="18" max="80" value="${minAge}" placeholder="Min">
+            <input type="number" id="f-maxAge" min="18" max="80" value="${maxAge===99?'':maxAge}" placeholder="Max">
+          </div>
+        </div>
+        <div class="field"><label>Mother Tongue</label>
+          <select><option value="">Any</option>${OPTIONS.motherTongue.map(m=>`<option>${m}</option>`).join('')}</select>
+        </div>
+        <div class="field"><label>Caste</label>
+          <select><option value="">Any</option>${OPTIONS.caste.map(c=>`<option>${c}</option>`).join('')}</select>
+        </div>
+        <div class="field"><label>Marital Status</label>
+          <select><option value="">Any</option>${OPTIONS.maritalStatus.map(m=>`<option>${m}</option>`).join('')}</select>
+        </div>
+        <div class="field"><label>Manglik</label>
+          <select><option value="">Any</option>${OPTIONS.manglik.map(m=>`<option>${m}</option>`).join('')}</select>
+        </div>
+        <div class="field"><label>Education</label>
+          <select><option value="">Any</option>${OPTIONS.education.map(m=>`<option>${m}</option>`).join('')}</select>
+        </div>
+        <div class="field"><label>Diet</label>
+          <select><option value="">Any</option>${OPTIONS.diet.map(m=>`<option>${m}</option>`).join('')}</select>
+        </div>
+        <button class="btn btn-primary btn-block mt-2" onclick="applyBrowse()"><i class="fa-solid fa-filter"></i> Apply Filters</button>
+        <button class="btn btn-ghost btn-block mt-1" onclick="go('browse')"><i class="fa-solid fa-rotate-left"></i> Clear All</button>
+      </aside>
+      <main>
+        ${list.length?`<div class="grid grid-3">${list.map(p=>profileCardHTML(p)).join('')}</div>`:'<div class="card"><div class="card-body center"><p class="muted" style="padding:30px">No profiles found. Try adjusting your filters.</p></div></div>'}
+      </main>
+    </div>
+  </div>
+  <style>@media(max-width:900px){[style*="grid-template-columns:260px 1fr"]{grid-template-columns:1fr!important}}</style>`;
+};
+function applyBrowse(){
+  const p={};
+  const q=document.getElementById('q-search').value.trim();if(q)p.q=q;
+  const r=document.getElementById('f-religion').value;if(r)p.religion=r;
+  const g=document.getElementById('f-gender').value;if(g)p.gender=g;
+  const n=document.getElementById('f-minAge').value;if(n)p.minAge=n;
+  const x=document.getElementById('f-maxAge').value;if(x)p.maxAge=x;
+  go('browse',p);
+}
+
+PAGES['profile']=function(s){
+  const id=qs('id');
+  const tab=qs('tab')||'overview';
+  const p=s.profiles.find(x=>x.id===id);
+  if(!p)return `<div class="container"><div class="card"><div class="card-body center"><h2>Profile not found</h2><button class="btn btn-primary mt-2" onclick="go('browse')">Back to Browse</button></div></div></div>`;
+  const me=getMe(s);
+  const ai=me&&me.id!==p.id?aiMatchScore(me,p):null;
+  const v=p.verification||{};
+  const vCount=verifCount(v);
+  const trustDeg=Math.round((p.trustScore||0)*3.6);
+  const aiDeg=ai?Math.round(ai.score*3.6):0;
+  return `
+  <div class="container">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+      <button class="btn btn-ghost btn-sm" onclick="history.back()"><i class="fa-solid fa-arrow-left"></i> Back</button>
+      <span class="muted" style="font-size:13px">Profile ID: <b>${p.id}</b></span>
+      <span class="last-seen ${p.online?'online':''}" style="margin-left:auto"><span class="dot"></span>${p.online?'Active now':(p.lastActive||'Recently')}</span>
+    </div>
+
+    <div class="prof-hero">
+      <div class="pwrap">
+        <div class="photo-main">${p.photos&&p.photos[0]?`<img src="${p.photos[0]}" alt="${escapeHtml(p.name)}">`:`<i class="fa-solid fa-user-large" style="font-size:80px;opacity:.4"></i>`}</div>
+        <div class="prof-info">
+          <h1>${escapeHtml(p.name)}</h1>
+          <div class="muted" style="font-size:14px">${p.age} yrs · ${escapeHtml(p.height)} · ${escapeHtml(p.maritalStatus)}</div>
+          <div class="badge-row">
+            ${p.verified?`<span class="verif-tier ${p.tier==='Premium Trust'?'premium':'verified'}"><i class="fa-solid ${tierIcon(p.tier)}"></i> ${escapeHtml(p.tier||'Verified')}</span>`:`<span class="verif-tier basic"><i class="fa-solid fa-circle-half-stroke"></i> Basic</span>`}
+            <span class="bg"><i class="fa-solid ${religionIcon(p.religion)}"></i> ${p.religion}</span>
+            <span class="bg"><i class="fa-solid fa-language"></i> ${escapeHtml(p.motherTongue)}</span>
+            ${p.manglik==='No'?`<span class="bg">Non-Manglik</span>`:p.manglik==='Yes'?`<span class="bg">Manglik</span>`:''}
+            ${ai?`<span class="ai-chip"><i class="fa-solid fa-wand-magic-sparkles"></i> ${ai.score}% AI match</span>`:''}
+          </div>
+          <div class="kv-grid">
+            <div class="kv"><i class="fa-solid fa-location-dot"></i><div><div class="kv-l">Location</div><div class="kv-v">${escapeHtml(p.city)}, ${escapeHtml(p.state)}</div></div></div>
+            <div class="kv"><i class="fa-solid fa-briefcase"></i><div><div class="kv-l">Profession</div><div class="kv-v">${escapeHtml(p.profession)}</div></div></div>
+            <div class="kv"><i class="fa-solid fa-graduation-cap"></i><div><div class="kv-l">Education</div><div class="kv-v">${escapeHtml(p.education)}</div></div></div>
+            <div class="kv"><i class="fa-solid fa-indian-rupee-sign"></i><div><div class="kv-l">Income</div><div class="kv-v">${escapeHtml(p.income)}</div></div></div>
+          </div>
+          <div style="display:flex;gap:16px;padding:12px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:14px 0;flex-wrap:wrap">
+            <div style="flex:1;min-width:120px">
+              <div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:.5px">Trust Score</div>
+              <div style="font-weight:700;color:var(--success);font-size:16px">${p.trustScore||0}/100 <i class="fa-solid fa-shield-halved" style="font-size:12px"></i></div>
+            </div>
+            <div style="flex:1;min-width:120px">
+              <div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:.5px">Response Rate</div>
+              <div style="font-weight:700;color:var(--ink);font-size:16px">${p.responseRate||0}%</div>
+            </div>
+            <div style="flex:1;min-width:120px">
+              <div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:.5px">Profile Views</div>
+              <div style="font-weight:700;color:var(--ink);font-size:16px">${p.profileViews||0}</div>
+            </div>
+          </div>
+          <div class="prof-actions">
+            <button class="btn btn-primary" onclick="sendInterest('${p.id}')"><i class="fa-solid fa-paper-plane"></i> Send Interest</button>
+            <button class="btn btn-outline-primary" onclick="toggleShortlist('${p.id}')"><i class="fa-solid fa-star"></i> Shortlist</button>
+            <button class="btn btn-ghost" onclick="go('inbox',{to:'${p.id}'})"><i class="fa-solid fa-comments"></i> Message</button>
+            <button class="btn btn-ghost" onclick="go('kundli',{a:'${me?me.id:''}',b:'${p.id}'})"><i class="fa-solid fa-om"></i> Match Kundli</button>
+            <button class="btn btn-ghost" onclick="toast('Reported. Our team will review within 4h.')"><i class="fa-solid fa-flag"></i> Report</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    ${ai?`
+    <div class="ai-widget">
+      <div class="head">
+        <i class="fa-solid fa-wand-magic-sparkles"></i>
+        <div style="flex:1">
+          <h3 class="shimmer-text">AI says this is a <b>${ai.score>=85?'Great':ai.score>=70?'Strong':'Fair'}</b> match for you</h3>
+          <div class="muted" style="font-size:12.5px">Based on 40+ compatibility signals</div>
+        </div>
+        <div class="score-circle" style="--deg:${aiDeg}deg"><span>${ai.score}%</span></div>
+      </div>
+      <ul class="ai-reasons">
+        ${ai.reasons.map(r=>`<li><i class="fa-solid ${r.ic}"></i>${escapeHtml(r.t)}</li>`).join('')}
+      </ul>
+    </div>`:''}
+
+    <div class="tabs">
+      <a class="${tab==='overview'?'active':''}" onclick="go('profile',{id:'${p.id}',tab:'overview'})"><i class="fa-solid fa-user"></i> Overview</a>
+      <a class="${tab==='family'?'active':''}" onclick="go('profile',{id:'${p.id}',tab:'family'})"><i class="fa-solid fa-house-user"></i> Family</a>
+      <a class="${tab==='horoscope'?'active':''}" onclick="go('profile',{id:'${p.id}',tab:'horoscope'})"><i class="fa-solid fa-om"></i> Horoscope</a>
+      <a class="${tab==='lifestyle'?'active':''}" onclick="go('profile',{id:'${p.id}',tab:'lifestyle'})"><i class="fa-solid fa-palette"></i> Lifestyle</a>
+      <a class="${tab==='verification'?'active':''}" onclick="go('profile',{id:'${p.id}',tab:'verification'})"><i class="fa-solid fa-shield-halved"></i> Verification</a>
+      <a class="${tab==='photos'?'active':''}" onclick="go('profile',{id:'${p.id}',tab:'photos'})"><i class="fa-solid fa-camera"></i> Photos</a>
+    </div>
+
+    ${profileTab(p,tab,me)}
+
+    <div class="alert alert-warn">
+      <i class="fa-solid fa-shield-halved"></i>
+      <div><b>Stay Safe</b><br>Never share money, bank details, OTPs or personal documents. Meet in public places. Report anything suspicious. <a onclick="go('safety')">Read safety tips →</a></div>
+    </div>
+  </div>`;
+};
+function dl(l,v){return `<div class="dl-row"><span class="dl-l">${l}</span><span class="dl-v">${escapeHtml(v||'—')}</span></div>`;}
+
+function profileTab(p,tab,me){
+  const v=p.verification||{};
+  const h=p.horoscope||{};
+  if(tab==='overview'){
+    return `
+      <div class="section">
+        <h2><i class="fa-solid fa-user"></i> About Me</h2>
+        <p style="font-size:15px;line-height:1.7;color:var(--ink)">${escapeHtml(p.aboutMe)}</p>
+        <h2 style="margin-top:22px"><i class="fa-solid fa-heart"></i> Partner Preference</h2>
+        <p style="font-size:15px;line-height:1.7;color:var(--ink)">${escapeHtml(p.partnerExpectation)}</p>
+        ${p.preference?`<div class="dl-grid mt-2">
+          ${dl('Age',`${p.preference.ageFrom} - ${p.preference.ageTo} years`)}
+          ${dl('Height',`${p.preference.heightFrom}+`)}
+          ${dl('Religion',p.preference.religion)}
+          ${dl('Diet',p.preference.diet)}
+        </div>`:''}
+      </div>
+      <div class="section">
+        <h2><i class="fa-solid fa-id-card"></i> Basic & Personal</h2>
+        <div class="dl-grid">${dl('Date of Birth',p.dob)}${dl('Gender',p.gender)}${dl('Height',p.height)}${dl('Weight',p.weight)}${dl('Body Type',p.bodyType)}${dl('Complexion',p.complexion)}${dl('Marital Status',p.maritalStatus)}${dl('Diet',p.diet)}${dl('Drinking',p.drinking)}${dl('Smoking',p.smoking)}</div>
+      </div>
+      <div class="section">
+        <h2><i class="fa-solid fa-graduation-cap"></i> Education & Career</h2>
+        <div class="dl-grid">${dl('Highest Education',p.education)}${dl('Details',p.educationDetails)}${dl('Profession',p.profession)}${dl('Designation',p.designation)}${dl('Company',p.company)}${dl('Annual Income',p.income)}</div>
+      </div>`;
+  }
+  if(tab==='family'){
+    return `
+      <div class="section">
+        <h2><i class="fa-solid fa-house-user"></i> Family Details</h2>
+        <div class="family-grid mb-2">
+          <div class="fam-card"><div class="av"><i class="fa-solid fa-user"></i></div><div class="n">${escapeHtml(p.fatherName||'—')}</div><div class="r">Father · ${escapeHtml(p.fatherOccupation||'')}</div></div>
+          <div class="fam-card"><div class="av"><i class="fa-solid fa-user"></i></div><div class="n">${escapeHtml(p.motherName||'—')}</div><div class="r">Mother · ${escapeHtml(p.motherOccupation||'')}</div></div>
+          <div class="fam-card"><div class="av"><i class="fa-solid fa-people-group"></i></div><div class="n">${escapeHtml(p.siblings||'—')}</div><div class="r">Siblings</div></div>
+        </div>
+        <div class="dl-grid">${dl('Family Type',p.familyType)}${dl('Family Status',p.familyStatus)}${dl('Family Values',p.familyValues)}${dl('Native Place',p.nativePlace)}</div>
+      </div>`;
+  }
+  if(tab==='horoscope'){
+    return `
+      <div class="section">
+        <h2><i class="fa-solid fa-om"></i> Horoscope / Kundli</h2>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:center">
+          <div>
+            <div class="dl-grid" style="grid-template-columns:1fr">
+              ${dl('Rashi',p.rashi)}
+              ${dl('Nakshatra',p.nakshatra)}
+              ${dl('Charan',h.charan)}
+              ${dl('Manglik',p.manglik)}
+              ${dl('Birth Place',h.birthPlace)}
+              ${dl('Birth Time',h.birthTime)}
+              ${dl('Doshas',(h.doshas&&h.doshas.length)?h.doshas.join(', '):'None')}
+            </div>
+          </div>
+          <div class="center">
+            <div class="guna-ring" style="--deg:${Math.round((h.gunas||0)/36*360)}deg">
+              <div class="v">${h.gunas||0}</div>
+              <div class="l">of 36 gunas</div>
+            </div>
+            <p class="muted mt-2" style="font-size:13px">Standalone kundli score. Match with your own kundli for compatibility.</p>
+            ${me?`<button class="btn btn-primary mt-1" onclick="go('kundli',{a:'${me.id}',b:'${p.id}'})"><i class="fa-solid fa-om"></i> Compute Guna Milan</button>`:''}
+          </div>
+        </div>
+        <style>@media(max-width:700px){.section [style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}}</style>
+      </div>`;
+  }
+  if(tab==='lifestyle'){
+    return `
+      <div class="section">
+        <h2><i class="fa-solid fa-palette"></i> Lifestyle & Interests</h2>
+        <div style="margin-bottom:14px"><b>Hobbies & Interests:</b> ${(p.hobbies||[]).map(h=>`<span class="tag-sm" style="margin:3px">${escapeHtml(h)}</span>`).join(' ')}</div>
+        <div style="margin-bottom:14px"><b>Languages Known:</b> ${(p.languages||[]).map(l=>`<span class="tag-sm" style="margin:3px">${escapeHtml(l)}</span>`).join(' ')}</div>
+        <div><b>AI Personality Traits:</b> ${(p.aiTraits||[]).map(t=>`<span class="ai-chip" style="margin:3px;font-size:11px;padding:3px 9px">${escapeHtml(t)}</span>`).join(' ')}</div>
+      </div>`;
+  }
+  if(tab==='verification'){
+    const items=[
+      {k:'email',l:'Email Verified',d:'OTP verified email address',ic:'fa-envelope'},
+      {k:'phone',l:'Phone Verified',d:'OTP verified mobile number',ic:'fa-mobile-screen-button'},
+      {k:'aadhaar',l:'Aadhaar / Govt ID',d:'Identity verified against official records',ic:'fa-id-card'},
+      {k:'selfie',l:'Selfie Match',d:'AI face-match with profile photo',ic:'fa-camera'},
+      {k:'video',l:'Video Verification',d:'Live call with verification team',ic:'fa-video'},
+      {k:'background',l:'Background Check',d:'Education + employment + criminal record',ic:'fa-user-shield'},
+      {k:'premium',l:'Premium Trust Badge',d:'All 6 verifications passed',ic:'fa-shield-halved'}
+    ];
+    return `
+      <div class="section">
+        <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;margin-bottom:20px">
+          <div class="trust-donut" style="--deg:${Math.round((p.trustScore||0)*3.6)}deg;background:conic-gradient(var(--success) ${Math.round((p.trustScore||0)*3.6)}deg,#eee 0)">
+            <div class="val">${p.trustScore||0}</div>
+            <div class="lbl">Trust</div>
+          </div>
+          <div style="flex:1;min-width:200px">
+            <h2 style="margin:0 0 6px"><i class="fa-solid fa-shield-halved"></i> Verification Status</h2>
+            <p class="muted" style="margin:0;font-size:13.5px">${verifCount(v)} of 7 verifications complete. Tier: <b>${escapeHtml(p.tier||'Basic')}</b></p>
+          </div>
+        </div>
+        ${items.map(it=>`
+          <div class="verif-step ${v[it.k]?'done':''}">
+            <div class="ic"><i class="fa-solid ${it.ic}"></i></div>
+            <div class="cnt"><h3>${it.l}</h3><p>${it.d}</p></div>
+            <div class="check">${v[it.k]?'<i class="fa-solid fa-circle-check" style="color:var(--success);font-size:20px"></i>':'<span class="muted" style="font-size:12px">Not done</span>'}</div>
+          </div>`).join('')}
+      </div>`;
+  }
+  if(tab==='photos'){
+    const blur=p.photosPrivacy==='request';
+    return `
+      <div class="section">
+        <h2><i class="fa-solid fa-camera"></i> Photos</h2>
+        ${blur?`<div class="alert alert-info"><i class="fa-solid fa-user-lock"></i><div><b>Photos are private.</b> Send an interest to request access. Photos unlock once accepted.</div></div>`:''}
+        ${p.photos&&p.photos.length?`
+          <div class="photos-strip">
+            ${p.photos.map(ph=>`<div class="p">${blur?`<div class="photo-locked"><img src="${ph}" class="photo-blurred" style="width:100%;height:100%;object-fit:cover"><div class="lock-overlay"><i class="fa-solid fa-lock"></i>Send interest to unlock</div></div>`:`<img src="${ph}">`}</div>`).join('')}
+          </div>`:'<p class="muted">This profile has no photos yet.</p>'}
+      </div>`;
+  }
+  return '<div class="muted">Unknown tab</div>';
+}
+
+function sendInterest(id){
+  const s=Store.load();
+  if(!s.user){toast('Please sign in first','fa-circle-info');setTimeout(()=>go('login'),900);return;}
+  if(s.interestsSent.some(i=>i.to===id)){toast('Interest already sent','fa-circle-info');return;}
+  s.interestsSent.push({to:id,date:new Date().toISOString().slice(0,10)});
+  Store.save(s);toast('Interest sent successfully');
+}
+function toggleShortlist(id){
+  const s=Store.load();
+  if(!s.user){toast('Please sign in first','fa-circle-info');setTimeout(()=>go('login'),900);return;}
+  if(s.shortlist.includes(id)){s.shortlist=s.shortlist.filter(x=>x!==id);toast('Removed from shortlist','fa-star');}
+  else{s.shortlist.push(id);toast('Added to shortlist','fa-star');}
+  Store.save(s);
+}
+
+PAGES.login=function(s){
+  return `
+  <div class="container">
+    <div class="auth-card">
+      <div class="center" style="margin-bottom:18px">
+        <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;display:grid;place-items:center;font-size:28px;margin:0 auto 12px;box-shadow:0 6px 20px rgba(139,30,63,.3)">
+          <i class="fa-solid fa-heart"></i>
+        </div>
+      </div>
+      <h1>Welcome Back</h1>
+      <div class="sub">Sign in to continue your journey</div>
+      <div class="field"><label>Email / Phone / Profile ID</label>
+        <div class="input-icon"><i class="fa-solid fa-user"></i><input type="text" id="li-user" placeholder="SM10001 or email"></div>
+      </div>
+      <div class="field"><label>Password</label>
+        <div class="input-icon"><i class="fa-solid fa-lock"></i><input type="password" id="li-pwd" placeholder="Enter password"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:13px">
+        <label style="display:flex;align-items:center;gap:6px;font-weight:500"><input type="checkbox" checked> Remember me</label>
+        <a>Forgot password?</a>
+      </div>
+      <button class="btn btn-primary btn-block btn-lg" onclick="doLogin()"><i class="fa-solid fa-right-to-bracket"></i> Sign In</button>
+      <div class="div"></div>
+      <p class="center" style="font-size:14px">New here? <a onclick="go('register')"><b>Register Free</b></a></p>
+      <div class="demo-note">
+        <b><i class="fa-solid fa-flask"></i> Demo Login:</b><br>
+        <button class="btn btn-ghost btn-sm mt-1" onclick="loginAs('SM10001')">Sign in as Priya (User)</button>
+        <button class="btn btn-ghost btn-sm mt-1" onclick="loginAs('SM10002')">Sign in as Rahul (User)</button>
+        <button class="btn btn-ghost btn-sm mt-1" onclick="loginAsAdmin()">Sign in as Admin</button>
+        <button class="btn btn-ghost btn-sm mt-1" onclick="loginAsSuper()">Sign in as Super Admin</button>
+      </div>
+    </div>
+  </div>`;
+};
+function doLogin(){const id=document.getElementById('li-user').value.trim()||'SM10001';loginAs(id);}
+function loginAs(id){const s=Store.load();const p=s.profiles.find(x=>x.id===id);if(!p){toast('Profile not found','fa-circle-exclamation');return;}s.user={id:p.id,name:p.name,role:'user'};Store.save(s);toast('Welcome, '+p.name.split(' ')[0]+'!');setTimeout(()=>go('dashboard'),600);}
+function loginAsAdmin(){const s=Store.load();s.user={id:'A001',name:'Admin User',role:'admin'};Store.save(s);toast('Logged in as Admin');setTimeout(()=>go('admin'),600);}
+function loginAsSuper(){const s=Store.load();s.user={id:'S001',name:'Super Admin',role:'super'};Store.save(s);toast('Logged in as Super Admin');setTimeout(()=>go('super'),600);}
+
+PAGES.register=function(s){
+  return `
+  <div class="container">
+    <div class="card" style="max-width:820px;margin:20px auto;padding:36px">
+      <h1 class="center">Create Your Free Profile</h1>
+      <p class="muted center" style="margin-bottom:26px">Takes 5 minutes · No credit card required · Free forever</p>
+      <div class="steps">
+        <div class="s active"><div class="dot">1</div><div class="label">Account</div></div>
+        <div class="s"><div class="dot">2</div><div class="label">Basic Info</div></div>
+        <div class="s"><div class="dot">3</div><div class="label">Community</div></div>
+        <div class="s"><div class="dot">4</div><div class="label">Family</div></div>
+        <div class="s"><div class="dot">5</div><div class="label">Done</div></div>
+      </div>
+      <form onsubmit="event.preventDefault();doRegister();">
+        <div class="form-row">
+          <div class="field"><label>Full Name <span class="req">*</span></label><input type="text" required placeholder="Your full name"></div>
+          <div class="field"><label>I am <span class="req">*</span></label><select required><option>Bride (Female)</option><option>Groom (Male)</option></select></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Email <span class="req">*</span></label><input type="email" required placeholder="you@example.com"></div>
+          <div class="field"><label>Mobile <span class="req">*</span></label><input type="tel" required placeholder="+91 ..."></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Create Password <span class="req">*</span></label><input type="password" required></div>
+          <div class="field"><label>Confirm Password <span class="req">*</span></label><input type="password" required></div>
+        </div>
+        <h3 class="mt-3" style="font-size:15px;color:var(--primary-dark)"><i class="fa-solid fa-user"></i> Basic Information</h3>
+        <div class="form-row-3">
+          <div class="field"><label>Date of Birth <span class="req">*</span></label><input type="date" required></div>
+          <div class="field"><label>Height</label><input type="text" placeholder="e.g. 5'6&quot;"></div>
+          <div class="field"><label>Marital Status</label><select>${OPTIONS.maritalStatus.map(m=>`<option>${m}</option>`).join('')}</select></div>
+        </div>
+        <h3 class="mt-3" style="font-size:15px;color:var(--primary-dark)"><i class="fa-solid fa-om"></i> Religion & Community</h3>
+        <div class="form-row-3">
+          <div class="field"><label>Religion <span class="req">*</span></label><select required>${OPTIONS.religion.map(r=>`<option>${r}</option>`).join('')}</select></div>
+          <div class="field"><label>Caste</label><select>${OPTIONS.caste.map(c=>`<option>${c}</option>`).join('')}</select></div>
+          <div class="field"><label>Mother Tongue</label><select>${OPTIONS.motherTongue.map(m=>`<option>${m}</option>`).join('')}</select></div>
+        </div>
+        <div class="form-row-3">
+          <div class="field"><label>Sub-caste</label><input type="text"></div>
+          <div class="field"><label>Gotra</label><input type="text"></div>
+          <div class="field"><label>Manglik</label><select>${OPTIONS.manglik.map(m=>`<option>${m}</option>`).join('')}</select></div>
+        </div>
+        <h3 class="mt-3" style="font-size:15px;color:var(--primary-dark)"><i class="fa-solid fa-location-dot"></i> Location</h3>
+        <div class="form-row-3">
+          <div class="field"><label>City</label><input type="text"></div>
+          <div class="field"><label>State</label><input type="text"></div>
+          <div class="field"><label>Country</label><input type="text" value="India"></div>
+        </div>
+        <div class="alert alert-info mt-2"><i class="fa-solid fa-circle-info"></i><div>You'll be able to add full family details, photos, education and partner preferences on the next step.</div></div>
+        <div class="field" style="margin-top:20px">
+          <label style="display:flex;align-items:flex-start;gap:8px;font-weight:400;font-size:13px">
+            <input type="checkbox" required style="margin-top:3px">
+            <span>I agree to the <a>Terms of Service</a> and <a>Privacy Policy</a>. I confirm I am 18+ and the information I provide is true.</span>
+          </label>
+        </div>
+        <button class="btn btn-primary btn-block btn-lg" type="submit"><i class="fa-solid fa-user-plus"></i> Create Free Account</button>
+      </form>
+      <p class="center mt-2" style="font-size:14px">Already have an account? <a onclick="go('login')"><b>Sign In</b></a></p>
+    </div>
+  </div>`;
+};
+function doRegister(){toast('Account created! Please sign in.');setTimeout(()=>go('login'),1000);}
+
+PAGES.dashboard=function(s){
+  const me=s.profiles.find(x=>x.id===s.user.id)||s.profiles[0];
+  const shortlistedProfiles=s.shortlist.map(id=>s.profiles.find(p=>p.id===id)).filter(Boolean);
+  const sentProfiles=s.interestsSent.map(i=>({...i,profile:s.profiles.find(p=>p.id===i.to)})).filter(x=>x.profile);
+  const recvProfiles=s.interestsReceived.map(i=>({...i,profile:s.profiles.find(p=>p.id===i.from)})).filter(x=>x.profile);
+  const matches=s.profiles.filter(p=>p.id!==me.id&&p.gender!==me.gender).map(p=>({p,ai:aiMatchScore(me,p)})).sort((a,b)=>b.ai.score-a.ai.score).slice(0,4);
+  const vCount=verifCount(me.verification);
+  const vPct=Math.round((vCount/7)*100);
+  const completenessPct=85; // profile completeness heuristic
+  return `
+  <div class="container">
+    <div class="flex-between" style="margin-bottom:22px">
+      <div>
+        <h1>Welcome back, ${escapeHtml(me.name.split(' ')[0])}</h1>
+        <p class="muted" style="margin:4px 0 0">${new Date().toLocaleDateString('en-IN',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</p>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline-primary" onclick="go('my-profile')"><i class="fa-solid fa-pen"></i> Edit Profile</button>
+        <button class="btn btn-primary" onclick="go('browse')"><i class="fa-solid fa-magnifying-glass"></i> Find Matches</button>
+      </div>
+    </div>
+
+    <!-- AI banner -->
+    <div class="ai-widget" style="padding:22px;margin-bottom:18px">
+      <div class="head">
+        <i class="fa-solid fa-wand-magic-sparkles"></i>
+        <div style="flex:1"><h3 class="shimmer-text">${matches.length} new AI-curated matches today</h3><div class="muted" style="font-size:13px">Scored and sorted by compatibility. Refreshed at 7 AM daily.</div></div>
+        <button class="btn btn-primary btn-sm" style="background:#6d28d9" onclick="go('ai-matches')"><i class="fa-solid fa-arrow-right"></i> View All</button>
+      </div>
+    </div>
+
+    <!-- Profile completeness + verification progress -->
+    <div class="grid grid-2 mb-2">
+      <div class="card" style="padding:20px;display:flex;gap:16px;align-items:center">
+        <div class="progress-ring" style="--deg:${Math.round(completenessPct*3.6)}deg"><div class="v">${completenessPct}%</div></div>
+        <div style="flex:1">
+          <h3 style="margin:0;font-family:'Inter',sans-serif">Profile Completeness</h3>
+          <p class="muted" style="font-size:13px;margin:4px 0 8px">Add 2 more photos + partner preferences to hit 100%</p>
+          <button class="btn btn-ghost btn-sm" onclick="go('my-profile')"><i class="fa-solid fa-pen"></i> Complete Profile</button>
+        </div>
+      </div>
+      <div class="card" style="padding:20px;display:flex;gap:16px;align-items:center;background:linear-gradient(135deg,#fff,var(--primary-50))">
+        <div class="trust-donut" style="--deg:${Math.round((me.trustScore||0)*3.6)}deg;background:conic-gradient(var(--success) ${Math.round((me.trustScore||0)*3.6)}deg,#eee 0)"><div class="val">${me.trustScore||0}</div><div class="lbl">Trust</div></div>
+        <div style="flex:1">
+          <h3 style="margin:0;font-family:'Inter',sans-serif">Verification · ${vCount}/7</h3>
+          <p class="muted" style="font-size:13px;margin:4px 0 8px">${vCount===7?'You\'re fully verified! Premium Trust active.':'Complete verification to get 3× more matches'}</p>
+          <button class="btn btn-primary btn-sm" onclick="go('verify')"><i class="fa-solid fa-shield-halved"></i> ${vCount===7?'Review Status':'Verify Now'}</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-4">
+      <div class="stat-tile"><div class="icon"><i class="fa-solid fa-eye"></i></div><div><div class="num">${me.profileViews||142}</div><div class="lbl">Profile Views</div></div></div>
+      <div class="stat-tile"><div class="icon"><i class="fa-solid fa-paper-plane"></i></div><div><div class="num">${s.interestsSent.length}</div><div class="lbl">Interests Sent</div></div></div>
+      <div class="stat-tile"><div class="icon"><i class="fa-solid fa-envelope-open-text"></i></div><div><div class="num">${s.interestsReceived.length}</div><div class="lbl">Interests Received</div></div></div>
+      <div class="stat-tile"><div class="icon"><i class="fa-solid fa-star"></i></div><div><div class="num">${s.shortlist.length}</div><div class="lbl">Shortlisted</div></div></div>
+    </div>
+
+    <div class="flex-between mt-3"><h2><i class="fa-solid fa-wand-magic-sparkles" style="color:#6d28d9;margin-right:8px"></i>AI Matches for You</h2><a onclick="go('ai-matches')" style="font-size:13px;font-weight:600">View all <i class="fa-solid fa-arrow-right"></i></a></div>
+    <div class="grid grid-4">
+      ${matches.length?matches.map(m=>profileCardHTML(m.p)).join(''):'<div class="muted">Update your profile to see personalised matches.</div>'}
+    </div>
+
+    <h2 class="mt-3"><i class="fa-solid fa-envelope-open-text" style="color:var(--primary);margin-right:8px"></i>Interests Received</h2>
+    ${recvProfiles.length?`
+      <div class="grid grid-2">
+        ${recvProfiles.map(r=>`
+          <div class="card"><div class="card-body" style="display:flex;gap:14px;align-items:center">
+            <div class="chat-list" style="border:none"><div class="avatar" style="width:60px;height:60px">${r.profile.photos&&r.profile.photos[0]?`<img src="${r.profile.photos[0]}">`:escapeHtml(r.profile.name[0])}</div></div>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:700;color:var(--ink)">${escapeHtml(r.profile.name)}, ${r.profile.age}</div>
+              <div class="muted" style="font-size:13px">${escapeHtml(r.profile.profession)} · ${escapeHtml(r.profile.city)}</div>
+              <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+                <button class="btn btn-success btn-sm" onclick="acceptInterest('${r.from}')"><i class="fa-solid fa-check"></i> Accept</button>
+                <button class="btn btn-ghost btn-sm" onclick="toast('Declined')"><i class="fa-solid fa-xmark"></i> Decline</button>
+                <button class="btn btn-outline-primary btn-sm" onclick="go('profile',{id:'${r.from}'})"><i class="fa-solid fa-eye"></i> View</button>
+              </div>
+            </div>
+          </div></div>`).join('')}
+      </div>`:'<div class="card"><div class="card-body"><p class="muted" style="margin:0">No interests received yet. Make sure your profile is complete and verified.</p></div></div>'}
+
+    <h2 class="mt-3"><i class="fa-solid fa-paper-plane" style="color:var(--primary);margin-right:8px"></i>Interests Sent</h2>
+    ${sentProfiles.length?`
+      <table class="data">
+        <thead><tr><th>Profile</th><th>Sent On</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+        ${sentProfiles.map(x=>`
+          <tr>
+            <td><b>${escapeHtml(x.profile.name)}</b><div class="muted" style="font-size:12px">${x.profile.id} · ${escapeHtml(x.profile.city)}</div></td>
+            <td>${x.date?new Date(x.date).toLocaleDateString():''}</td>
+            <td><span class="status-pill status-pending"><i class="fa-solid fa-hourglass-half"></i> Pending</span></td>
+            <td><button class="btn btn-ghost btn-sm" onclick="go('profile',{id:'${x.to}'})"><i class="fa-solid fa-eye"></i> View</button></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`:'<div class="card"><div class="card-body"><p class="muted" style="margin:0">No interests sent yet. Browse profiles and express interest.</p></div></div>'}
+
+    <h2 class="mt-3"><i class="fa-solid fa-star" style="color:var(--accent);margin-right:8px"></i>My Shortlist</h2>
+    ${shortlistedProfiles.length?`<div class="grid grid-4">${shortlistedProfiles.map(p=>profileCardHTML(p)).join('')}</div>`:'<div class="card"><div class="card-body"><p class="muted" style="margin:0">Shortlist is empty. Tap the star on any profile to save it for later.</p></div></div>'}
+  </div>`;
+};
+function acceptInterest(id){const s=Store.load();s.interestsReceived=s.interestsReceived.filter(x=>x.from!==id);if(!s.messages[id])s.messages[id]=[];Store.save(s);toast('Accepted! Contact details have been shared.');setTimeout(()=>go('inbox',{to:id}),800);}
+
+PAGES['my-profile']=function(s){
+  const me=s.profiles.find(x=>x.id===s.user.id)||s.profiles[0];
+  return `
+  <div class="container">
+    <div class="page-head">
+      <div><h2>My Profile</h2><div class="sub">Keep your profile complete and up to date for better matches</div></div>
+      <div><button class="btn btn-ghost" onclick="go('profile',{id:'${me.id}'})"><i class="fa-solid fa-eye"></i> Preview Public View</button></div>
+    </div>
+    <div class="grid grid-2 mb-2">
+      <div class="alert alert-info" style="margin:0"><i class="fa-solid fa-circle-info"></i><div><b>Profile completeness: 85%</b> — Upload additional photos and add partner preferences to reach 100%.</div></div>
+      <div class="alert ${verifCount(me.verification)===7?'alert-success':'alert-warn'}" style="margin:0"><i class="fa-solid fa-shield-halved"></i><div><b>Verification: ${verifCount(me.verification)}/7 · Trust Score ${me.trustScore||0}</b> — <a onclick="go('verify')">Complete verification</a> to get 3× more matches.</div></div>
+    </div>
+    <form onsubmit="event.preventDefault();saveProfile()">
+    <div class="section">
+      <h2><i class="fa-solid fa-user"></i> Basic Information</h2>
+      <div class="form-row">
+        <div class="field"><label>Full Name</label><input id="mp-name" type="text" value="${escapeHtml(me.name)}"></div>
+        <div class="field"><label>Date of Birth</label><input type="date" value="${me.dob}"></div>
+      </div>
+      <div class="form-row-3">
+        <div class="field"><label>Height</label><input type="text" value="${escapeHtml(me.height)}"></div>
+        <div class="field"><label>Weight</label><input type="text" value="${escapeHtml(me.weight)}"></div>
+        <div class="field"><label>Body Type</label><select>${OPTIONS.bodyType.map(b=>`<option ${me.bodyType===b?'selected':''}>${b}</option>`).join('')}</select></div>
+      </div>
+      <div class="form-row-3">
+        <div class="field"><label>Complexion</label><select>${OPTIONS.complexion.map(c=>`<option ${me.complexion===c?'selected':''}>${c}</option>`).join('')}</select></div>
+        <div class="field"><label>Marital Status</label><select>${OPTIONS.maritalStatus.map(m=>`<option ${me.maritalStatus===m?'selected':''}>${m}</option>`).join('')}</select></div>
+        <div class="field"><label>Diet</label><select>${OPTIONS.diet.map(d=>`<option ${me.diet===d?'selected':''}>${d}</option>`).join('')}</select></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2><i class="fa-solid fa-om"></i> Religion & Community</h2>
+      <div class="form-row-3">
+        <div class="field"><label>Religion</label><select>${OPTIONS.religion.map(r=>`<option ${me.religion===r?'selected':''}>${r}</option>`).join('')}</select></div>
+        <div class="field"><label>Caste</label><select>${OPTIONS.caste.map(c=>`<option ${me.caste===c?'selected':''}>${c}</option>`).join('')}</select></div>
+        <div class="field"><label>Mother Tongue</label><select>${OPTIONS.motherTongue.map(m=>`<option ${me.motherTongue===m?'selected':''}>${m}</option>`).join('')}</select></div>
+      </div>
+      <div class="form-row-3">
+        <div class="field"><label>Sub-caste</label><input type="text" value="${escapeHtml(me.subcaste)}"></div>
+        <div class="field"><label>Gotra</label><input type="text" value="${escapeHtml(me.gotra)}"></div>
+        <div class="field"><label>Manglik</label><select>${OPTIONS.manglik.map(m=>`<option ${me.manglik===m?'selected':''}>${m}</option>`).join('')}</select></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Rashi</label><select>${OPTIONS.rashi.map(r=>`<option ${me.rashi===r?'selected':''}>${r}</option>`).join('')}</select></div>
+        <div class="field"><label>Nakshatra</label><input type="text" value="${escapeHtml(me.nakshatra)}"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2><i class="fa-solid fa-graduation-cap"></i> Education & Career</h2>
+      <div class="form-row">
+        <div class="field"><label>Highest Education</label><select>${OPTIONS.education.map(e=>`<option ${me.education===e?'selected':''}>${e}</option>`).join('')}</select></div>
+        <div class="field"><label>Education Details</label><input type="text" value="${escapeHtml(me.educationDetails)}"></div>
+      </div>
+      <div class="form-row-3">
+        <div class="field"><label>Profession</label><select>${OPTIONS.profession.map(p=>`<option ${me.profession===p?'selected':''}>${p}</option>`).join('')}</select></div>
+        <div class="field"><label>Company</label><input type="text" value="${escapeHtml(me.company)}"></div>
+        <div class="field"><label>Annual Income</label><select>${OPTIONS.income.map(i=>`<option ${me.income===i?'selected':''}>${i}</option>`).join('')}</select></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2><i class="fa-solid fa-location-dot"></i> Location</h2>
+      <div class="form-row-3">
+        <div class="field"><label>City</label><input type="text" value="${escapeHtml(me.city)}"></div>
+        <div class="field"><label>State</label><input type="text" value="${escapeHtml(me.state)}"></div>
+        <div class="field"><label>Country</label><input type="text" value="${escapeHtml(me.country)}"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2><i class="fa-solid fa-house-user"></i> Family Details</h2>
+      <div class="form-row">
+        <div class="field"><label>Father's Name</label><input type="text" value="${escapeHtml(me.fatherName)}"></div>
+        <div class="field"><label>Father's Occupation</label><input type="text" value="${escapeHtml(me.fatherOccupation)}"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Mother's Name</label><input type="text" value="${escapeHtml(me.motherName)}"></div>
+        <div class="field"><label>Mother's Occupation</label><input type="text" value="${escapeHtml(me.motherOccupation)}"></div>
+      </div>
+      <div class="form-row-3">
+        <div class="field"><label>Siblings</label><input type="text" value="${escapeHtml(me.siblings)}"></div>
+        <div class="field"><label>Family Type</label><select>${OPTIONS.familyType.map(f=>`<option ${me.familyType===f?'selected':''}>${f}</option>`).join('')}</select></div>
+        <div class="field"><label>Family Status</label><select>${OPTIONS.familyStatus.map(f=>`<option ${me.familyStatus===f?'selected':''}>${f}</option>`).join('')}</select></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Family Values</label><select>${OPTIONS.familyValues.map(f=>`<option ${me.familyValues===f?'selected':''}>${f}</option>`).join('')}</select></div>
+        <div class="field"><label>Native Place</label><input type="text" value="${escapeHtml(me.nativePlace)}"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2><i class="fa-solid fa-pen"></i> About & Preferences</h2>
+      <div class="field"><label>About Me</label><textarea>${escapeHtml(me.aboutMe)}</textarea></div>
+      <div class="field"><label>Partner Expectations</label><textarea>${escapeHtml(me.partnerExpectation)}</textarea></div>
+    </div>
+
+    <div class="section">
+      <h2><i class="fa-solid fa-om"></i> Horoscope / Kundli (Optional)</h2>
+      <div class="form-row-3">
+        <div class="field"><label>Birth Place</label><input type="text" value="${escapeHtml((me.horoscope&&me.horoscope.birthPlace)||'')}"></div>
+        <div class="field"><label>Birth Time</label><input type="time" value="${(me.horoscope&&me.horoscope.birthTime&&me.horoscope.birthTime!=='—')?'':''}"></div>
+        <div class="field"><label>Charan</label><input type="text" value="${escapeHtml((me.horoscope&&me.horoscope.charan)||'')}"></div>
+      </div>
+      <div class="field"><label>Upload Kundli (PDF/Image)</label><div style="padding:20px;border:2px dashed var(--line);border-radius:10px;text-align:center;cursor:pointer" onclick="toast('Upload kundli')"><i class="fa-solid fa-cloud-arrow-up ic-lg"></i><p class="muted" style="margin:6px 0 0;font-size:13px">Drop your kundli here — we'll extract rashi/nakshatra automatically</p></div></div>
+    </div>
+
+    <div class="section">
+      <h2><i class="fa-solid fa-camera"></i> Photos</h2>
+      <div class="photos-strip">
+        ${(me.photos||[]).map(ph=>`<div class="p"><img src="${ph}"></div>`).join('')}
+        <div class="p" style="border:2px dashed var(--primary-100);background:#fff;color:var(--primary);cursor:pointer" onclick="toast('Upload coming soon')"><i class="fa-solid fa-plus" style="font-size:28px"></i></div>
+      </div>
+      <p class="muted" style="font-size:12.5px;margin-top:10px"><i class="fa-solid fa-circle-info"></i> Verified photos get 3× more matches. Max 10 photos, 5MB each.</p>
+      <div class="form-row mt-2">
+        <div class="field"><label>Photo Privacy</label><select><option ${me.photosPrivacy==='public'?'selected':''} value="public">Public — visible to all</option><option ${me.photosPrivacy==='request'?'selected':''} value="request">On request — blurred until accepted</option><option>Premium members only</option></select></div>
+        <div class="field"><label>Display Name</label><select><option>Full name (current)</option><option>First name only (until accepted)</option></select></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2><i class="fa-solid fa-lock"></i> Privacy & Visibility</h2>
+      <div style="display:grid;gap:10px">
+        <label style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:#fafafa;border-radius:10px"><span><b>Stealth Browsing</b><br><span class="muted" style="font-size:12.5px">Browse without leaving a trace</span></span><input type="checkbox"></label>
+        <label style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:#fafafa;border-radius:10px"><span><b>Hide Online Status</b><br><span class="muted" style="font-size:12.5px">Don't show "active now"</span></span><input type="checkbox"></label>
+        <label style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:#fafafa;border-radius:10px"><span><b>Hide Contact Info</b><br><span class="muted" style="font-size:12.5px">Only show after interest accepted</span></span><input type="checkbox" checked></label>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button type="button" class="btn btn-ghost" onclick="go('dashboard')">Cancel</button>
+      <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
+    </div>
+    </form>
+  </div>`;
+};
+function saveProfile(){toast('Profile saved successfully');}
+
+PAGES.inbox=function(s){
+  const chatIds=Object.keys(s.messages);
+  let activeId=qs('to')||chatIds[0];
+  if(activeId && !s.messages[activeId]){s.messages[activeId]=[];Store.save(s);}
+  const activeProfile=s.profiles.find(p=>p.id===activeId);
+  const otherIds=Object.keys(s.messages);
+  return `
+  <div class="container">
+    <div class="page-head"><div><h2>My Inbox</h2><div class="sub">Conversations with your connections</div></div></div>
+    <div class="chat-wrap">
+      <div class="chat-list">
+        ${otherIds.length?otherIds.map(id=>{
+          const p=s.profiles.find(x=>x.id===id);
+          if(!p)return'';
+          const msgs=s.messages[id]||[];
+          const last=msgs[msgs.length-1];
+          return `
+          <div class="item ${id===activeId?'active':''}" onclick="go('inbox',{to:'${id}'})">
+            <div class="avatar">${p.photos&&p.photos[0]?`<img src="${p.photos[0]}">`:escapeHtml(p.name[0])}</div>
+            <div style="flex:1;min-width:0">
+              <div class="name">${escapeHtml(p.name)}</div>
+              <div class="preview">${last?escapeHtml(last.text):'Say hello'}</div>
+            </div>
+          </div>`;
+        }).join(''):'<p class="muted center" style="padding:20px">No conversations yet</p>'}
+      </div>
+      <div class="chat-window">
+        ${activeProfile?`
+          <div class="chat-header">
+            <div class="avatar" style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#f4e7eb,#ead2db);display:grid;place-items:center;color:var(--primary);font-weight:700;overflow:hidden">
+              ${activeProfile.photos&&activeProfile.photos[0]?`<img src="${activeProfile.photos[0]}" style="width:100%;height:100%;object-fit:cover">`:escapeHtml(activeProfile.name[0])}
+            </div>
+            <div style="flex:1;min-width:0">
+              <div>${escapeHtml(activeProfile.name)}</div>
+              <div class="muted" style="font-size:12px;font-weight:400"><i class="fa-solid fa-circle" style="color:var(--success);font-size:8px"></i> Online · ${escapeHtml(activeProfile.city)}</div>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="go('profile',{id:'${activeProfile.id}'})"><i class="fa-solid fa-user"></i> View Profile</button>
+          </div>
+          <div class="chat-body" id="chat-body">
+            ${(s.messages[activeId]||[]).map(m=>`
+              <div class="chat-msg ${m.from}">${escapeHtml(m.text)}<div style="font-size:10.5px;opacity:.7;margin-top:4px;text-align:right">${m.t||''}</div></div>
+            `).join('')}
+          </div>
+          <div class="chat-input">
+            <input type="text" id="msg" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendMsg('${activeId}')">
+            <button class="btn btn-primary" onclick="sendMsg('${activeId}')"><i class="fa-solid fa-paper-plane"></i></button>
+          </div>
+        `:`<div style="padding:60px;text-align:center;color:var(--muted)"><i class="fa-solid fa-comments ic-lg"></i><p class="mt-2">Select a conversation or start one from a profile page</p></div>`}
+      </div>
+    </div>
+    <div class="alert alert-warn mt-2"><i class="fa-solid fa-shield-halved"></i><div><b>Stay Safe:</b> Never share money, bank details or OTPs with anyone you meet here. Report suspicious behavior.</div></div>
+  </div>
+  <script>setTimeout(()=>{const c=document.getElementById('chat-body');if(c)c.scrollTop=c.scrollHeight;},20);<\/script>`;
+};
+function sendMsg(id){
+  const input=document.getElementById('msg');const text=input.value.trim();if(!text)return;
+  const s=Store.load();s.messages[id]=s.messages[id]||[];
+  const t=new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  s.messages[id].push({from:'me',text,t});Store.save(s);render();
+  setTimeout(()=>{const s2=Store.load();s2.messages[id].push({from:'them',text:'Thank you for your message. I will respond shortly.',t:new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})});Store.save(s2);render();},1200);
+}
+
+/* ========================= AI Matches ========================= */
+PAGES['ai-matches']=function(s){
+  const me=getMe(s);
+  const scored=s.profiles.filter(p=>p.id!==me.id&&p.gender!==me.gender).map(p=>({p,ai:aiMatchScore(me,p)})).sort((a,b)=>b.ai.score-a.ai.score);
+  const top=scored.filter(x=>x.ai.score>=70);
+  const also=scored.filter(x=>x.ai.score<70&&x.ai.score>=55);
+  return `
+  <div class="container">
+    <div class="ai-widget" style="padding:26px;margin-bottom:22px">
+      <div class="head">
+        <i class="fa-solid fa-wand-magic-sparkles"></i>
+        <div style="flex:1"><h3 class="shimmer-text" style="font-size:20px">Your AI-Curated Matches</h3><div class="muted" style="font-size:13px">Refreshed daily. Scored against your preferences, values, traits & kundli.</div></div>
+        <button class="btn btn-primary btn-sm" onclick="toast('AI refreshed','fa-wand-magic-sparkles')" style="background:#6d28d9"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:14px">
+        <div style="background:#fff;padding:14px;border-radius:10px;text-align:center"><div style="font-family:'Playfair Display';font-size:26px;color:#6d28d9;font-weight:700">${top.length}</div><div class="muted" style="font-size:12px">Highly compatible</div></div>
+        <div style="background:#fff;padding:14px;border-radius:10px;text-align:center"><div style="font-family:'Playfair Display';font-size:26px;color:#6d28d9;font-weight:700">${also.length}</div><div class="muted" style="font-size:12px">Also worth exploring</div></div>
+        <div style="background:#fff;padding:14px;border-radius:10px;text-align:center"><div style="font-family:'Playfair Display';font-size:26px;color:#6d28d9;font-weight:700">40+</div><div class="muted" style="font-size:12px">Signals analysed</div></div>
+        <div style="background:#fff;padding:14px;border-radius:10px;text-align:center"><div style="font-family:'Playfair Display';font-size:26px;color:#6d28d9;font-weight:700">Daily</div><div class="muted" style="font-size:12px">Fresh each morning</div></div>
+      </div>
+      <style>@media(max-width:700px){.ai-widget [style*="grid-template-columns:repeat(4,1fr)"]{grid-template-columns:repeat(2,1fr)!important}}</style>
+    </div>
+
+    <h2 style="font-family:'Inter',sans-serif;font-size:20px;margin:0 0 14px"><i class="fa-solid fa-medal" style="color:var(--accent)"></i> Top Matches For You</h2>
+    ${top.length?`<div class="grid grid-2">
+      ${top.slice(0,6).map(x=>`
+        <div class="card">
+          <div class="card-body" style="display:flex;gap:16px">
+            <div style="width:110px;height:140px;background:linear-gradient(135deg,#f4e7eb,#ead2db);border-radius:10px;overflow:hidden;flex-shrink:0;position:relative">
+              ${x.p.photos&&x.p.photos[0]?`<img src="${x.p.photos[0]}" style="width:100%;height:100%;object-fit:cover">`:`<div style="display:grid;place-items:center;height:100%;color:var(--primary);font-weight:700;font-size:30px">${escapeHtml(x.p.name[0])}</div>`}
+              <div class="ai-score" style="top:6px;left:6px;font-size:10px;padding:3px 7px"><i class="fa-solid fa-wand-magic-sparkles"></i> ${x.ai.score}%</div>
+            </div>
+            <div style="flex:1;min-width:0">
+              <h3 style="margin:0;font-size:16px;font-family:'Inter',sans-serif"><a onclick="go('profile',{id:'${x.p.id}'})">${escapeHtml(x.p.name)}, ${x.p.age}</a></h3>
+              <div class="muted" style="font-size:12.5px;margin-top:2px"><i class="fa-solid fa-location-dot"></i> ${escapeHtml(x.p.city)} · ${escapeHtml(x.p.profession)}</div>
+              <ul class="ai-reasons" style="margin-top:8px">${x.ai.reasons.slice(0,3).map(r=>`<li style="font-size:12px"><i class="fa-solid ${r.ic}"></i>${escapeHtml(r.t)}</li>`).join('')}</ul>
+              <div style="display:flex;gap:6px;margin-top:10px">
+                <button class="btn btn-primary btn-sm" onclick="sendInterest('${x.p.id}')"><i class="fa-solid fa-paper-plane"></i> Interest</button>
+                <button class="btn btn-outline-primary btn-sm" onclick="go('profile',{id:'${x.p.id}'})">View</button>
+              </div>
+            </div>
+          </div>
+        </div>`).join('')}
+    </div>`:'<div class="card"><div class="card-body muted center">Complete your profile to get AI-curated matches.</div></div>'}
+
+    <h2 style="font-family:'Inter',sans-serif;font-size:20px;margin:30px 0 14px"><i class="fa-solid fa-binoculars"></i> Also Worth Exploring</h2>
+    <div class="grid grid-3">${also.slice(0,6).map(x=>profileCardHTML(x.p)).join('')}</div>
+  </div>`;
+};
+
+/* ========================= Verification Center ========================= */
+PAGES.verify=function(s){
+  const me=getMe(s);
+  const v=(me&&me.verification)||{email:true,phone:false,aadhaar:false,selfie:false,video:false,background:false,premium:false};
+  const steps=[
+    {k:'email',l:'Email Verification',d:'A 6-digit OTP is sent to your email. Basic but essential.',ic:'fa-envelope',time:'1 min',reward:'+10 Trust'},
+    {k:'phone',l:'Phone Verification',d:'Verify your mobile number via SMS OTP.',ic:'fa-mobile-screen-button',time:'1 min',reward:'+15 Trust'},
+    {k:'aadhaar',l:'Aadhaar / Govt ID',d:'Upload your Aadhaar or any government ID. Instantly matched against DigiLocker records.',ic:'fa-id-card',time:'2 min',reward:'+20 Trust'},
+    {k:'selfie',l:'Selfie Liveness Check',d:'Take a quick live selfie. Our AI face-matches it with your Aadhaar photo + profile photos.',ic:'fa-camera',time:'2 min',reward:'+20 Trust'},
+    {k:'video',l:'Video Verification',d:'Schedule a 5-minute live video call with our verification team. Unlocks Premium Trust badge.',ic:'fa-video',time:'5 min',reward:'+15 Trust'},
+    {k:'background',l:'Background Check',d:'Comprehensive verification of education, employment and criminal record via partner agencies.',ic:'fa-user-shield',time:'3-5 days',reward:'+10 Trust'}
+  ];
+  const done=steps.filter(st=>v[st.k]).length;
+  const pct=Math.round((done/steps.length)*100);
+  return `
+  <div class="container">
+    <div class="page-head">
+      <div><h2><i class="fa-solid fa-shield-halved" style="color:var(--primary);margin-right:8px"></i>Verification Center</h2><div class="sub">Build trust. Get more matches. Stay safe.</div></div>
+      <div class="chip-free" style="background:var(--primary-50);border-color:#f1cfda;color:var(--primary-dark)"><i class="fa-solid fa-lock"></i> Your data is encrypted</div>
+    </div>
+
+    <div class="card" style="padding:24px;margin-bottom:20px;background:linear-gradient(135deg,#fff,var(--primary-50))">
+      <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap">
+        <div class="progress-ring" style="--deg:${Math.round(pct*3.6)}deg;width:100px;height:100px">
+          <div class="v" style="font-size:22px">${pct}%</div>
+        </div>
+        <div style="flex:1;min-width:240px">
+          <h2 style="margin:0 0 4px;font-family:'Inter',sans-serif;font-size:20px">${done===0?'Start verifying':done===steps.length?'You\'re fully verified!':'Almost there'}</h2>
+          <p class="muted" style="margin:0;font-size:14px">${done} of ${steps.length} verifications complete. Verified profiles get <b>3.2× more matches</b> and appear higher in search.</p>
+        </div>
+        <div style="text-align:right">
+          <div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;font-weight:600">Current Tier</div>
+          <div style="margin-top:4px">${done===0?'<span class="verif-tier basic">Basic</span>':done<4?'<span class="verif-tier verified">Partially Verified</span>':done<6?'<span class="verif-tier verified">Verified</span>':'<span class="verif-tier premium">Premium Trust</span>'}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert alert-info">
+      <i class="fa-solid fa-circle-info"></i>
+      <div><b>Why we verify:</b> ShubhMilan's multi-layer verification stops fake profiles, catfish and frauds. Your ID proofs are stored encrypted and never shared with other members — only your verification badge is visible.</div>
+    </div>
+
+    ${steps.map(st=>`
+      <div class="verif-step ${v[st.k]?'done':''}">
+        <div class="ic"><i class="fa-solid ${st.ic}"></i></div>
+        <div class="cnt">
+          <h3>${st.l}${v[st.k]?' <span class="status-pill status-active" style="margin-left:8px">Verified</span>':''}</h3>
+          <p>${st.d}</p>
+          <div style="display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:6px">
+            <span><i class="fa-solid fa-clock"></i> ${st.time}</span>
+            <span><i class="fa-solid fa-shield"></i> ${st.reward}</span>
+          </div>
+        </div>
+        <div class="check">${v[st.k]?`<button class="btn btn-ghost btn-sm" onclick="toast('${st.l} — already verified')"><i class="fa-solid fa-circle-check" style="color:var(--success)"></i> Done</button>`:`<button class="btn btn-primary btn-sm" onclick="verifyStep('${st.k}')"><i class="fa-solid fa-arrow-right"></i> Start</button>`}</div>
+      </div>`).join('')}
+
+    <div class="card mt-3" style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid #f59e0b;padding:24px">
+      <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+        <i class="fa-solid fa-crown" style="font-size:40px;color:#d97706"></i>
+        <div style="flex:1;min-width:240px">
+          <h3 style="margin:0;color:#78350f">Premium Trust Badge</h3>
+          <p style="margin:6px 0 0;color:#92400e;font-size:14px">Complete all 6 verifications to earn our highest trust tier. Premium Trust profiles appear at the top of every search and get 5× more interest.</p>
+        </div>
+        <div><span class="verif-tier premium"><i class="fa-solid fa-shield-halved"></i> Premium Trust</span></div>
+      </div>
+    </div>
+
+    <div class="section mt-3">
+      <h2><i class="fa-solid fa-user-lock"></i> Privacy Controls</h2>
+      <div style="display:grid;gap:12px">
+        <label style="display:flex;justify-content:space-between;align-items:center;padding:14px;background:#fafafa;border-radius:10px"><span><b>Photo Privacy</b><br><span class="muted" style="font-size:13px">Blur photos until interest is accepted</span></span><select style="max-width:200px"><option>Public</option><option>Request-only (blurred)</option><option>Premium members only</option></select></label>
+        <label style="display:flex;justify-content:space-between;align-items:center;padding:14px;background:#fafafa;border-radius:10px"><span><b>Stealth Browsing</b><br><span class="muted" style="font-size:13px">View profiles without leaving a trace</span></span><input type="checkbox"></label>
+        <label style="display:flex;justify-content:space-between;align-items:center;padding:14px;background:#fafafa;border-radius:10px"><span><b>Hide Online Status</b><br><span class="muted" style="font-size:13px">Don't show when you're active</span></span><input type="checkbox"></label>
+        <label style="display:flex;justify-content:space-between;align-items:center;padding:14px;background:#fafafa;border-radius:10px"><span><b>Hide Last Name</b><br><span class="muted" style="font-size:13px">Show only first name until interest is accepted</span></span><input type="checkbox" checked></label>
+        <label style="display:flex;justify-content:space-between;align-items:center;padding:14px;background:#fafafa;border-radius:10px"><span><b>Profile Visibility</b><br><span class="muted" style="font-size:13px">Who can see your profile</span></span><select style="max-width:200px"><option>Everyone</option><option>Registered members only</option><option>Mutual interests only</option><option>Hidden</option></select></label>
+      </div>
+    </div>
+  </div>`;
+};
+function verifyStep(k){toast('Verification started for '+k,'fa-shield-halved');}
+
+/* ========================= Kundli Match ========================= */
+PAGES.kundli=function(s){
+  const a=qs('a'),b=qs('b');
+  const pa=a?s.profiles.find(x=>x.id===a):getMe(s);
+  const pb=b?s.profiles.find(x=>x.id===b):null;
+  const gunaBreakdown=[
+    {k:'Varna',max:1,score:1,desc:'Spiritual compatibility'},
+    {k:'Vashya',max:2,score:2,desc:'Mutual attraction & control'},
+    {k:'Tara',max:3,score:3,desc:'Health & well-being'},
+    {k:'Yoni',max:4,score:3,desc:'Sexual compatibility'},
+    {k:'Graha Maitri',max:5,score:5,desc:'Mental compatibility'},
+    {k:'Gana',max:6,score:6,desc:'Temperament match'},
+    {k:'Bhakoot',max:7,score:4,desc:'Financial & family prosperity'},
+    {k:'Nadi',max:8,score:8,desc:'Genetic & health compatibility'}
+  ];
+  const total=gunaBreakdown.reduce((a,c)=>a+c.score,0);
+  const verdict=total>=28?{label:'Excellent Match',color:'var(--success)',note:'Highly recommended. All major doshas balanced.'}:total>=18?{label:'Good Match',color:'var(--success)',note:'Compatible. Minor factors to discuss with elders.'}:total>=12?{label:'Average Match',color:'var(--warn)',note:'Moderate compatibility. Consult an astrologer.'}:{label:'Poor Match',color:'var(--danger)',note:'Low compatibility. Significant remedies may be needed.'};
+  return `
+  <div class="container">
+    <div class="page-head"><div><h2><i class="fa-solid fa-om" style="color:var(--primary)"></i> Kundli / Guna Milan Matching</h2><div class="sub">Traditional 36-point horoscope compatibility analysis (Ashtakoot)</div></div></div>
+
+    ${!pb?`
+    <div class="card" style="padding:30px;text-align:center">
+      <i class="fa-solid fa-om ic-lg" style="font-size:60px"></i>
+      <h2 class="mt-2">Choose a profile to match with</h2>
+      <p class="muted">Select any profile to instantly compute horoscope compatibility with ${escapeHtml((pa&&pa.name)||'your kundli')}.</p>
+      <button class="btn btn-primary mt-2" onclick="go('browse')"><i class="fa-solid fa-magnifying-glass"></i> Browse Profiles</button>
+    </div>`:`
+    <div class="card mb-2" style="padding:24px">
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:20px;align-items:center">
+        <div style="text-align:center">
+          <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#f4e7eb,#ead2db);overflow:hidden;margin:0 auto 10px">${pa&&pa.photos&&pa.photos[0]?`<img src="${pa.photos[0]}" style="width:100%;height:100%;object-fit:cover">`:'<div style="display:grid;place-items:center;height:100%;color:var(--primary);font-weight:700;font-size:30px">'+escapeHtml((pa&&pa.name)||'?')[0]+'</div>'}</div>
+          <div style="font-weight:700">${escapeHtml((pa&&pa.name)||'You')}</div>
+          <div class="muted" style="font-size:12px">${escapeHtml((pa&&pa.rashi)||'—')}</div>
+        </div>
+        <div style="text-align:center;color:var(--primary)"><i class="fa-solid fa-heart" style="font-size:40px"></i></div>
+        <div style="text-align:center">
+          <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#f4e7eb,#ead2db);overflow:hidden;margin:0 auto 10px">${pb.photos&&pb.photos[0]?`<img src="${pb.photos[0]}" style="width:100%;height:100%;object-fit:cover">`:'<div style="display:grid;place-items:center;height:100%;color:var(--primary);font-weight:700;font-size:30px">'+escapeHtml(pb.name[0])+'</div>'}</div>
+          <div style="font-weight:700">${escapeHtml(pb.name)}</div>
+          <div class="muted" style="font-size:12px">${escapeHtml(pb.rashi||'—')}</div>
+        </div>
+      </div>
+    </div>
+    <div class="grid grid-2">
+      <div class="section">
+        <h2><i class="fa-solid fa-circle-half-stroke"></i> Overall Compatibility</h2>
+        <div class="center">
+          <div class="guna-ring" style="--deg:${Math.round(total/36*360)}deg;background:conic-gradient(${verdict.color} ${Math.round(total/36*360)}deg,#eee 0)">
+            <div class="v" style="color:${verdict.color}">${total}</div>
+            <div class="l">of 36 gunas</div>
+          </div>
+          <h3 class="mt-2" style="color:${verdict.color}">${verdict.label}</h3>
+          <p class="muted" style="font-size:13px;max-width:280px;margin:6px auto 0">${verdict.note}</p>
+        </div>
+        <div class="div"></div>
+        <div style="display:grid;gap:8px;font-size:13.5px">
+          <div style="display:flex;justify-content:space-between"><span>Manglik Status</span><b>${pa&&pa.manglik===pb.manglik?'<span style="color:var(--success)">Compatible</span>':'<span style="color:var(--warn)">Review needed</span>'}</b></div>
+          <div style="display:flex;justify-content:space-between"><span>Nakshatra</span><b>${escapeHtml((pa&&pa.nakshatra)||'—')} × ${escapeHtml(pb.nakshatra||'—')}</b></div>
+          <div style="display:flex;justify-content:space-between"><span>Rashi</span><b>${escapeHtml((pa&&pa.rashi)||'—')} × ${escapeHtml(pb.rashi||'—')}</b></div>
+        </div>
+      </div>
+      <div class="section">
+        <h2><i class="fa-solid fa-list-check"></i> Ashtakoot Breakdown</h2>
+        <table class="guna-table">
+          <thead><tr><th>Factor</th><th>Score</th><th>Status</th></tr></thead>
+          <tbody>
+            ${gunaBreakdown.map(g=>`<tr><td><b>${g.k}</b><div class="muted" style="font-size:11px">${g.desc}</div></td><td>${g.score}/${g.max}</td><td class="${g.score/g.max>=0.66?'good':'avg'}">${g.score/g.max>=0.66?'Good':'Moderate'}</td></tr>`).join('')}
+            <tr style="background:#fafafa"><td><b>Total</b></td><td><b>${total}/36</b></td><td class="good">${verdict.label}</td></tr>
+          </tbody>
+        </table>
+        <div class="alert alert-info mt-2"><i class="fa-solid fa-circle-info"></i><div style="font-size:12.5px">This is an automated Ashtakoot calculation. For a detailed reading and remedies, consult a certified astrologer via our <a>astrology partners</a>.</div></div>
+      </div>
+    </div>
+    <div class="flex-between mt-3">
+      <button class="btn btn-outline-primary" onclick="go('profile',{id:'${pb.id}'})"><i class="fa-solid fa-arrow-left"></i> Back to Profile</button>
+      <div><button class="btn btn-ghost" onclick="toast('Kundli PDF generated','fa-file-pdf')"><i class="fa-solid fa-file-pdf"></i> Download PDF</button> <button class="btn btn-primary" onclick="sendInterest('${pb.id}')"><i class="fa-solid fa-paper-plane"></i> Send Interest</button></div>
+    </div>
+    `}
+  </div>`;
+};
+
+/* ========================= Safety Center ========================= */
+PAGES.safety=function(s){
+  return `
+  <div class="container">
+    <div class="page-head"><div><h2><i class="fa-solid fa-shield-halved" style="color:var(--primary)"></i> Safety Center</h2><div class="sub">Your safety is our top priority. Here's how we protect you — and how to stay safe.</div></div></div>
+
+    <div class="card" style="background:linear-gradient(135deg,var(--danger-50),#fff);padding:26px;border:1px solid #f3cdc5;margin-bottom:20px">
+      <div style="display:flex;gap:16px;align-items:flex-start">
+        <i class="fa-solid fa-triangle-exclamation" style="font-size:32px;color:var(--danger)"></i>
+        <div style="flex:1">
+          <h3 style="margin:0;color:var(--danger)">In an emergency or if you've been scammed</h3>
+          <p style="margin:6px 0 12px;font-size:14px">Contact the ShubhMilan safety team immediately. We respond within 1 hour for safety-critical issues.</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-danger btn-sm"><i class="fa-solid fa-phone"></i> Call 1800-123-4567</button>
+            <button class="btn btn-ghost btn-sm"><i class="fa-solid fa-envelope"></i> safety@shubhmilan.com</button>
+            <button class="btn btn-ghost btn-sm"><i class="fa-solid fa-flag"></i> Report Profile</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-3">
+      <div class="feature"><div class="ic"><i class="fa-solid fa-hand-holding-dollar"></i></div><div><h3>Never Send Money</h3><p>No genuine member will ever ask for money, emergency loans, gift cards, or crypto. This is the #1 fraud pattern. Report and block immediately.</p></div></div>
+      <div class="feature"><div class="ic"><i class="fa-solid fa-key"></i></div><div><h3>Never Share OTPs</h3><p>Never share OTPs, passwords, banking PINs, CVVs or personal documents over chat. Not even to "verify identity."</p></div></div>
+      <div class="feature"><div class="ic"><i class="fa-solid fa-location-dot"></i></div><div><h3>Meet in Public</h3><p>Always meet at public places like cafes or restaurants. Tell a family member where you're going and share live location.</p></div></div>
+      <div class="feature"><div class="ic"><i class="fa-solid fa-id-card"></i></div><div><h3>Ask to Verify</h3><p>Request video call or verification before sharing personal details. Use our in-platform verified video call.</p></div></div>
+      <div class="feature"><div class="ic"><i class="fa-solid fa-eye-slash"></i></div><div><h3>Hide Personal Info</h3><p>Don't share home address, office, Aadhaar photocopies, or extended family details until you're certain.</p></div></div>
+      <div class="feature"><div class="ic"><i class="fa-solid fa-circle-exclamation"></i></div><div><h3>Trust Your Gut</h3><p>If something feels off — pushy timelines, too-good-to-be-true stories, avoiding video calls — it probably is. Report and move on.</p></div></div>
+    </div>
+
+    <div class="section mt-3">
+      <h2><i class="fa-solid fa-flag"></i> Report a Profile</h2>
+      <div class="field"><label>Profile ID</label><input type="text" placeholder="e.g. SM10007"></div>
+      <div class="field"><label>Reason</label><select><option>Fake profile / photos</option><option>Married / misrepresenting status</option><option>Asking for money</option><option>Abusive behavior</option><option>Spam / scam</option><option>Other</option></select></div>
+      <div class="field"><label>Details</label><textarea placeholder="Please describe what happened..."></textarea></div>
+      <button class="btn btn-primary" onclick="toast('Report submitted. We\\'ll review within 4 hours.','fa-flag')"><i class="fa-solid fa-paper-plane"></i> Submit Report</button>
+    </div>
+
+    <div class="section">
+      <h2><i class="fa-solid fa-book"></i> How We Protect You</h2>
+      <div class="dl-grid">
+        <div class="dl-row"><span class="dl-l">Every profile verified</span><span class="dl-v">Yes</span></div>
+        <div class="dl-row"><span class="dl-l">AI scam detection</span><span class="dl-v">Active 24/7</span></div>
+        <div class="dl-row"><span class="dl-l">Photo reverse-image search</span><span class="dl-v">On every upload</span></div>
+        <div class="dl-row"><span class="dl-l">Safety team response</span><span class="dl-v">&lt; 4 hours</span></div>
+        <div class="dl-row"><span class="dl-l">Encrypted messaging</span><span class="dl-v">Yes</span></div>
+        <div class="dl-row"><span class="dl-l">Keyword monitoring</span><span class="dl-v">Money/OTP/personal info</span></div>
+      </div>
+    </div>
+  </div>`;
+};
+
+/* ========================= Events ========================= */
+PAGES.events=function(s){
+  return `
+  <div class="container">
+    <div class="page-head"><div><h2><i class="fa-solid fa-calendar-days" style="color:var(--primary)"></i> Community Events</h2><div class="sub">In-person & virtual meetups — for members and their families</div></div><button class="btn btn-primary"><i class="fa-solid fa-bell"></i> Notify me of new events</button></div>
+
+    <div class="grid grid-2">
+      ${s.events.map(e=>{
+        const d=new Date(e.date);
+        return `
+        <div class="event-card">
+          <div class="date-box">
+            <div class="d">${d.getDate()}</div>
+            <div class="m">${d.toLocaleString('en',{month:'short'})}</div>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+              <span class="status-pill ${e.type==='Virtual'?'status-verified':'status-active'}"><i class="fa-solid ${e.type==='Virtual'?'fa-video':'fa-location-dot'}"></i> ${e.type}</span>
+            </div>
+            <h3 style="margin:0 0 4px;font-family:'Inter',sans-serif">${escapeHtml(e.name)}</h3>
+            <div class="muted" style="font-size:13px"><i class="fa-solid fa-clock"></i> ${escapeHtml(e.time)} · <i class="fa-solid fa-location-dot"></i> ${escapeHtml(e.venue)}</div>
+            <div class="muted" style="font-size:13px;margin-top:4px"><i class="fa-solid fa-user-group"></i> ${e.attending} attending</div>
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <button class="btn btn-primary btn-sm" onclick="toast('RSVP confirmed','fa-check')"><i class="fa-solid fa-check"></i> RSVP</button>
+              <button class="btn btn-ghost btn-sm"><i class="fa-solid fa-info"></i> Details</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <div class="card mt-3" style="background:linear-gradient(135deg,var(--primary-50),#fff);padding:30px;text-align:center">
+      <i class="fa-solid fa-calendar-plus ic-lg"></i>
+      <h2 class="mt-2">Host a community event</h2>
+      <p class="muted">Community leaders can host local meetups. We help with promotion and RSVP tracking — all free.</p>
+      <button class="btn btn-primary mt-1"><i class="fa-solid fa-plus"></i> Propose an Event</button>
+    </div>
+  </div>`;
+};
+
+/* ========================= Stories ========================= */
+PAGES.stories=function(s){
+  return `
+  <div class="container">
+    <div class="page-head"><div><h2><i class="fa-solid fa-ring" style="color:var(--accent)"></i> Success Stories</h2><div class="sub">25,000+ couples found each other on ShubhMilan — completely free.</div></div><button class="btn btn-primary" onclick="toast('Story submitted','fa-heart')"><i class="fa-solid fa-plus"></i> Share Your Story</button></div>
+
+    <div class="grid grid-2">
+      ${s.successStories.map(st=>`
+        <div class="story-card">
+          <div class="s-photo"><img src="${st.photo}"></div>
+          <div class="s-body">
+            <div class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+            <h3>${escapeHtml(st.names)}</h3>
+            <div class="when"><i class="fa-solid fa-ring" style="color:var(--accent)"></i> Married ${escapeHtml(st.married)} · ${escapeHtml(st.city)}</div>
+            <p>"${escapeHtml(st.quote)}"</p>
+          </div>
+        </div>`).join('')}
+    </div>
+  </div>`;
+};
+
+/* ========================= Admin ========================= */
+PAGES.admin=function(s){
+  const tab=qs('tab')||'overview';
+  const tabs=[
+    {k:'overview',l:'Overview',i:'fa-chart-line'},
+    {k:'users',l:'All Users',i:'fa-users'},
+    {k:'verifications',l:'Verifications',i:'fa-circle-check'},
+    {k:'reports',l:'Reports',i:'fa-flag'},
+    {k:'messages',l:'Messages',i:'fa-comments'},
+    {k:'matches',l:'Successful Matches',i:'fa-ring'},
+    {k:'support',l:'Support Tickets',i:'fa-headset'}
+  ];
+  return `
+  <div class="container">
+    <div class="page-head">
+      <div><h2><i class="fa-solid fa-shield-halved" style="color:var(--primary);margin-right:8px"></i>Admin Console</h2><div class="sub">Manage users, content and operations</div></div>
+      <div class="chip-free"><i class="fa-solid fa-user-tie"></i> Admin Role</div>
+    </div>
+    <div class="admin-wrap">
+      <aside class="admin-side">
+        <h4>Dashboard</h4>
+        ${tabs.map(t=>`<a class="${tab===t.k?'active':''}" onclick="go('admin',{tab:'${t.k}'})"><i class="fa-solid ${t.i}"></i> ${t.l}</a>`).join('')}
+      </aside>
+      <main class="admin-main">
+        ${adminTab(tab,s)}
+      </main>
+    </div>
+  </div>`;
+};
+function adminTab(tab,s){
+  if(tab==='overview'){
+    return `
+      <div class="grid grid-4">
+        <div class="stat-tile"><div class="icon"><i class="fa-solid fa-users"></i></div><div><div class="num">${s.profiles.length.toLocaleString('en-IN')}</div><div class="lbl">Total Users</div></div></div>
+        <div class="stat-tile"><div class="icon"><i class="fa-solid fa-circle-check"></i></div><div><div class="num">${s.profiles.filter(p=>p.verified).length}</div><div class="lbl">Verified</div></div></div>
+        <div class="stat-tile"><div class="icon"><i class="fa-solid fa-flag"></i></div><div><div class="num">${s.reports.length}</div><div class="lbl">Open Reports</div></div></div>
+        <div class="stat-tile"><div class="icon"><i class="fa-solid fa-ring"></i></div><div><div class="num">142</div><div class="lbl">Matches Made</div></div></div>
+      </div>
+      <div class="grid grid-2 mt-3">
+        <div class="section">
+          <h2><i class="fa-solid fa-user-plus"></i> Recent Signups</h2>
+          <table class="data">
+            <tr><th>Profile</th><th>City</th><th>Date</th></tr>
+            ${s.profiles.slice(0,5).map(p=>`<tr><td><b>${escapeHtml(p.name)}</b><div class="muted" style="font-size:12px">${p.id}</div></td><td>${escapeHtml(p.city)}</td><td>${new Date().toLocaleDateString()}</td></tr>`).join('')}
+          </table>
+        </div>
+        <div class="section">
+          <h2><i class="fa-solid fa-bell"></i> Action Required</h2>
+          <ul style="list-style:none;padding:0;margin:0">
+            <li style="padding:12px 0;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px"><i class="fa-solid fa-flag" style="color:var(--danger)"></i><div style="flex:1"><b>${s.reports.length} reports</b> awaiting moderation<div class="muted" style="font-size:12px">Review and take action</div></div><button class="btn btn-ghost btn-sm" onclick="go('admin',{tab:'reports'})">Review</button></li>
+            <li style="padding:12px 0;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px"><i class="fa-solid fa-circle-check" style="color:var(--warn)"></i><div style="flex:1"><b>${s.profiles.filter(p=>!p.verified).length} profiles</b> pending verification<div class="muted" style="font-size:12px">Document check required</div></div><button class="btn btn-ghost btn-sm" onclick="go('admin',{tab:'verifications'})">Review</button></li>
+            <li style="padding:12px 0;display:flex;align-items:center;gap:12px"><i class="fa-solid fa-headset" style="color:var(--info)"></i><div style="flex:1"><b>5 support tickets</b> open<div class="muted" style="font-size:12px">Avg response: 2h</div></div><button class="btn btn-ghost btn-sm" onclick="go('admin',{tab:'support'})">Open</button></li>
+          </ul>
+        </div>
+      </div>`;
+  }
+  if(tab==='users'){
+    return `
+      <div class="flex-between mb-2">
+        <div class="input-icon" style="min-width:280px"><i class="fa-solid fa-magnifying-glass"></i><input type="text" placeholder="Search users..."></div>
+        <div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-filter"></i> Filter</button><button class="btn btn-primary btn-sm"><i class="fa-solid fa-file-export"></i> Export CSV</button></div>
+      </div>
+      <table class="data">
+        <thead><tr><th>ID</th><th>Name</th><th>Age</th><th>City</th><th>Religion</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${s.profiles.map(p=>`
+            <tr>
+              <td><b>${p.id}</b></td>
+              <td><div style="display:flex;align-items:center;gap:10px"><div class="avatar" style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#f4e7eb,#ead2db);display:grid;place-items:center;color:var(--primary);font-weight:700;overflow:hidden">${p.photos&&p.photos[0]?`<img src="${p.photos[0]}" style="width:100%;height:100%;object-fit:cover">`:escapeHtml(p.name[0])}</div><div>${escapeHtml(p.name)}<div class="muted" style="font-size:12px">${escapeHtml(p.profession)}</div></div></div></td>
+              <td>${p.age}</td>
+              <td>${escapeHtml(p.city)}</td>
+              <td>${p.religion}</td>
+              <td>${p.verified?'<span class="status-pill status-verified"><i class="fa-solid fa-circle-check"></i> Verified</span>':'<span class="status-pill status-pending"><i class="fa-solid fa-hourglass-half"></i> Pending</span>'}</td>
+              <td>
+                <button class="btn btn-ghost btn-sm" onclick="go('profile',{id:'${p.id}'})"><i class="fa-solid fa-eye"></i></button>
+                <button class="btn btn-ghost btn-sm" onclick="toast('Edit user')"><i class="fa-solid fa-pen"></i></button>
+                <button class="btn btn-ghost btn-sm" onclick="toast('User banned','fa-ban')"><i class="fa-solid fa-ban" style="color:var(--danger)"></i></button>
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
+  }
+  if(tab==='verifications'){
+    return `
+      <div class="section">
+        <h2><i class="fa-solid fa-circle-check"></i> Pending Verifications</h2>
+        <table class="data">
+          <thead><tr><th>Profile</th><th>Type</th><th>Submitted</th><th>Actions</th></tr></thead>
+          <tbody>
+            ${s.profiles.filter(p=>!p.verified).concat(s.profiles.slice(0,2)).slice(0,4).map(p=>`
+              <tr>
+                <td><b>${escapeHtml(p.name)}</b><div class="muted" style="font-size:12px">${p.id}</div></td>
+                <td>ID Proof + Photo</td>
+                <td>${new Date().toLocaleDateString()}</td>
+                <td style="display:flex;gap:6px"><button class="btn btn-success btn-sm" onclick="toast('Verified')"><i class="fa-solid fa-check"></i> Approve</button><button class="btn btn-danger btn-sm" onclick="toast('Rejected','fa-xmark')"><i class="fa-solid fa-xmark"></i> Reject</button></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  }
+  if(tab==='reports'){
+    return `
+      <div class="section">
+        <h2><i class="fa-solid fa-flag"></i> Reported Profiles</h2>
+        <table class="data">
+          <thead><tr><th>Report ID</th><th>Against</th><th>By</th><th>Reason</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody>
+            ${s.reports.map(r=>`
+              <tr>
+                <td><b>${r.id}</b></td>
+                <td>${r.against}</td>
+                <td>${r.by}</td>
+                <td>${escapeHtml(r.reason)}</td>
+                <td>${new Date(r.date).toLocaleDateString()}</td>
+                <td><span class="status-pill status-pending">${r.status}</span></td>
+                <td style="display:flex;gap:6px"><button class="btn btn-danger btn-sm" onclick="toast('User banned','fa-ban')"><i class="fa-solid fa-ban"></i> Ban</button><button class="btn btn-ghost btn-sm" onclick="toast('Dismissed')"><i class="fa-solid fa-xmark"></i></button></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  }
+  if(tab==='messages'){
+    return `<div class="section"><h2><i class="fa-solid fa-comments"></i> Message Monitoring</h2><p class="muted">Review flagged messages and keywords. All messages are end-to-end private; only user-reported messages appear here.</p><table class="data"><thead><tr><th>From → To</th><th>Snippet</th><th>Flag</th><th>Actions</th></tr></thead><tbody><tr><td>SM10002 → SM10001</td><td>"Can you share your phone number?"</td><td><span class="status-pill status-pending">Auto</span></td><td><button class="btn btn-ghost btn-sm">Review</button></td></tr></tbody></table></div>`;
+  }
+  if(tab==='matches'){
+    return `
+      <div class="section">
+        <h2><i class="fa-solid fa-ring"></i> Successful Matches</h2>
+        <table class="data">
+          <thead><tr><th>Couple</th><th>Matched On</th><th>Married On</th><th>Location</th></tr></thead>
+          <tbody>
+            <tr><td><b>Pooja & Karan</b></td><td>Aug 2024</td><td>Nov 2024</td><td>Delhi</td></tr>
+            <tr><td><b>Rhea & Sameer</b></td><td>Oct 2024</td><td>Feb 2025</td><td>Mumbai</td></tr>
+            <tr><td><b>Vidya & Arjun</b></td><td>Jul 2024</td><td>Dec 2024</td><td>Bengaluru</td></tr>
+          </tbody>
+        </table>
+      </div>`;
+  }
+  if(tab==='support'){
+    return `
+      <div class="section">
+        <h2><i class="fa-solid fa-headset"></i> Support Tickets</h2>
+        <table class="data">
+          <thead><tr><th>Ticket</th><th>User</th><th>Subject</th><th>Priority</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>#T1042</td><td>SM10003</td><td>Cannot upload photo</td><td><span class="status-pill status-pending">High</span></td><td><span class="status-pill status-active">Open</span></td><td><button class="btn btn-ghost btn-sm">Reply</button></td></tr>
+            <tr><td>#T1041</td><td>SM10005</td><td>How to hide profile?</td><td><span class="status-pill status-inactive">Low</span></td><td><span class="status-pill status-active">Open</span></td><td><button class="btn btn-ghost btn-sm">Reply</button></td></tr>
+          </tbody>
+        </table>
+      </div>`;
+  }
+  return '<div>Unknown tab</div>';
+}
+
+/* ========================= Super Admin ========================= */
+PAGES.super=function(s){
+  const tab=qs('tab')||'overview';
+  const tabs=[
+    {k:'overview',l:'Dashboard',i:'fa-gauge-high'},
+    {k:'plans',l:'Membership Plans',i:'fa-tags'},
+    {k:'payments',l:'Payments',i:'fa-indian-rupee-sign'},
+    {k:'admins',l:'Admin Team',i:'fa-user-tie'},
+    {k:'settings',l:'Site Settings',i:'fa-gear'},
+    {k:'branding',l:'Branding',i:'fa-palette'},
+    {k:'emails',l:'Email Templates',i:'fa-envelope'},
+    {k:'audit',l:'Audit Log',i:'fa-scroll'},
+    {k:'api',l:'API & Integrations',i:'fa-plug'}
+  ];
+  return `
+  <div class="container">
+    <div class="page-head">
+      <div><h2><i class="fa-solid fa-crown" style="color:var(--accent);margin-right:8px"></i>Super Admin Console</h2><div class="sub">Full control · Plans, payments, team, platform settings</div></div>
+      <div class="chip-free" style="background:#fff5db;border-color:#ebdbaa;color:#8a6612"><i class="fa-solid fa-crown"></i> Super Admin</div>
+    </div>
+    <div class="admin-wrap">
+      <aside class="admin-side">
+        <h4>Control Center</h4>
+        ${tabs.map(t=>`<a class="${tab===t.k?'active':''}" onclick="go('super',{tab:'${t.k}'})"><i class="fa-solid ${t.i}"></i> ${t.l}</a>`).join('')}
+      </aside>
+      <main class="admin-main">
+        ${superTab(tab,s)}
+      </main>
+    </div>
+  </div>`;
+};
+function superTab(tab,s){
+  if(tab==='overview'){
+    return `
+      <div class="alert alert-info"><i class="fa-solid fa-circle-info"></i><div><b>Current Membership Model:</b> 100% Free — no paid plans are active. You can toggle paid plans on from <a onclick="go('super',{tab:'plans'})">Membership Plans</a>.</div></div>
+      <div class="grid grid-4">
+        <div class="stat-tile"><div class="icon"><i class="fa-solid fa-users"></i></div><div><div class="num">${s.profiles.length}</div><div class="lbl">Total Users</div></div></div>
+        <div class="stat-tile"><div class="icon"><i class="fa-solid fa-indian-rupee-sign"></i></div><div><div class="num">₹0</div><div class="lbl">Revenue (MTD)</div></div></div>
+        <div class="stat-tile"><div class="icon"><i class="fa-solid fa-ring"></i></div><div><div class="num">142</div><div class="lbl">Total Matches</div></div></div>
+        <div class="stat-tile"><div class="icon"><i class="fa-solid fa-shield-halved"></i></div><div><div class="num">99.9%</div><div class="lbl">Uptime</div></div></div>
+      </div>
+      <div class="grid grid-2 mt-3">
+        <div class="section"><h2><i class="fa-solid fa-chart-line"></i> Growth This Month</h2><p class="muted">Signups, engagement, and match rate will chart here once analytics is connected.</p><div style="height:160px;background:linear-gradient(180deg,var(--primary-50),transparent);border-radius:10px;display:grid;place-items:center;color:var(--muted);font-size:13px"><i class="fa-solid fa-chart-column" style="font-size:28px;color:var(--primary);opacity:.4"></i></div></div>
+        <div class="section"><h2><i class="fa-solid fa-triangle-exclamation"></i> System Health</h2>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)"><span>API status</span><span class="status-pill status-active">Online</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)"><span>Database</span><span class="status-pill status-active">Healthy</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)"><span>Email delivery</span><span class="status-pill status-active">98.2%</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0"><span>Backup</span><span class="status-pill status-active">2h ago</span></div>
+        </div>
+      </div>`;
+  }
+  if(tab==='plans'){
+    return `
+      <div class="flex-between mb-2"><div><h2 style="margin:0"><i class="fa-solid fa-tags"></i> Membership Plans</h2><p class="muted" style="margin:4px 0 0;font-size:13px">Currently in free mode. Activate a plan to start monetizing.</p></div><button class="btn btn-primary" onclick="toast('Plan added')"><i class="fa-solid fa-plus"></i> New Plan</button></div>
+      <div class="grid grid-3">
+        ${s.plans.map(pl=>`
+          <div class="card" style="border:${pl.active?'2px solid var(--primary)':'1px solid var(--line)'}">
+            <div class="card-body">
+              <div class="flex-between">
+                <h3 style="margin:0">${escapeHtml(pl.name)}</h3>
+                ${pl.active?'<span class="status-pill status-active">Active</span>':'<span class="status-pill status-inactive">Inactive</span>'}
+              </div>
+              <div style="font-size:30px;font-weight:700;color:var(--primary);margin:14px 0;font-family:Playfair Display">${pl.price===0?'Free':`₹${pl.price.toLocaleString('en-IN')}`}<span style="font-size:13px;color:var(--muted);font-weight:500">${pl.price===0?' forever':' / year'}</span></div>
+              <ul style="list-style:none;padding:0;margin:0 0 18px">${pl.features.map(f=>`<li style="padding:6px 0;font-size:13.5px;display:flex;align-items:flex-start;gap:8px"><i class="fa-solid fa-circle-check" style="color:var(--success);margin-top:3px"></i>${escapeHtml(f)}</li>`).join('')}</ul>
+              <div style="display:flex;gap:6px">
+                <button class="btn btn-ghost btn-sm" onclick="toast('Edit plan')"><i class="fa-solid fa-pen"></i> Edit</button>
+                ${pl.active?`<button class="btn btn-danger btn-sm" onclick="togglePlan('${pl.id}')"><i class="fa-solid fa-power-off"></i> Deactivate</button>`:`<button class="btn btn-success btn-sm" onclick="togglePlan('${pl.id}')"><i class="fa-solid fa-power-off"></i> Activate</button>`}
+              </div>
+            </div>
+          </div>`).join('')}
+      </div>
+      <div class="alert alert-warn mt-2"><i class="fa-solid fa-triangle-exclamation"></i><div><b>Heads up:</b> Activating paid plans will switch the site out of "Free forever" mode. Existing users continue under their current plan — grandfathering rules can be configured in <a onclick="go('super',{tab:'settings'})">Settings</a>.</div></div>`;
+  }
+  if(tab==='payments'){
+    return `
+      <div class="alert alert-info"><i class="fa-solid fa-circle-info"></i><div>No payment gateway connected. Set up Razorpay / Stripe / PayU to start accepting payments.</div></div>
+      <div class="grid grid-3">
+        <div class="card"><div class="card-body center"><i class="fa-solid fa-credit-card ic-lg"></i><h3 class="mt-1">Razorpay</h3><p class="muted" style="font-size:13px">Indian payment gateway</p><button class="btn btn-primary btn-sm" onclick="toast('Razorpay settings')">Connect</button></div></div>
+        <div class="card"><div class="card-body center"><i class="fa-brands fa-stripe ic-lg"></i><h3 class="mt-1">Stripe</h3><p class="muted" style="font-size:13px">International cards</p><button class="btn btn-primary btn-sm" onclick="toast('Stripe settings')">Connect</button></div></div>
+        <div class="card"><div class="card-body center"><i class="fa-solid fa-wallet ic-lg"></i><h3 class="mt-1">PayU</h3><p class="muted" style="font-size:13px">Multi-gateway</p><button class="btn btn-primary btn-sm" onclick="toast('PayU settings')">Connect</button></div></div>
+      </div>
+      <div class="section mt-3">
+        <h2><i class="fa-solid fa-receipt"></i> Recent Transactions</h2>
+        <table class="data">
+          <thead><tr><th>Order ID</th><th>User</th><th>Plan</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+          <tbody><tr><td colspan="6" class="muted center" style="padding:30px">No transactions yet. Activate a paid plan to begin.</td></tr></tbody>
+        </table>
+      </div>`;
+  }
+  if(tab==='admins'){
+    return `
+      <div class="flex-between mb-2"><h2 style="margin:0"><i class="fa-solid fa-user-tie"></i> Admin Team</h2><button class="btn btn-primary" onclick="toast('Invite sent')"><i class="fa-solid fa-user-plus"></i> Invite Admin</button></div>
+      <table class="data">
+        <thead><tr><th>Admin</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${s.admins.map(a=>`
+            <tr>
+              <td><div style="display:flex;align-items:center;gap:10px"><div style="width:34px;height:34px;border-radius:50%;background:var(--primary-50);color:var(--primary);display:grid;place-items:center;font-weight:700">${escapeHtml(a.name[0])}</div><b>${escapeHtml(a.name)}</b></div></td>
+              <td>${escapeHtml(a.email)}</td>
+              <td><span class="status-pill ${a.role==='Super Admin'?'status-verified':'status-inactive'}">${escapeHtml(a.role)}</span></td>
+              <td><span class="status-pill status-active">${escapeHtml(a.status)}</span></td>
+              <td style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm" onclick="toast('Edit admin')"><i class="fa-solid fa-pen"></i></button><button class="btn btn-ghost btn-sm" onclick="toast('Admin removed','fa-trash')"><i class="fa-solid fa-trash" style="color:var(--danger)"></i></button></td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
+  }
+  if(tab==='settings'){
+    const st=s.settings;
+    return `
+      <form onsubmit="event.preventDefault();saveSettings()">
+        <div class="section">
+          <h2><i class="fa-solid fa-gear"></i> General Settings</h2>
+          <div class="form-row">
+            <div class="field"><label>Site Name</label><input type="text" value="${escapeHtml(st.siteName)}"></div>
+            <div class="field"><label>Tagline</label><input type="text" value="${escapeHtml(st.tagline)}"></div>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>Support Email</label><input type="email" value="${escapeHtml(st.supportEmail)}"></div>
+            <div class="field"><label>Support Phone</label><input type="tel" value="${escapeHtml(st.supportPhone)}"></div>
+          </div>
+        </div>
+        <div class="section">
+          <h2><i class="fa-solid fa-toggle-on"></i> Platform Controls</h2>
+          <div style="display:grid;gap:12px">
+            <label style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:#fafafa;border-radius:10px"><span><b>Membership Model</b><br><span class="muted" style="font-size:13px">Free for all, or introduce paid plans</span></span><select style="max-width:200px"><option ${st.membershipModel==='free'?'selected':''}>Free Forever</option><option ${st.membershipModel==='hybrid'?'selected':''}>Free + Paid (Hybrid)</option><option ${st.membershipModel==='paid'?'selected':''}>Paid Only</option></select></label>
+            <label style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:#fafafa;border-radius:10px"><span><b>Auto-verify profiles</b><br><span class="muted" style="font-size:13px">Skip manual verification</span></span><input type="checkbox" ${st.autoVerify?'checked':''}></label>
+            <label style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:#fafafa;border-radius:10px"><span><b>Two-factor auth for admins</b><br><span class="muted" style="font-size:13px">Require 2FA for all admins</span></span><input type="checkbox" ${st.twoFA?'checked':''}></label>
+            <label style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:#fafafa;border-radius:10px"><span><b>Maintenance Mode</b><br><span class="muted" style="font-size:13px">Take site offline for maintenance</span></span><input type="checkbox" ${st.maintenance?'checked':''}></label>
+          </div>
+        </div>
+        <div class="section">
+          <h2><i class="fa-solid fa-triangle-exclamation"></i> Danger Zone</h2>
+          <div style="padding:14px;background:var(--danger-50);border:1px solid #f3cdc5;border-radius:10px">
+            <b style="color:var(--danger)">Reset Demo Data</b>
+            <p class="muted" style="font-size:13px;margin:4px 0 10px">Deletes all localStorage state and reloads the app with default sample data.</p>
+            <button type="button" class="btn btn-danger btn-sm" onclick="if(confirm('Reset all demo data?')){Store.reset();location.reload()}"><i class="fa-solid fa-trash"></i> Reset Demo Data</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end"><button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save Settings</button></div>
+      </form>`;
+  }
+  if(tab==='branding'){
+    return `
+      <div class="section"><h2><i class="fa-solid fa-palette"></i> Brand Identity</h2>
+        <div class="form-row">
+          <div class="field"><label>Logo</label><div style="padding:20px;border:2px dashed var(--line);border-radius:10px;text-align:center;cursor:pointer" onclick="toast('Upload logo')"><i class="fa-solid fa-cloud-arrow-up ic-lg"></i><p class="muted" style="margin:6px 0 0;font-size:13px">Drop your logo here (SVG/PNG)</p></div></div>
+          <div class="field"><label>Primary Color</label><input type="color" value="${s.settings.logoColor}" style="height:50px;padding:4px"><p class="hint">Current: ${s.settings.logoColor}</p></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Primary Font</label><select><option>Inter (Default)</option><option>Poppins</option><option>Nunito</option><option>Lato</option></select></div>
+          <div class="field"><label>Heading Font</label><select><option>Playfair Display (Default)</option><option>Merriweather</option><option>Lora</option></select></div>
+        </div>
+      </div>
+      <div class="section"><h2><i class="fa-solid fa-image"></i> Homepage Content</h2>
+        <div class="field"><label>Hero Headline</label><input type="text" value="Find Your Perfect Life Partner"></div>
+        <div class="field"><label>Hero Subtext</label><textarea>India's most trusted matrimony platform — rooted in values, built for today.</textarea></div>
+        <div class="field"><label>Call-to-action text</label><input type="text" value="Register Free"></div>
+      </div>`;
+  }
+  if(tab==='emails'){
+    return `
+      <div class="section"><h2><i class="fa-solid fa-envelope"></i> Email Templates</h2>
+        <table class="data">
+          <thead><tr><th>Template</th><th>Trigger</th><th>Last Edited</th><th></th></tr></thead>
+          <tbody>
+            <tr><td><b>Welcome Email</b></td><td>On registration</td><td>${new Date().toLocaleDateString()}</td><td><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-pen"></i> Edit</button></td></tr>
+            <tr><td><b>Verification OTP</b></td><td>On email/phone change</td><td>${new Date().toLocaleDateString()}</td><td><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-pen"></i> Edit</button></td></tr>
+            <tr><td><b>Interest Received</b></td><td>On receiving interest</td><td>${new Date().toLocaleDateString()}</td><td><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-pen"></i> Edit</button></td></tr>
+            <tr><td><b>Interest Accepted</b></td><td>On interest acceptance</td><td>${new Date().toLocaleDateString()}</td><td><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-pen"></i> Edit</button></td></tr>
+            <tr><td><b>Weekly Matches</b></td><td>Every Monday 9AM</td><td>${new Date().toLocaleDateString()}</td><td><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-pen"></i> Edit</button></td></tr>
+            <tr><td><b>Password Reset</b></td><td>On request</td><td>${new Date().toLocaleDateString()}</td><td><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-pen"></i> Edit</button></td></tr>
+          </tbody>
+        </table>
+      </div>`;
+  }
+  if(tab==='audit'){
+    return `
+      <div class="section"><h2><i class="fa-solid fa-scroll"></i> Audit Log</h2>
+        <table class="data">
+          <thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>IP</th></tr></thead>
+          <tbody>
+            <tr><td>${new Date().toLocaleString()}</td><td>Super Admin</td><td>Viewed audit log</td><td>127.0.0.1</td></tr>
+            <tr><td>${new Date(Date.now()-3600e3).toLocaleString()}</td><td>Admin User</td><td>Banned user SM99999</td><td>192.168.1.4</td></tr>
+            <tr><td>${new Date(Date.now()-7200e3).toLocaleString()}</td><td>System</td><td>Daily backup completed</td><td>—</td></tr>
+            <tr><td>${new Date(Date.now()-86400e3).toLocaleString()}</td><td>Sita Verma</td><td>Verified profile SM10003</td><td>192.168.1.8</td></tr>
+          </tbody>
+        </table>
+      </div>`;
+  }
+  if(tab==='api'){
+    return `
+      <div class="section"><h2><i class="fa-solid fa-plug"></i> API & Integrations</h2>
+        <div class="grid grid-3">
+          <div class="card"><div class="card-body"><i class="fa-brands fa-whatsapp" style="font-size:26px;color:#25d366"></i><h3 class="mt-1">WhatsApp Business</h3><p class="muted" style="font-size:13px">OTP and notifications</p><button class="btn btn-primary btn-sm" onclick="toast('Connect WhatsApp')">Connect</button></div></div>
+          <div class="card"><div class="card-body"><i class="fa-solid fa-message" style="font-size:26px;color:var(--info)"></i><h3 class="mt-1">SMS Gateway</h3><p class="muted" style="font-size:13px">Transactional SMS</p><button class="btn btn-primary btn-sm" onclick="toast('Connect SMS')">Connect</button></div></div>
+          <div class="card"><div class="card-body"><i class="fa-solid fa-envelope" style="font-size:26px;color:var(--primary)"></i><h3 class="mt-1">Email Service</h3><p class="muted" style="font-size:13px">SendGrid / SES / Mailgun</p><button class="btn btn-primary btn-sm" onclick="toast('Connect Email')">Connect</button></div></div>
+        </div>
+        <h3 class="mt-3" style="font-size:15px">API Keys</h3>
+        <table class="data">
+          <thead><tr><th>Key Name</th><th>Key</th><th>Created</th><th></th></tr></thead>
+          <tbody><tr><td>Public API</td><td><code>sk_live_••••••••••ab12</code></td><td>${new Date().toLocaleDateString()}</td><td><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-rotate"></i> Rotate</button></td></tr></tbody>
+        </table>
+      </div>`;
+  }
+  return '<div>Unknown tab</div>';
+}
+function togglePlan(id){const s=Store.load();const pl=s.plans.find(p=>p.id===id);if(pl)pl.active=!pl.active;Store.save(s);toast(pl.active?'Plan activated':'Plan deactivated');render();}
+function saveSettings(){toast('Settings saved');}
+
+/* Initial render */
+render();
+</script>
+</body>
+</html>

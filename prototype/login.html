@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Login · ShubhMilan</title>
+<link rel="stylesheet" href="css/styles.css">
+<script src="js/data.js" defer></script>
+<script src="js/app.js" defer></script>
+</head>
+<body>
+<div id="nav"></div>
+
+<div class="container" style="max-width:520px;">
+  <div class="card mt-3">
+    <div class="card-body">
+      <h2 style="color:var(--primary-dark);margin-top:0;text-align:center;">Member Login</h2>
+      <p class="muted center">Login to your free account · No fees, ever.</p>
+
+      <div class="alert alert-info" style="font-size:13px;">
+        <b>Demo:</b> Use any email/password — or click <a href="#" onclick="loginAs('SM10001');return false;"><b>Login as Priya</b></a> · <a href="#" onclick="loginAs('SM10002');return false;"><b>Login as Rahul</b></a>
+      </div>
+
+      <form onsubmit="doLogin(event)">
+        <div class="field">
+          <label>Email or Mobile / Profile ID</label>
+          <input id="login-id" type="text" placeholder="example@email.com" required>
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input id="login-pw" type="password" placeholder="••••••••" required>
+        </div>
+        <div class="field">
+          <label style="font-weight:400;font-size:13px;">
+            <input type="checkbox" checked> Remember me
+            <a href="#" style="float:right;">Forgot password?</a>
+          </label>
+        </div>
+        <button class="btn btn-primary btn-block btn-lg">Login</button>
+      </form>
+
+      <p class="center mt-2 muted">
+        New here? <a href="register.html"><b>Register Free</b></a>
+      </p>
+
+      <div style="display:flex;gap:8px;align-items:center;margin:18px 0;color:#aaa;">
+        <div style="flex:1;height:1px;background:#ddd;"></div><span style="font-size:12px;">OR</span><div style="flex:1;height:1px;background:#ddd;"></div>
+      </div>
+
+      <div class="grid grid-2">
+        <button class="btn btn-ghost">📱 OTP Login</button>
+        <button class="btn btn-ghost">🔵 Google</button>
+      </div>
+    </div>
+  </div>
+
+  <p class="center mt-2 muted" style="font-size:13px;">
+    🔒 Your data is safe. We never share your information without consent.
+  </p>
+</div>
+
+<div id="footer"></div>
+
+<script>
+document.getElementById('nav').innerHTML=renderNav('login');
+document.getElementById('footer').innerHTML=renderFooter();
+
+function doLogin(e){
+  e.preventDefault();
+  const id=document.getElementById('login-id').value;
+  // demo: log in as Priya by default
+  loginAs('SM10001');
+}
+function loginAs(profileId){
+  const s=Store.load();
+  const p=s.profiles.find(x=>x.id===profileId);
+  if(!p){alert('Demo profile not found');return;}
+  s.user={id:p.id,name:p.name,role:'member'};
+  Store.save(s);
+  toast('Welcome '+p.name.split(' ')[0]+'!');
+  setTimeout(()=>location.href='dashboard.html',600);
+}
+</script>
+</body>
+</html>
