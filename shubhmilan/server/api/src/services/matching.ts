@@ -1,6 +1,7 @@
 import type { PartnerPreference, Profile, Verification } from '@prisma/client';
 
 import { prisma } from '../db.js';
+import { cosineSimilarity, getEmbedding, openaiEnabled } from './openai.js';
 
 export interface MatchReason {
   icon: string;
@@ -205,9 +206,59 @@ export async function computeTopMatchesForProfile(profileId: string, take = 25) 
     take: 500,
   });
 
-  const scored = candidates.map((c) => aiMatchScore(me, c));
-  scored.sort((a, b) => b.score - a.score);
-  return scored.slice(0, take);
+  const baseScores = candidates.map((c) => aiMatchScore(me, c));
+
+  // Optional hybrid rerank: blend heuristic (70%) + OpenAI embedding cosine (30%).
+  // Gracefully degrades to heuristic-only when the OpenAI key isn't configured.
+  if (openaiEnabled()) {
+    const myVec = await getEmbedding(me.id);
+    if (myVec) {
+      const boosted = await Promise.all(
+        baseScores.map(async (s) => {
+          const vec = await getEmbedding(s.profileId);
+          if (!vec) return s;
+          const sim = Math.max(0, cosineSimilarity(myVec, vec));
+          const blended = Math.round(s.score * 0.7 + sim * 100 * 0.3);
+          if (sim > 0.75) {
+            return {
+              ...s,
+              score: Math.min(100, blended),
+              reasons: [
+                { icon: 'sparkles', text: 'Semantic "about me" alignment', weight: 10 },
+                ...s.reasons,
+              ].slice(0, 6),
+            };
+          }
+          return { ...s, score: Math.min(100, blended) };
+        }),
+      );
+      boosted.sort((a, b) => b.score - a.score);
+      return boosted.slice(0, take);
+    }
+  }
+
+  baseScores.sort((a, b) => b.score - a.score);
+  return baseScores.slice(0, take);
+}
+
+/** Logs served matches for online learning / A/B analysis. Fire-and-forget. */
+export async function logServedMatches(
+  viewerProfileId: string,
+  matches: ScoredProfile[],
+  variant = 'v1',
+) {
+  if (!matches.length) return;
+  await prisma.matchLog
+    .createMany({
+      data: matches.map((m, i) => ({
+        viewerProfileId,
+        candidateId: m.profileId,
+        rank: i,
+        score: m.score,
+        variant,
+      })),
+    })
+    .catch(() => null);
 }
 
 /**

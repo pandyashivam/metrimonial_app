@@ -30,6 +30,11 @@ const EnvSchema = z.object({
   RAZORPAY_KEY_SECRET: z.string().default(''),
   RAZORPAY_WEBHOOK_SECRET: z.string().default(''),
 
+  // OpenAI (key provided at deploy time; features degrade gracefully when missing).
+  OPENAI_API_KEY: z.string().default(''),
+  OPENAI_EMBEDDING_MODEL: z.string().default('text-embedding-3-small'),
+  OPENAI_CHAT_MODEL: z.string().default('gpt-4o-mini'),
+
   EMAIL_FROM: z.string().default('noreply@shubhmilan.local'),
   SMTP_HOST: z.string().default(''),
   SMTP_PORT: z.coerce.number().default(587),

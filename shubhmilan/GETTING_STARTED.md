@@ -251,14 +251,59 @@ pnpm clean
 
 ---
 
-## 10. Next steps
+## 10. OpenAI integration
+
+The AI features (match re-ranking, aboutMe rewriting, trait suggestion, coach chat) use OpenAI. The key lives **only** on the API server.
+
+Set it in `.env` when you're ready:
+
+```
+OPENAI_API_KEY=sk-…
+OPENAI_EMBEDDING_MODEL=text-embedding-3-small
+OPENAI_CHAT_MODEL=gpt-4o-mini
+```
+
+When the key is missing, every AI endpoint returns `AI_DISABLED` and the mobile UI shows a "feature unavailable" state. The server falls back to the pure-heuristic matching score. Endpoints:
+
+- `GET /api/v1/ai/status` — `{ enabled: boolean }`
+- `POST /api/v1/ai/improve-about` — rewrites aboutMe
+- `POST /api/v1/ai/suggest-traits` — extract personality + hobbies from text
+- `POST /api/v1/ai/reindex-self` — refresh this user's embedding (also runs lazily)
+- `POST /api/v1/ai/coach` — profile-coach chat turn
+
+---
+
+## 11. End-to-end encrypted chat
+
+Chat uses Curve25519 + XSalsa20-Poly1305 (`nacl.box`) for authenticated, forward-secret-per-message encryption between peers. The server is never in possession of plaintext.
+
+- On first login, the mobile app generates a keypair with `expo-crypto`, stores the secret key in SecureStore, and uploads the public key via `PUT /me/public-key`.
+- Sending: client encrypts with `nacl.box(plaintext, nonce, peerPublicKey, secretKey)` → sends base64 `{ciphertext, nonce}`.
+- Receiving: client decrypts with `nacl.box.open(…, peerPublicKey, secretKey)`.
+- Server persists opaque ciphertext + nonce only. Moderation uses metadata + user reports — never message content.
+
+Rotating devices creates a new keypair. Old threads on the new device can't be decrypted; this is intentional. A future "key backup" feature could change that.
+
+---
+
+## 12. Admin panel
+
+Admin UI runs at **http://localhost:3001** and is gated behind ADMIN / SUPERADMIN role.
+
+- Login: `support@tenderfy.org` / `Admin#12345` (seeded SUPERADMIN).
+- Surfaces: Dashboard, Users, Verifications queue, Reports, Plans, Transactions, Audit log, Settings.
+- Every mutating admin action is captured in the `AdminLog` table for forensic traceability.
+
+---
+
+## 13. Next steps
 
 Once you're running, the natural flow of work is:
 
-1. Wire photo upload in the API (MinIO is running; see `server/api/README.md` for the R2 stub).
-2. Flesh out the onboarding screens (`apps/mobile/app/(onboarding)/`) using the prototype as reference.
-3. Implement admin endpoints in `server/api/src/routes/admin.ts` (mount from `src/app.ts`).
-4. Replace FCM / Razorpay stubs with real keys (all env variables are in `.env.example`).
-5. Add Vitest/Jest tests and turn on CI (`.github/workflows/ci.yml` — add when ready).
+1. Swap dev KYC stubs (`/me/verification/*`) with a real Digio / HyperVerge integration.
+2. Replace Razorpay dev fallback by setting `RAZORPAY_*` — then the real order flow exercises mobile SDK `RazorpayCheckout`.
+3. Add your OpenAI key — the server immediately starts blending semantic similarity into match ranking.
+4. Wire FCM for iOS (APNs → Expo Push) and Android and enable push categories.
+5. Add Playwright E2E covering signup → onboarding → interest → encrypted chat → payment.
 
 See `../BUILD_INSTRUCTIONS.md` §22 for the week-one delivery order the project was planned against.

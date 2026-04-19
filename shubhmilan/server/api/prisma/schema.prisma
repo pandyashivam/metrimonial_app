@@ -193,12 +193,17 @@ model Profile {
   complexion         String?
   bodyType           String?
 
+  // X25519 public key (base64) for end-to-end encrypted chat (nacl.box).
+  // The matching private key never leaves the user's device (SecureStore).
+  publicKey          String?       @db.VarChar(64)
+
   lastActiveAt       DateTime      @default(now())
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
   deletedAt          DateTime?
 
   family             Family?
+  embedding          ProfileEmbedding?
   horoscope          Horoscope?
   preference         PartnerPreference?
   verification       Verification?
@@ -421,8 +426,19 @@ model Message {
   id                 String       @id @default(cuid())
   conversationId     String
   senderProfileId    String
+
+  // End-to-end encrypted payload. `body` holds the base64-encoded ciphertext produced by
+  // nacl.box(plaintext, nonce, peerPublicKey, senderSecretKey) on the sender's device.
+  // The server never possesses plaintext.
   body               String       @db.Text
+  nonce              String       @db.VarChar(40)
+  encrypted          Boolean      @default(true)
+
+  // Media (optional). The client uploads the file to R2 after encrypting it with a per-
+  // message symmetric key; that key is included inside the encrypted body payload.
   mediaUrl           String?
+  mediaMime          String?
+
   readAt             DateTime?
   createdAt          DateTime     @default(now())
 
@@ -534,4 +550,42 @@ model AdminLog {
 
   @@index([adminUserId, createdAt])
   @@index([action])
+}
+
+// =========================
+//  OpenAI embeddings (sidecar for semantic match rerank)
+// =========================
+
+model ProfileEmbedding {
+  id          String   @id @default(cuid())
+  profileId   String   @unique
+  model       String   // e.g. "text-embedding-3-small"
+  dimension   Int      // 1536 for small, 3072 for large
+  vector      Bytes    // float32 array packed little-endian
+  sourceHash  String   // sha256 of aboutMe; recompute when it changes
+  computedAt  DateTime @default(now())
+
+  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([model])
+}
+
+// =========================
+//  Match served log (A/B testing / online metrics)
+// =========================
+
+model MatchLog {
+  id              String   @id @default(cuid())
+  viewerProfileId String
+  candidateId     String
+  rank            Int
+  score           Int
+  variant         String   @default("v1")
+  interacted      Boolean  @default(false)
+  interactionKind String?
+  createdAt       DateTime @default(now())
+
+  @@index([viewerProfileId, createdAt])
+  @@index([candidateId])
+  @@index([variant])
 }

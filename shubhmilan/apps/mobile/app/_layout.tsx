@@ -17,19 +17,23 @@ export default function RootLayout() {
   const segments = useSegments();
   const router = useRouter();
 
+  const syncKeys = useAuth((s) => s.syncEncryptionKeys);
+
   useEffect(() => {
     (async () => {
       await hydrateTokens();
       try {
         const me = await api.me.get();
         setUser(me);
+        // Ensure E2E encryption keys exist for this device and the server has our public key.
+        await syncKeys();
       } catch {
         setUser(null);
       }
       setHydrated(true);
       setBooted(true);
     })();
-  }, [setUser, setHydrated]);
+  }, [setUser, setHydrated, syncKeys]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -48,6 +52,15 @@ export default function RootLayout() {
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="profile/[id]" options={{ headerShown: true, title: 'Profile' }} />
+          <Stack.Screen
+            name="chat/[conversationId]"
+            options={{ headerShown: true, title: 'Chat' }}
+          />
+          <Stack.Screen name="kundli/[otherId]" options={{ headerShown: true, title: 'Kundli' }} />
+          <Stack.Screen name="verify/index" options={{ headerShown: true, title: 'Verification' }} />
+          <Stack.Screen name="premium" options={{ headerShown: true, title: 'Go Premium' }} />
+          <Stack.Screen name="filters" options={{ headerShown: true, title: 'Filters' }} />
+          <Stack.Screen name="(onboarding)" />
         </Stack>
       </QueryClientProvider>
     </SafeAreaProvider>

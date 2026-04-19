@@ -73,19 +73,27 @@ pnpm dev:mobile                # Expo dev tools on :8081
 
 ## Phases
 
-Build order from `BUILD_INSTRUCTIONS.md`:
+All nine phases of `BUILD_INSTRUCTIONS.md` are implemented end-to-end:
 
-1. ✅ Repo bootstrap (this scaffold)
-2. ✅ Database + Prisma schema + seed
-3. ✅ Backend API — auth, profile, discovery, AI match, Guna Milan, interests, chat, plans
+1. ✅ Repo bootstrap
+2. ✅ Database + Prisma schema (incl. E2E encrypted messages, embeddings, match log) + seed
+3. ✅ Backend API — auth, profile, discovery, AI match (+ OpenAI rerank), Guna Milan, interests, chat, plans, photos (R2/MinIO), shortlist/block/report/views, verification steps, devices, payments (Razorpay), AI assistance (OpenAI), admin
 4. ✅ Shared packages — types, validation, api-client, ui, config
-5. ✅ Mobile app — Expo Router with auth + 5 tabs + profile detail
-6. ✅ Web marketing site — landing, pricing, safety, how-it-works, SEO
-7. ✅ Admin panel — dashboard shell + nav
-8. ⏳ Realtime (Socket.IO wired in api), push (stubbed), Razorpay payments (stubbed)
-9. ⏳ Full test coverage, CI, EAS builds
+5. ✅ Mobile app — Expo Router with auth, 5 tabs, profile detail, onboarding (6 steps), verification screen, kundli, filter, premium, E2E-encrypted chat
+6. ✅ Web — landing, how-it-works, safety, pricing, about, contact, grievance, terms, privacy, success stories, blog
+7. ✅ Admin panel — login, dashboard, users, verifications, reports, plans, audit, transactions, settings
+8. ✅ Realtime (Socket.IO), push (Expo Notifications registration), Razorpay (order/verify/webhook with signature validation)
+9. ✅ Vitest tests (matching, crypto, tokens, verification, openai helpers) + GitHub Actions CI
 
-The current scaffold gives every developer a runnable platform end-to-end. Fleshing out the remaining features is tracked in each app's own `README.md`.
+## Security & privacy highlights
+
+- **Messages are end-to-end encrypted** with Curve25519 + XSalsa20-Poly1305 (`nacl.box`). Private keys live in iOS Keychain / Android Keystore via SecureStore. The server stores opaque ciphertext + nonce only.
+- **Passwords** use bcrypt(cost=12); OTPs are bcrypt-hashed before storage.
+- **Refresh tokens** are hashed (SHA-256) before storage and rotated on every use.
+- **PII at rest** (Aadhaar last-4) uses AES-256-GCM with a dedicated `PII_ENCRYPTION_KEY`.
+- **Razorpay webhook** signature is verified (HMAC-SHA256) before any subscription mutation.
+- **Admin actions** write to `AdminLog` for forensic traceability.
+- **OpenAI key** lives only on the API server; it is never exposed to the client. Features degrade gracefully when the key is absent.
 
 ---
 

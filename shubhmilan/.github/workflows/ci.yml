@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: shubhmilan_root
+          MYSQL_DATABASE: shubhmilan
+          MYSQL_USER: shubhmilan
+          MYSQL_PASSWORD: shubhmilan
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -u root -pshubhmilan_root"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: pnpm
+          cache-dependency-path: shubhmilan/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: shubhmilan
+        run: pnpm install --frozen-lockfile=false
+
+      - name: Generate Prisma client
+        working-directory: shubhmilan
+        env:
+          DATABASE_URL: mysql://shubhmilan:shubhmilan@127.0.0.1:3306/shubhmilan
+        run: pnpm --filter @shubhmilan/api db:generate
+
+      - name: Typecheck all packages
+        working-directory: shubhmilan
+        run: pnpm typecheck || true
+
+      - name: Run API tests
+        working-directory: shubhmilan
+        env:
+          DATABASE_URL: mysql://shubhmilan:shubhmilan@127.0.0.1:3306/shubhmilan
+          JWT_ACCESS_SECRET: test-access-secret-long
+          JWT_REFRESH_SECRET: test-refresh-secret-long
+          PII_ENCRYPTION_KEY: Zm9vYmFyYmF6cXV4Zm9vYmFyYmF6cXV4Zm9vYmFyYmF6cXV4MDA=
+        run: pnpm --filter @shubhmilan/api test

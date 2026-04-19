@@ -1,12 +1,10 @@
 import type {
   ApiResponse,
   AuthTokens,
-  Conversation,
   CursorPage,
   Interest,
   LoginResponse,
   MatchResult,
-  Message,
   PartnerPreference,
   Plan,
   Profile,
@@ -39,6 +37,29 @@ export class ApiError extends Error {
     super(message);
     this.name = 'ApiError';
   }
+}
+
+export interface EncryptedMessage {
+  id: string;
+  conversationId: string;
+  senderProfileId: string;
+  ciphertext: string;
+  nonce: string;
+  encrypted: boolean;
+  mediaUrl: string | null;
+  mediaMime: string | null;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface ConversationSummary {
+  id: string;
+  peerId: string;
+  peerName: string;
+  peerPublicKey: string | null;
+  peerPhotoUrl: string | null;
+  lastMessageAt: string | null;
+  unreadCount: number;
 }
 
 export function createApiClient(opts: ApiClientOptions) {
@@ -97,8 +118,30 @@ export function createApiClient(opts: ApiClientOptions) {
     return json.data;
   }
 
+  async function uploadFile<T>(path: string, file: File | Blob, fieldName = 'file'): Promise<T> {
+    const form = new FormData();
+    form.append(fieldName, file);
+    const headers = new Headers();
+    const accessToken = opts.tokenProvider.getAccessToken();
+    if (accessToken) headers.set('authorization', `Bearer ${accessToken}`);
+    const res = await fetchImpl(`${opts.baseUrl}${path}`, {
+      method: 'POST',
+      body: form,
+      headers,
+    });
+    const json = (await res.json().catch(() => null)) as ApiResponse<T> | null;
+    if (!json || !json.ok) {
+      throw new ApiError(
+        res.status,
+        json?.ok === false ? json.error.code : 'UPLOAD',
+        json?.ok === false ? json.error.message : 'Upload failed',
+      );
+    }
+    return json.data;
+  }
+
   return {
-    raw: { request },
+    raw: { request, uploadFile },
     auth: {
       signup: (body: { email: string; phone: string; password: string }) =>
         request<{ pending: true; target: string }>('/auth/signup', {
@@ -126,6 +169,16 @@ export function createApiClient(opts: ApiClientOptions) {
           method: 'POST',
           body: JSON.stringify(body),
         }),
+      forgotPassword: (body: { identifier: string }) =>
+        request<{ ok: true }>('/auth/forgot-password', {
+          method: 'POST',
+          body: JSON.stringify(body),
+        }),
+      resetPassword: (body: { target: string; code: string; password: string }) =>
+        request<{ ok: true }>('/auth/reset-password', {
+          method: 'POST',
+          body: JSON.stringify(body),
+        }),
     },
     me: {
       get: () => request<PublicUser>('/me'),
@@ -138,9 +191,40 @@ export function createApiClient(opts: ApiClientOptions) {
           method: 'PUT',
           body: JSON.stringify(body),
         }),
+      family: () => request<unknown>('/me/family'),
+      updateFamily: (body: unknown) =>
+        request<unknown>('/me/family', { method: 'PUT', body: JSON.stringify(body) }),
+      updateHoroscope: (body: unknown) =>
+        request<unknown>('/me/horoscope', { method: 'PUT', body: JSON.stringify(body) }),
       verification: () => request<VerificationStatus>('/me/verification'),
-      completeness: () =>
-        request<{ percent: number; missing: string[] }>('/me/completeness'),
+      completeness: () => request<{ percent: number; missing: string[] }>('/me/completeness'),
+      viewers: () => request<{ id: string; fullName: string; viewedAt: string }[]>('/me/viewers'),
+      publicKey: () => request<{ publicKey: string | null }>('/me/public-key'),
+      uploadPublicKey: (publicKey: string) =>
+        request<{ id: string; publicKey: string }>('/me/public-key', {
+          method: 'PUT',
+          body: JSON.stringify({ publicKey }),
+        }),
+      photos: () =>
+        request<
+          { id: string; url: string; isPrimary: boolean; privacy: string; moderationStatus: string }[]
+        >('/me/photos'),
+      uploadPhoto: (file: File | Blob) =>
+        uploadFile<{ id: string; url: string; isPrimary: boolean; privacy: string }>(
+          '/me/photos',
+          file,
+        ),
+      setPrimaryPhoto: (id: string) =>
+        request<{ ok: true }>(`/me/photos/${id}/primary`, { method: 'PATCH' }),
+      setPhotoPrivacy: (id: string, privacy: 'PUBLIC' | 'MEMBERS' | 'REQUEST') =>
+        request<{ id: string; privacy: string }>(`/me/photos/${id}/privacy`, {
+          method: 'PATCH',
+          body: JSON.stringify({ privacy }),
+        }),
+      deletePhoto: (id: string) =>
+        request<{ ok: true }>(`/me/photos/${id}`, { method: 'DELETE' }),
+      registerDevice: (body: { fcmToken: string; platform: 'ios' | 'android' | 'web' }) =>
+        request<{ id: string }>('/me/devices', { method: 'POST', body: JSON.stringify(body) }),
     },
     profiles: {
       list: (query: Record<string, string | number | boolean | undefined> = {}) => {
@@ -150,9 +234,13 @@ export function createApiClient(opts: ApiClientOptions) {
         }
         return request<CursorPage<ProfileSummary>>(`/profiles?${params.toString()}`);
       },
-      get: (id: string) => request<Profile & { photos: { id: string; url: string }[] }>(
+      get: (id: string) => request<Profile & { photos: { id: string; r2Key: string }[] }>(
         `/profiles/${encodeURIComponent(id)}`,
       ),
+      publicKey: (id: string) =>
+        request<{ publicKey: string | null }>(
+          `/profiles/${encodeURIComponent(id)}/public-key`,
+        ),
     },
     matches: {
       ai: () => request<MatchResult[]>('/matches/ai'),
@@ -161,8 +249,6 @@ export function createApiClient(opts: ApiClientOptions) {
           `/matches/kundli/${encodeURIComponent(otherId)}`,
         ),
       newToday: () => request<ProfileSummary[]>('/matches/new-today'),
-      premium: () => request<ProfileSummary[]>('/matches/premium'),
-      nearby: () => request<ProfileSummary[]>('/matches/nearby'),
     },
     interests: {
       send: (toProfileId: string, note?: string) =>
@@ -187,17 +273,44 @@ export function createApiClient(opts: ApiClientOptions) {
         }),
       list: () => request<ProfileSummary[]>('/shortlist'),
     },
+    block: {
+      add: (profileId: string, reason?: string) =>
+        request<{ ok: true }>(`/block/${encodeURIComponent(profileId)}`, {
+          method: 'POST',
+          body: JSON.stringify({ reason }),
+        }),
+      remove: (profileId: string) =>
+        request<{ ok: true }>(`/block/${encodeURIComponent(profileId)}`, { method: 'DELETE' }),
+    },
+    report: {
+      create: (profileId: string, reason: string, detail?: string) =>
+        request<unknown>(`/report/${encodeURIComponent(profileId)}`, {
+          method: 'POST',
+          body: JSON.stringify({ reason, detail }),
+        }),
+    },
+    views: {
+      log: (profileId: string) =>
+        request<{ ok: true } | { alreadyLogged: true }>(
+          `/views/${encodeURIComponent(profileId)}`,
+          { method: 'POST' },
+        ),
+    },
     chat: {
-      conversations: () => request<Conversation[]>('/conversations'),
+      conversations: () => request<ConversationSummary[]>('/conversations'),
       messages: (conversationId: string, cursor?: string) => {
         const q = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
-        return request<CursorPage<Message>>(`/conversations/${conversationId}/messages${q}`);
+        return request<CursorPage<EncryptedMessage>>(
+          `/conversations/${conversationId}/messages${q}`,
+        );
       },
-      send: (conversationId: string, body: string, mediaUrl?: string) =>
-        request<Message>(`/conversations/${conversationId}/messages`, {
+      send: (conversationId: string, body: { ciphertext: string; nonce: string; mediaUrl?: string; mediaMime?: string }) =>
+        request<EncryptedMessage>(`/conversations/${conversationId}/messages`, {
           method: 'POST',
-          body: JSON.stringify({ body, mediaUrl }),
+          body: JSON.stringify(body),
         }),
+      markRead: (conversationId: string) =>
+        request<{ ok: true }>(`/conversations/${conversationId}/read`, { method: 'POST' }),
     },
     payments: {
       plans: () => request<Plan[]>('/plans'),
@@ -216,6 +329,84 @@ export function createApiClient(opts: ApiClientOptions) {
           body: JSON.stringify(body),
         }),
       mySubscription: () => request<Subscription | null>('/me/subscription'),
+    },
+    verification: {
+      get: () => request<VerificationStatus>('/me/verification'),
+      requestEmail: () => request<{ sent: true }>('/me/verification/email/request', { method: 'POST' }),
+      verifyEmail: (code: string) =>
+        request<{ verified: true }>('/me/verification/email/verify', {
+          method: 'POST',
+          body: JSON.stringify({ code }),
+        }),
+      requestPhone: () => request<{ sent: true }>('/me/verification/phone/request', { method: 'POST' }),
+      verifyPhone: (code: string) =>
+        request<{ verified: true }>('/me/verification/phone/verify', {
+          method: 'POST',
+          body: JSON.stringify({ code }),
+        }),
+      submitSelfie: () =>
+        request<{ submitted: true }>('/me/verification/selfie/submit', { method: 'POST' }),
+      submitVideo: () =>
+        request<{ submitted: true; status: 'pending' }>('/me/verification/video/submit', {
+          method: 'POST',
+        }),
+      requestBackground: () =>
+        request<{ submitted: true; status: 'pending' }>('/me/verification/background/request', {
+          method: 'POST',
+        }),
+    },
+    ai: {
+      status: () => request<{ enabled: boolean }>('/ai/status'),
+      improveAbout: (aboutMe: string) =>
+        request<{ improved: string }>('/ai/improve-about', {
+          method: 'POST',
+          body: JSON.stringify({ aboutMe }),
+        }),
+      suggestTraits: (aboutMe: string) =>
+        request<{ personality: string[]; hobbies: string[] }>('/ai/suggest-traits', {
+          method: 'POST',
+          body: JSON.stringify({ aboutMe }),
+        }),
+      reindex: () => request<{ indexed: boolean }>('/ai/reindex-self', { method: 'POST' }),
+      coach: (question: string) =>
+        request<{ reply: string }>('/ai/coach', {
+          method: 'POST',
+          body: JSON.stringify({ question }),
+        }),
+    },
+    admin: {
+      stats: () =>
+        request<{
+          totalUsers: number;
+          signups24h: number;
+          signupsMonth: number;
+          activeSubs: number;
+          openReports: number;
+          revenueInr: number;
+        }>('/admin/stats'),
+      users: (q: Record<string, string | number | undefined> = {}) => {
+        const params = new URLSearchParams();
+        for (const [k, v] of Object.entries(q)) if (v != null) params.set(k, String(v));
+        return request<unknown>(`/admin/users?${params.toString()}`);
+      },
+      setUserStatus: (id: string, status: 'ACTIVE' | 'SUSPENDED' | 'DELETED') =>
+        request<unknown>(`/admin/users/${id}/status`, {
+          method: 'PATCH',
+          body: JSON.stringify({ status }),
+        }),
+      reports: () => request<unknown>('/admin/reports'),
+      resolveReport: (id: string, status: 'RESOLVED' | 'DISMISSED') =>
+        request<unknown>(`/admin/reports/${id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ status }),
+        }),
+      pendingVerifications: () => request<unknown>('/admin/verifications/pending'),
+      approveStep: (profileId: string, step: string) =>
+        request<unknown>(`/admin/verify/${profileId}`, {
+          method: 'POST',
+          body: JSON.stringify({ step }),
+        }),
+      logs: () => request<unknown>('/admin/logs'),
     },
   };
 }
