@@ -1,10 +1,12 @@
 import { Button, Card, Chip, colors, fontSizes, spacing } from '@shubhmilan/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { api } from '../../src/api';
+import { useAppLock } from '../../src/app-lock';
 import { useAuth } from '../../src/auth-store';
 import { useAppTheme, useThemeStore } from '../../src/theme';
 
@@ -32,6 +34,10 @@ export default function Settings() {
   const theme = useAppTheme();
   const mode = useThemeStore((s) => s.mode);
   const setMode = useThemeStore((s) => s.setMode);
+
+  const appLockEnabled = useAppLock((s) => s.enabled);
+  const setAppLockEnabled = useAppLock((s) => s.setEnabled);
+  const [appLockErr, setAppLockErr] = useState<string | null>(null);
 
   const prefs = useQuery({
     queryKey: ['notification-prefs'],
@@ -76,6 +82,37 @@ export default function Settings() {
             ))}
           </View>
         </Card>
+
+        {Platform.OS !== 'web' && (
+          <Card style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
+            <Text style={[styles.h2, { color: theme.ink }]}>Security</Text>
+            <View style={styles.pref}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: theme.ink, fontWeight: '600' }}>Require Face ID / Touch ID</Text>
+                <Text style={[styles.sub, { color: theme.textMuted, marginBottom: 0 }]}>
+                  Prompt to unlock when the app comes back to the foreground.
+                </Text>
+              </View>
+              <Switch
+                value={appLockEnabled}
+                onValueChange={async (v) => {
+                  setAppLockErr(null);
+                  try {
+                    await setAppLockEnabled(v);
+                  } catch (e) {
+                    setAppLockErr(e instanceof Error ? e.message : 'Could not enable');
+                  }
+                }}
+                trackColor={{ true: theme.primary, false: theme.border }}
+              />
+            </View>
+            {appLockErr ? (
+              <Text style={{ color: theme.danger, fontSize: fontSizes.xs + 1, marginTop: 6 }}>
+                {appLockErr}
+              </Text>
+            ) : null}
+          </Card>
+        )}
 
         <Card style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
           <Text style={[styles.h2, { color: theme.ink }]}>Notifications</Text>

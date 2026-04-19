@@ -21,7 +21,7 @@ export default function Users() {
   async function load() {
     setLoading(true);
     try {
-      const res = (await api.admin.users({ q, limit: 50 })) as { items: UserRow[] };
+      const res = (await api.admin.users({ q: q || undefined, limit: 50 })) as { items: UserRow[] };
       setUsers(res.items);
     } finally {
       setLoading(false);
@@ -36,6 +36,27 @@ export default function Users() {
   async function setStatus(id: string, status: 'ACTIVE' | 'SUSPENDED' | 'DELETED') {
     await api.admin.setUserStatus(id, status);
     load();
+  }
+
+  async function impersonate(user: UserRow) {
+    const reason = prompt(
+      `Impersonate ${user.email}?\n\nThis is logged to AdminLog. Brief reason:`,
+      '',
+    );
+    if (reason === null) return;
+    try {
+      const res = await api.admin.impersonate(user.id, reason || undefined);
+      // Stash the tokens in a separate pair of keys so an admin can come back to their
+      // own session after the impersonation window closes.
+      window.localStorage.setItem('shubhmilan.admin.impersonating', user.email);
+      window.localStorage.setItem('shubhmilan.admin.impersonate.access', res.tokens.accessToken);
+      window.localStorage.setItem('shubhmilan.admin.impersonate.refresh', res.tokens.refreshToken);
+      alert(
+        `Impersonation tokens issued for ${user.email}. Use them in a new browser profile — they're stored under shubhmilan.admin.impersonate.*`,
+      );
+    } catch (e) {
+      alert('Impersonation failed: ' + (e instanceof Error ? e.message : String(e)));
+    }
   }
 
   return (
@@ -86,7 +107,7 @@ export default function Users() {
                   </span>
                 </td>
                 <td>{new Date(u.createdAt).toLocaleDateString()}</td>
-                <td style={{ display: 'flex', gap: 6 }}>
+                <td style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   {u.status !== 'SUSPENDED' && (
                     <button onClick={() => setStatus(u.id, 'SUSPENDED')} style={btn('warn')}>
                       Suspend
@@ -95,6 +116,11 @@ export default function Users() {
                   {u.status !== 'ACTIVE' && (
                     <button onClick={() => setStatus(u.id, 'ACTIVE')} style={btn('ok')}>
                       Restore
+                    </button>
+                  )}
+                  {u.role === 'USER' && (
+                    <button onClick={() => impersonate(u)} style={btn('ok')}>
+                      Impersonate
                     </button>
                   )}
                 </td>

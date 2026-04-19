@@ -15,3 +15,4 @@ export * from './components/Modal.js';
 export * from './components/BottomSheet.js';
 export * from './components/GunaRing.js';
 export * from './components/PhotoGallery.js';
+export * from './components/SwipeableCard.js';

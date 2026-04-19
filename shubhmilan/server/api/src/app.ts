@@ -20,6 +20,7 @@ import { notificationPrefRoutes } from './routes/notification-prefs.js';
 import { interestRoutes } from './routes/interests.js';
 import { keyRoutes } from './routes/keys.js';
 import { matchRoutes } from './routes/matches.js';
+import { metricsRoutes } from './routes/metrics.js';
 import { meRoutes } from './routes/me.js';
 import { paymentRoutes } from './routes/payments.js';
 import { photoRoutes } from './routes/photos.js';
@@ -76,6 +77,7 @@ export async function buildApp() {
       await v1.register(interactionRoutes);
       await v1.register(notificationPrefRoutes);
       await v1.register(publicContentRoutes, { prefix: '/content' });
+      await v1.register(metricsRoutes, { prefix: '/metrics' });
 
       await v1.register(adminRoutes, { prefix: '/admin' });
     },

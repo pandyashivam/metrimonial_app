@@ -3,6 +3,7 @@ import { Inter, Playfair_Display } from 'next/font/google';
 import type { ReactNode } from 'react';
 
 import './globals.css';
+import { WebVitalsReporter } from './web-vitals';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfair' });
@@ -88,7 +89,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(WEBSITE_JSON_LD) }}
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <WebVitalsReporter />
+        {children}
+      </body>
     </html>
   );
 }

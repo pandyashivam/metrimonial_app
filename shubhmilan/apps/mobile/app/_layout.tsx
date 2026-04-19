@@ -2,10 +2,13 @@ import { ToastProvider } from '@shubhmilan/ui';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { AppState, type AppStateStatus } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { api, hydrateTokens } from '../src/api';
+import { useAppLock } from '../src/app-lock';
+import { LockScreen } from '../src/LockScreen';
 import { useAuth } from '../src/auth-store';
 import { attachDeepLinks } from '../src/deep-links';
 import { useIsDark, useThemeStore } from '../src/theme';
@@ -22,11 +25,16 @@ export default function RootLayout() {
 
   const syncKeys = useAuth((s) => s.syncEncryptionKeys);
   const hydrateTheme = useThemeStore((s) => s.hydrate);
+  const hydrateLock = useAppLock((s) => s.hydrate);
+  const lockNow = useAppLock((s) => s.lock);
+  const locked = useAppLock((s) => s.locked);
   const isDark = useIsDark();
+  const appState = useRef<AppStateStatus>(AppState.currentState);
 
   useEffect(() => {
     (async () => {
       await hydrateTheme();
+      await hydrateLock();
       await hydrateTokens();
       try {
         const me = await api.me.get();
@@ -39,7 +47,21 @@ export default function RootLayout() {
       setHydrated(true);
       setBooted(true);
     })();
-  }, [setUser, setHydrated, syncKeys, hydrateTheme]);
+  }, [setUser, setHydrated, syncKeys, hydrateTheme, hydrateLock]);
+
+  // Lock the app when it goes to the background so a re-open requires biometric unlock.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (next) => {
+      if (
+        appState.current.match(/active/) &&
+        (next === 'background' || next === 'inactive')
+      ) {
+        lockNow();
+      }
+      appState.current = next;
+    });
+    return () => sub.remove();
+  }, [lockNow]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -62,6 +84,7 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
         <StatusBar style={isDark ? 'light' : 'dark'} />
+        {locked && user ? <LockScreen /> : null}
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(tabs)" />
