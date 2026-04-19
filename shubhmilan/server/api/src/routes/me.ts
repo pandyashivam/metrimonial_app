@@ -197,15 +197,6 @@ export async function meRoutes(app: FastifyInstance) {
     return ok(reply, pref);
   });
 
-  // ------- Verification -------
-  app.get('/verification', async (request, reply) => {
-    const profile = await prisma.profile.findUnique({
-      where: { userId: request.auth!.sub },
-      select: { verification: true },
-    });
-    return ok(reply, profile?.verification ?? null);
-  });
-
   // ------- Completeness -------
   app.get('/completeness', async (request, reply) => {
     const profile = await prisma.profile.findUnique({
