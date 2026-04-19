@@ -13,8 +13,10 @@ import { adminRoutes } from './routes/admin.js';
 import { aiRoutes } from './routes/ai.js';
 import { authRoutes } from './routes/auth.js';
 import { chatRoutes } from './routes/chat.js';
+import { publicContentRoutes } from './routes/content.js';
 import { deviceRoutes } from './routes/devices.js';
 import { interactionRoutes } from './routes/interactions.js';
+import { notificationPrefRoutes } from './routes/notification-prefs.js';
 import { interestRoutes } from './routes/interests.js';
 import { keyRoutes } from './routes/keys.js';
 import { matchRoutes } from './routes/matches.js';
@@ -72,6 +74,8 @@ export async function buildApp() {
       await v1.register(keyRoutes);
       await v1.register(deviceRoutes);
       await v1.register(interactionRoutes);
+      await v1.register(notificationPrefRoutes);
+      await v1.register(publicContentRoutes, { prefix: '/content' });
 
       await v1.register(adminRoutes, { prefix: '/admin' });
     },

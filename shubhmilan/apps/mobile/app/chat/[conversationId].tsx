@@ -1,12 +1,16 @@
+import { FontAwesome6 } from '@expo/vector-icons';
 import type { EncryptedMessage } from '@shubhmilan/api-client';
 import { Button, Input, colors, fontSizes, spacing } from '@shubhmilan/ui';
 import { useQuery } from '@tanstack/react-query';
+import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
+  Image,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   StyleSheet,
   Text,
   View,
@@ -14,13 +18,24 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { api } from '../../src/api';
-import { decryptMessage, encryptMessage, ensureKeyPair } from '../../src/crypto';
+import {
+  decodeEnvelope,
+  decryptMedia,
+  decryptMessage,
+  encodeEnvelope,
+  encryptMedia,
+  encryptMessage,
+  ensureKeyPair,
+  naclUtil,
+  type MessageEnvelope,
+} from '../../src/crypto';
 import { getSocket } from '../../src/socket';
 
 interface DecryptedMessage {
   id: string;
   senderProfileId: string;
   text: string;
+  media?: { uri: string; mime: string };
   createdAt: string;
   readAt: string | null;
   failed?: boolean;
@@ -59,29 +74,85 @@ export default function ChatScreen() {
     enabled: !!conversationId,
   });
 
-  // Decrypt and merge server-fetched history whenever inputs are ready.
+  // Decrypt and merge server-fetched history whenever inputs are ready. For media
+  // envelopes we fetch the encrypted blob, symmetrically decrypt it, and turn the
+  // plaintext bytes into a data URI so RN <Image> can render without another roundtrip.
+  const resolveMedia = useCallback(
+    async (env: Extract<MessageEnvelope, { kind: 'media' }>): Promise<DecryptedMessage['media']> => {
+      try {
+        const { url } = await api.chat.signMedia(env.mediaKey);
+        const res = await fetch(url);
+        const buf = new Uint8Array(await res.arrayBuffer());
+        const ct = naclUtil.encodeBase64(buf);
+        const plain = decryptMedia(ct, env.symKey, env.symNonce);
+        if (!plain) return undefined;
+        const dataUri = `data:${env.mediaMime};base64,${naclUtil.encodeBase64(plain)}`;
+        return { uri: dataUri, mime: env.mediaMime };
+      } catch {
+        return undefined;
+      }
+    },
+    [],
+  );
+
   useEffect(() => {
     if (!historyQuery.data || !mySecret || !peerKey || !myProfileId) return;
-    const decrypted: DecryptedMessage[] = [];
-    for (const m of historyQuery.data.items as EncryptedMessage[]) {
-      // For messages I sent, the peer's public key is also the "other" party's key.
-      const otherKey = peerKey;
-      const text = decryptMessage(m.ciphertext, m.nonce, otherKey, mySecret);
-      decrypted.push({
-        id: m.id,
-        senderProfileId: m.senderProfileId,
-        text: text ?? '🔒 Cannot decrypt (different device or rotated key)',
-        createdAt: m.createdAt,
-        readAt: m.readAt,
-        failed: text === null,
-      });
-    }
-    // History arrives newest-first; we reverse for chronological display.
-    setMessages(decrypted.reverse());
-    setTimeout(() => listRef.current?.scrollToEnd({ animated: false }), 50);
-    // Mark as read on open.
-    api.chat.markRead(conversationId!).catch(() => null);
-  }, [historyQuery.data, mySecret, peerKey, myProfileId, conversationId]);
+    let cancelled = false;
+    (async () => {
+      const decrypted: DecryptedMessage[] = [];
+      for (const m of historyQuery.data.items as EncryptedMessage[]) {
+        const raw = decryptMessage(m.ciphertext, m.nonce, peerKey, mySecret);
+        if (raw === null) {
+          decrypted.push({
+            id: m.id,
+            senderProfileId: m.senderProfileId,
+            text: '🔒 Cannot decrypt (different device or rotated key)',
+            createdAt: m.createdAt,
+            readAt: m.readAt,
+            failed: true,
+          });
+          continue;
+        }
+        const env = decodeEnvelope(raw);
+        if (env && env.kind === 'media') {
+          const media = await resolveMedia(env);
+          decrypted.push({
+            id: m.id,
+            senderProfileId: m.senderProfileId,
+            text: env.text,
+            media,
+            createdAt: m.createdAt,
+            readAt: m.readAt,
+          });
+        } else if (env && env.kind === 'text') {
+          decrypted.push({
+            id: m.id,
+            senderProfileId: m.senderProfileId,
+            text: env.text,
+            createdAt: m.createdAt,
+            readAt: m.readAt,
+          });
+        } else {
+          // Legacy message pre-envelope: treat as plain text.
+          decrypted.push({
+            id: m.id,
+            senderProfileId: m.senderProfileId,
+            text: raw,
+            createdAt: m.createdAt,
+            readAt: m.readAt,
+          });
+        }
+      }
+      if (!cancelled) {
+        setMessages(decrypted.reverse());
+        setTimeout(() => listRef.current?.scrollToEnd({ animated: false }), 50);
+        api.chat.markRead(conversationId!).catch(() => null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [historyQuery.data, mySecret, peerKey, myProfileId, conversationId, resolveMedia]);
 
   const [peerTyping, setPeerTyping] = useState(false);
   const [peerOnline, setPeerOnline] = useState(false);
@@ -96,20 +167,31 @@ export default function ChatScreen() {
       socketInstance = await getSocket();
       if (!socketInstance || cancelled) return;
       socketInstance.emit('join', conversationId);
-      socketInstance.on('message:new', (m: EncryptedMessage) => {
+      socketInstance.on('message:new', async (m: EncryptedMessage) => {
         if (m.conversationId !== conversationId) return;
-        const text = decryptMessage(m.ciphertext, m.nonce, peerKey, mySecret);
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: m.id,
-            senderProfileId: m.senderProfileId,
-            text: text ?? '🔒 …',
-            createdAt: m.createdAt,
-            readAt: null,
-            failed: text === null,
-          },
-        ]);
+        const raw = decryptMessage(m.ciphertext, m.nonce, peerKey, mySecret);
+        const base = {
+          id: m.id,
+          senderProfileId: m.senderProfileId,
+          createdAt: m.createdAt,
+          readAt: null as string | null,
+        };
+        if (raw === null) {
+          setMessages((prev) => [
+            ...prev,
+            { ...base, text: '🔒 …', failed: true },
+          ]);
+          return;
+        }
+        const env = decodeEnvelope(raw);
+        if (env && env.kind === 'media') {
+          const media = await resolveMedia(env);
+          setMessages((prev) => [...prev, { ...base, text: env.text, media }]);
+        } else if (env && env.kind === 'text') {
+          setMessages((prev) => [...prev, { ...base, text: env.text }]);
+        } else {
+          setMessages((prev) => [...prev, { ...base, text: raw }]);
+        }
       });
       socketInstance.on(
         'typing',
@@ -160,11 +242,59 @@ export default function ChatScreen() {
     if (!input.trim() || !mySecret || !peerKey || !conversationId) return;
     setSending(true);
     try {
-      const { ciphertext, nonce } = await encryptMessage(input.trim(), peerKey, mySecret);
+      const envelope = encodeEnvelope({ kind: 'text', text: input.trim() });
+      const { ciphertext, nonce } = await encryptMessage(envelope, peerKey, mySecret);
       await api.chat.send(conversationId, { ciphertext, nonce });
       setInput('');
     } catch (err) {
       console.warn('send failed', err);
+    } finally {
+      setSending(false);
+    }
+  }, [input, mySecret, peerKey, conversationId]);
+
+  const sendImage = useCallback(async () => {
+    if (!mySecret || !peerKey || !conversationId) return;
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) return;
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.85,
+      base64: true,
+    });
+    if (result.canceled || !result.assets[0]) return;
+    const asset = result.assets[0];
+    const mime = asset.mimeType ?? 'image/jpeg';
+    const bytes = asset.base64 ? naclUtil.decodeBase64(asset.base64) : null;
+    if (!bytes) return;
+
+    setSending(true);
+    try {
+      // 1. Encrypt the image bytes with a fresh symmetric key.
+      const { ciphertext: mediaCt, symKey, symNonce } = await encryptMedia(bytes);
+      // 2. Upload the encrypted blob to R2 — it's opaque to the server.
+      const blob = new Blob([mediaCt], { type: 'application/octet-stream' });
+      const { key } = await api.chat.uploadMedia(blob);
+      // 3. Build + E2E-encrypt the envelope (contains the sym key so the peer can decrypt).
+      const envelope = encodeEnvelope({
+        kind: 'media',
+        text: input.trim(),
+        mediaKey: key,
+        mediaMime: mime,
+        symKey: naclUtil.encodeBase64(symKey),
+        symNonce: naclUtil.encodeBase64(symNonce),
+      });
+      const { ciphertext, nonce } = await encryptMessage(envelope, peerKey, mySecret);
+      await api.chat.send(conversationId, {
+        ciphertext,
+        nonce,
+        mediaUrl: null,
+        mediaMime: mime,
+      });
+      setInput('');
+    } catch (err) {
+      console.warn('send-image failed', err);
     } finally {
       setSending(false);
     }
@@ -198,6 +328,14 @@ export default function ChatScreen() {
                 item.senderProfileId === myProfileId ? styles.bubbleMine : styles.bubbleThem,
               ]}
             >
+              {item.media ? (
+                <Image
+                  source={{ uri: item.media.uri }}
+                  style={styles.bubbleImage}
+                  accessibilityLabel="Chat photo"
+                />
+              ) : null}
+              {item.text ? (
               <Text
                 style={[
                   styles.bubbleText,
@@ -206,6 +344,7 @@ export default function ChatScreen() {
               >
                 {item.text}
               </Text>
+              ) : null}
             </View>
           )}
         />
@@ -213,6 +352,14 @@ export default function ChatScreen() {
           <Text style={styles.typing}>Typing…</Text>
         )}
         <View style={styles.inputBar}>
+          <Pressable
+            onPress={sendImage}
+            disabled={sending || !peerKey}
+            accessibilityLabel="Attach photo"
+            style={styles.attachBtn}
+          >
+            <FontAwesome6 name="image" size={18} color={colors.primary} />
+          </Pressable>
           <View style={{ flex: 1 }}>
             <Input
               value={input}
@@ -249,6 +396,23 @@ const styles = StyleSheet.create({
   bubbleMine: { alignSelf: 'flex-end', backgroundColor: colors.primary },
   bubbleThem: { alignSelf: 'flex-start', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   bubbleText: { fontSize: fontSizes.sm + 1 },
+  bubbleImage: {
+    width: 220,
+    height: 220,
+    borderRadius: 10,
+    marginBottom: 6,
+    backgroundColor: colors.primary100,
+  },
+  attachBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+  },
   typing: { color: colors.textMuted, fontStyle: 'italic', paddingHorizontal: spacing.md, paddingBottom: 4 },
   inputBar: {
     flexDirection: 'row',

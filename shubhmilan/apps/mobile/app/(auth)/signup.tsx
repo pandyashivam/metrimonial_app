@@ -2,36 +2,53 @@ import { Button, Input, colors, fontSizes, spacing } from '@shubhmilan/ui';
 import { SignupInput } from '@shubhmilan/validation';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { api } from '../../src/api';
 
+/**
+ * Signup form — React Hook Form + our shared Zod schema. The form owns its own field
+ * state + validation; we only touch server-side errors at submit time.
+ */
+
+interface FormValues {
+  email: string;
+  phone: string;
+  password: string;
+}
+
 export default function Signup() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('+91');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
+  const [serverErr, setServerErr] = useState<string | null>(null);
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<FormValues>({
+    defaultValues: { email: '', phone: '+91', password: '' },
+    mode: 'onBlur',
+  });
 
-  async function submit() {
-    setErr(null);
-    const parsed = SignupInput.safeParse({ email, phone, password });
+  const onSubmit = async (values: FormValues) => {
+    setServerErr(null);
+    // Run the shared Zod schema manually so the error surfaces consistently with the server.
+    const parsed = SignupInput.safeParse(values);
     if (!parsed.success) {
-      setErr(parsed.error.issues[0]?.message ?? 'Check your inputs');
+      setServerErr(parsed.error.issues[0]?.message ?? 'Check your inputs');
       return;
     }
-    setLoading(true);
     try {
       await api.auth.signup(parsed.data);
-      router.push({ pathname: '/(auth)/otp', params: { target: phone, purpose: 'SIGNUP' } });
+      router.push({
+        pathname: '/(auth)/otp',
+        params: { target: values.phone, purpose: 'SIGNUP' },
+      });
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Signup failed');
-    } finally {
-      setLoading(false);
+      setServerErr(e instanceof Error ? e.message : 'Signup failed');
     }
-  }
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -43,32 +60,76 @@ export default function Signup() {
           <Text style={styles.title}>Create your free profile</Text>
           <Text style={styles.sub}>We&apos;ll send an OTP to verify your phone.</Text>
           <View style={{ marginTop: spacing.lg }}>
-            <Input
-              label="Email"
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              autoComplete="email"
-              inputMode="email"
-              placeholder="you@example.com"
+            <Controller
+              control={control}
+              name="email"
+              rules={{
+                required: 'Email is required',
+                pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: 'Invalid email' },
+              }}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <Input
+                  label="Email"
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  inputMode="email"
+                  placeholder="you@example.com"
+                  error={errors.email?.message}
+                />
+              )}
             />
-            <Input
-              label="Phone"
-              value={phone}
-              onChangeText={setPhone}
-              autoComplete="tel"
-              inputMode="tel"
-              placeholder="+91…"
+            <Controller
+              control={control}
+              name="phone"
+              rules={{
+                required: 'Phone is required',
+                pattern: { value: /^\+?[1-9]\d{9,14}$/, message: 'Invalid phone' },
+              }}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <Input
+                  label="Phone"
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  autoComplete="tel"
+                  inputMode="tel"
+                  placeholder="+91…"
+                  error={errors.phone?.message}
+                />
+              )}
             />
-            <Input
-              label="Password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              placeholder="At least 8 chars, mixed case + digit"
+            <Controller
+              control={control}
+              name="password"
+              rules={{
+                required: 'Password is required',
+                minLength: { value: 8, message: 'At least 8 characters' },
+                validate: (v) =>
+                  (/[a-z]/.test(v) && /[A-Z]/.test(v) && /\d/.test(v)) ||
+                  'Mix case + include a digit',
+              }}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <Input
+                  label="Password"
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  secureTextEntry
+                  placeholder="At least 8 chars, mixed case + digit"
+                  error={errors.password?.message}
+                />
+              )}
             />
-            {err ? <Text style={styles.err}>{err}</Text> : null}
-            <Button title="Continue" onPress={submit} loading={loading} block />
+            {serverErr ? <Text style={styles.err}>{serverErr}</Text> : null}
+            <Button
+              title="Continue"
+              onPress={handleSubmit(onSubmit)}
+              loading={isSubmitting}
+              block
+            />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

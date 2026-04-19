@@ -72,6 +72,8 @@ export default function RootLayout() {
           />
           <Stack.Screen name="kundli/[otherId]" options={{ headerShown: true, title: 'Kundli' }} />
           <Stack.Screen name="verify/index" options={{ headerShown: true, title: 'Verification' }} />
+          <Stack.Screen name="verify/video" options={{ headerShown: true, title: 'Video KYC' }} />
+          <Stack.Screen name="verify/background" options={{ headerShown: true, title: 'Background check' }} />
           <Stack.Screen name="settings/index" options={{ headerShown: true, title: 'Settings' }} />
           <Stack.Screen name="premium" options={{ headerShown: true, title: 'Go Premium' }} />
           <Stack.Screen name="filters" options={{ headerShown: true, title: 'Filters' }} />

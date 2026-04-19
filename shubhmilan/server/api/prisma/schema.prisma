@@ -142,6 +142,8 @@ model User {
   subscriptions    Subscription[]
   refreshTokens    RefreshToken[]
   adminLogs        AdminLog[]
+  notificationPref NotificationPref?
+  authoredContent  Content[]
 }
 
 model RefreshToken {
@@ -533,6 +535,61 @@ model Device {
   createdAt   DateTime @default(now())
 
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+enum ContentKind {
+  SUCCESS_STORY
+  BLOG_POST
+  EVENT
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+/// CMS-lite. One table covers every long-form asset we publish on the marketing site:
+/// success stories, blog posts, events. Admins CRUD via /admin/content/*; the marketing
+/// site reads via the public /content/* endpoints (no auth).
+model Content {
+  id          String        @id @default(cuid())
+  kind        ContentKind
+  slug        String
+  title       String
+  excerpt     String?       @db.Text
+  body        String        @db.LongText
+  coverKey    String?
+  meta        Json?
+  status      ContentStatus @default(DRAFT)
+  publishedAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  authorId    String?
+
+  author      User?         @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@unique([kind, slug])
+  @@index([kind, status])
+  @@index([publishedAt])
+}
+
+/// Per-user push preferences. Missing rows default to "all categories enabled" — users only
+/// create a row when they opt out of something.
+model NotificationPref {
+  id                      String   @id @default(cuid())
+  userId                  String   @unique
+  newInterest             Boolean  @default(true)
+  interestAccepted        Boolean  @default(true)
+  newMessage              Boolean  @default(true)
+  profileViewed           Boolean  @default(true)
+  premiumMatch            Boolean  @default(true)
+  verificationApproved    Boolean  @default(true)
+  updatedAt               DateTime @updatedAt
+
+  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }

@@ -106,3 +106,78 @@ export function decryptMessage(
     return null;
   }
 }
+
+// ---------- Media envelopes ----------
+//
+// Chat media uses a hybrid scheme: the file is encrypted with a per-message symmetric
+// key (nacl.secretbox, XSalsa20-Poly1305); the symmetric key is bundled into the message
+// envelope which is then E2E-encrypted with nacl.box like regular text. This keeps the
+// "server never sees plaintext" invariant while letting us reuse public storage for the
+// (encrypted) blob.
+//
+// Plaintext payload shape (JSON):
+//   { kind: 'text', text: string }
+//   { kind: 'media', text: string, mediaKey: string (R2 object key), mediaMime: string,
+//     symKey: string (base64, 32 bytes), symNonce: string (base64, 24 bytes) }
+
+export type MessageEnvelope =
+  | { kind: 'text'; text: string }
+  | {
+      kind: 'media';
+      text: string;
+      mediaKey: string;
+      mediaMime: string;
+      symKey: string;
+      symNonce: string;
+    };
+
+/** Serialize an envelope for nacl.box input. */
+export function encodeEnvelope(env: MessageEnvelope): string {
+  return JSON.stringify(env);
+}
+
+/** Parse. Returns null when the payload isn't a JSON envelope — in that case the caller
+ *  should treat the raw string as a legacy plaintext message (kind: 'text'). */
+export function decodeEnvelope(raw: string): MessageEnvelope | null {
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object' && typeof parsed.kind === 'string') {
+      return parsed as MessageEnvelope;
+    }
+  } catch {
+    /* fall through */
+  }
+  return null;
+}
+
+/** Encrypt a raw byte payload with a fresh symmetric key (nacl.secretbox). */
+export async function encryptMedia(bytes: Uint8Array): Promise<{
+  ciphertext: Uint8Array;
+  symKey: Uint8Array;
+  symNonce: Uint8Array;
+}> {
+  const symKey = new Uint8Array(await Crypto.getRandomBytesAsync(32));
+  const symNonce = new Uint8Array(await Crypto.getRandomBytesAsync(24));
+  const ciphertext = nacl.secretbox(bytes, symNonce, symKey);
+  return { ciphertext, symKey, symNonce };
+}
+
+/** Decrypt a symmetric blob back to plaintext bytes. */
+export function decryptMedia(
+  ciphertextB64: string,
+  symKeyB64: string,
+  symNonceB64: string,
+): Uint8Array | null {
+  try {
+    const out = nacl.secretbox.open(
+      naclUtil.decodeBase64(ciphertextB64),
+      naclUtil.decodeBase64(symNonceB64),
+      naclUtil.decodeBase64(symKeyB64),
+    );
+    return out ? new Uint8Array(out) : null;
+  } catch {
+    return null;
+  }
+}
+
+export { naclUtil };

@@ -225,6 +225,29 @@ export function createApiClient(opts: ApiClientOptions) {
         request<{ ok: true }>(`/me/photos/${id}`, { method: 'DELETE' }),
       registerDevice: (body: { fcmToken: string; platform: 'ios' | 'android' | 'web' }) =>
         request<{ id: string }>('/me/devices', { method: 'POST', body: JSON.stringify(body) }),
+      notificationPrefs: () =>
+        request<{
+          newInterest: boolean;
+          interestAccepted: boolean;
+          newMessage: boolean;
+          profileViewed: boolean;
+          premiumMatch: boolean;
+          verificationApproved: boolean;
+        }>('/me/notification-prefs'),
+      setNotificationPrefs: (
+        body: Partial<{
+          newInterest: boolean;
+          interestAccepted: boolean;
+          newMessage: boolean;
+          profileViewed: boolean;
+          premiumMatch: boolean;
+          verificationApproved: boolean;
+        }>,
+      ) =>
+        request<unknown>('/me/notification-prefs', {
+          method: 'PUT',
+          body: JSON.stringify(body),
+        }),
     },
     profiles: {
       list: (query: Record<string, string | number | boolean | undefined> = {}) => {
@@ -335,6 +358,26 @@ export function createApiClient(opts: ApiClientOptions) {
           body: JSON.stringify({ key }),
         }),
     },
+    content: {
+      list: (kind?: string) => {
+        const params = new URLSearchParams();
+        if (kind) params.set('kind', kind);
+        return request<
+          Array<{
+            id: string;
+            kind: string;
+            slug: string;
+            title: string;
+            excerpt: string | null;
+            coverKey: string | null;
+            publishedAt: string | null;
+            meta: Record<string, unknown> | null;
+          }>
+        >(`/content?${params.toString()}`);
+      },
+      get: (kind: string, slug: string) =>
+        request<unknown>(`/content/${encodeURIComponent(kind)}/${encodeURIComponent(slug)}`),
+    },
     payments: {
       plans: () => request<Plan[]>('/plans'),
       createOrder: (planId: string) =>
@@ -430,6 +473,31 @@ export function createApiClient(opts: ApiClientOptions) {
           body: JSON.stringify({ step }),
         }),
       logs: () => request<unknown>('/admin/logs'),
+      transactions: (q: Record<string, string | undefined> = {}) => {
+        const params = new URLSearchParams();
+        for (const [k, v] of Object.entries(q)) if (v) params.set(k, v);
+        return request<unknown>(`/admin/transactions?${params.toString()}`);
+      },
+      contentList: (kind?: string, status?: string) => {
+        const params = new URLSearchParams();
+        if (kind) params.set('kind', kind);
+        if (status) params.set('status', status);
+        return request<unknown[]>(`/admin/content?${params.toString()}`);
+      },
+      contentCreate: (body: {
+        kind: 'SUCCESS_STORY' | 'BLOG_POST' | 'EVENT';
+        slug: string;
+        title: string;
+        excerpt?: string | null;
+        body: string;
+        coverKey?: string | null;
+        meta?: Record<string, unknown> | null;
+        status?: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+      }) => request<unknown>('/admin/content', { method: 'POST', body: JSON.stringify(body) }),
+      contentUpdate: (id: string, body: Record<string, unknown>) =>
+        request<unknown>(`/admin/content/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+      contentDelete: (id: string) =>
+        request<{ ok: true }>(`/admin/content/${id}`, { method: 'DELETE' }),
       impersonate: (userId: string, reason?: string) =>
         request<{
           user: { id: string; email: string };

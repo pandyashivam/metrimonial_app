@@ -1,33 +1,38 @@
 import { Button, Input, colors, spacing } from '@shubhmilan/ui';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { api } from '../../src/api';
 import { useAuth } from '../../src/auth-store';
 
+interface FormValues {
+  identifier: string;
+  password: string;
+}
+
 export default function Login() {
   const router = useRouter();
   const setUser = useAuth((s) => s.setUser);
-  const [identifier, setIdentifier] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
+  const [serverErr, setServerErr] = useState<string | null>(null);
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<FormValues>({ defaultValues: { identifier: '', password: '' }, mode: 'onBlur' });
 
-  async function submit() {
-    setErr(null);
-    setLoading(true);
+  const onSubmit = async (values: FormValues) => {
+    setServerErr(null);
     try {
-      const res = await api.auth.login({ identifier, password });
+      const res = await api.auth.login(values);
       setUser(res.user);
       router.replace('/(tabs)/home');
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Login failed');
-    } finally {
-      setLoading(false);
+      setServerErr(e instanceof Error ? e.message : 'Login failed');
     }
-  }
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -37,15 +42,38 @@ export default function Login() {
       >
         <ScrollView contentContainerStyle={styles.scroll}>
           <Text style={styles.title}>Welcome back</Text>
-          <Input
-            label="Email or phone"
-            value={identifier}
-            onChangeText={setIdentifier}
-            autoCapitalize="none"
+          <Controller
+            control={control}
+            name="identifier"
+            rules={{ required: 'Email or phone is required' }}
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                label="Email or phone"
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                autoCapitalize="none"
+                error={errors.identifier?.message}
+              />
+            )}
           />
-          <Input label="Password" value={password} onChangeText={setPassword} secureTextEntry />
-          {err ? <Text style={styles.err}>{err}</Text> : null}
-          <Button title="Log in" onPress={submit} loading={loading} block />
+          <Controller
+            control={control}
+            name="password"
+            rules={{ required: 'Password is required' }}
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                label="Password"
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                secureTextEntry
+                error={errors.password?.message}
+              />
+            )}
+          />
+          {serverErr ? <Text style={styles.err}>{serverErr}</Text> : null}
+          <Button title="Log in" onPress={handleSubmit(onSubmit)} loading={isSubmitting} block />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

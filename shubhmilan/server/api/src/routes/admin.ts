@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { prisma } from '../db.js';
 import { fail, ok } from '../lib/response.js';
+import { adminContentRoutes } from './content.js';
 import { issueTokensForUser } from '../services/auth.js';
 import { pushVerificationApproved } from '../services/push.js';
 import {
@@ -280,6 +281,52 @@ export async function adminRoutes(app: FastifyInstance) {
     await audit(request.auth!.sub, 'MAINTENANCE_MODE', 'setting', SETTING_KEYS.maintenanceMode, next);
     return ok(reply, next);
   });
+
+  // ---------------- Content CRUD ----------------
+  await app.register(
+    async (scope) => {
+      await adminContentRoutes(scope, audit);
+    },
+    { prefix: '/content' },
+  );
+
+  // ---------------- Transactions ledger ----------------
+  app.get<{ Querystring: { status?: string; limit?: string; cursor?: string } }>(
+    '/transactions',
+    async (request, reply) => {
+      const status = request.query.status;
+      const limit = Math.min(Math.max(parseInt(request.query.limit ?? '50', 10) || 50, 1), 200);
+      const rows = await prisma.subscription.findMany({
+        where: {
+          ...(status &&
+          ['PENDING', 'ACTIVE', 'EXPIRED', 'CANCELLED', 'FAILED'].includes(status)
+            ? {
+                status: status as
+                  | 'PENDING'
+                  | 'ACTIVE'
+                  | 'EXPIRED'
+                  | 'CANCELLED'
+                  | 'FAILED',
+              }
+            : {}),
+        },
+        orderBy: { createdAt: 'desc' },
+        take: limit + 1,
+        ...(request.query.cursor && { cursor: { id: request.query.cursor }, skip: 1 }),
+        include: {
+          plan: { select: { name: true, priceInr: true } },
+          user: { select: { id: true, email: true } },
+        },
+      });
+      const hasMore = rows.length > limit;
+      const items = rows.slice(0, limit);
+      return ok(reply, {
+        items,
+        nextCursor: hasMore ? items[items.length - 1]?.id ?? null : null,
+        hasMore,
+      });
+    },
+  );
 
   // ---------------- Audit log ----------------
   app.get('/logs', async (request, reply) => {

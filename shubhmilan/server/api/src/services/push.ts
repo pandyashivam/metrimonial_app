@@ -41,8 +41,25 @@ interface ExpoMessage {
   channelId?: string;
 }
 
+/** Field name on NotificationPref corresponding to each category. */
+const CATEGORY_FIELD: Record<NotificationCategory, keyof import('@prisma/client').NotificationPref> = {
+  new_interest: 'newInterest',
+  interest_accepted: 'interestAccepted',
+  new_message: 'newMessage',
+  profile_viewed: 'profileViewed',
+  premium_match: 'premiumMatch',
+  verification_approved: 'verificationApproved',
+};
+
 /** Send a notification to every registered device for a user. Fire-and-forget. */
 export async function sendPush(p: PushPayload): Promise<void> {
+  // Respect the user's per-category opt-out. Missing row = all categories enabled.
+  const prefs = await prisma.notificationPref.findUnique({ where: { userId: p.userId } });
+  if (prefs) {
+    const field = CATEGORY_FIELD[p.category];
+    if (prefs[field] === false) return;
+  }
+
   const devices = await prisma.device.findMany({
     where: { userId: p.userId },
     select: { fcmToken: true, platform: true, id: true },

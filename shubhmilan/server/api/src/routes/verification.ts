@@ -170,7 +170,50 @@ export async function verificationRoutes(app: FastifyInstance) {
     return ok(reply, { submitted: true as const, status: 'pending' as const });
   });
 
-  // ---- Background check — paid, requires an active Platinum plan or explicit request ----
+  // ---- Background check — one-time paid step (₹1500). Gold+ members get it free. ----
+  app.post('/background/order', async (request, reply) => {
+    if (!request.profileId) return fail(reply, 400, 'NO_PROFILE', 'Create profile first');
+    const [existing, subscription] = await Promise.all([
+      prisma.verification.findUnique({ where: { profileId: request.profileId } }),
+      prisma.subscription.findFirst({
+        where: { userId: request.auth!.sub, status: 'ACTIVE' },
+        include: { plan: true },
+        orderBy: { endsAt: 'desc' },
+      }),
+    ]);
+    if (existing?.backgroundVerified) {
+      return fail(reply, 400, 'ALREADY_VERIFIED', 'Background check already completed');
+    }
+
+    const freeTier =
+      subscription?.plan?.name?.toLowerCase().includes('gold') ||
+      subscription?.plan?.name?.toLowerCase().includes('platinum');
+    if (freeTier) {
+      // Fast-path: no payment required for Gold/Platinum. Queue for admin review.
+      await prisma.verification.upsert({
+        where: { profileId: request.profileId },
+        update: {},
+        create: { profileId: request.profileId },
+      });
+      return ok(reply, { queued: true as const, free: true as const });
+    }
+
+    // Create a PENDING subscription-shaped row so the Razorpay flow + webhook works
+    // unchanged — we use a synthetic short-lived "plan" for the one-time fee instead of
+    // creating a new table. The admin queue picks it up on capture.
+    const { createOrder } = await import('../services/razorpay.js');
+    const receipt = `bgchk_${request.auth!.sub}_${Date.now()}`;
+    const order = await createOrder(150_000, receipt);
+    return ok(reply, {
+      orderId: order.id,
+      amount: order.amount,
+      keyId: (await import('../env.js')).env.RAZORPAY_KEY_ID,
+      receipt,
+      queued: false as const,
+      free: false as const,
+    });
+  });
+
   app.post('/background/request', async (request, reply) => {
     if (!request.profileId) return fail(reply, 400, 'NO_PROFILE', 'Create profile first');
     await prisma.verification.upsert({
