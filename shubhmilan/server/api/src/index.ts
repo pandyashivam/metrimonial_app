@@ -2,9 +2,16 @@ import { createServer } from 'node:http';
 import { Server as SocketIoServer } from 'socket.io';
 
 import { buildApp } from './app.js';
-import { shutdownDb } from './db.js';
+import { prisma, shutdownDb } from './db.js';
 import { env } from './env.js';
 import { verifyAccessToken } from './lib/tokens.js';
+
+/**
+ * In-memory presence registry. Maps userId → number of live socket connections (0 means
+ * offline). For single-instance deploys we keep it in-process; multi-instance deploys
+ * should swap this for Redis so presence is consistent across pods.
+ */
+const presenceCount = new Map<string, number>();
 
 async function main() {
   const app = await buildApp();
@@ -27,12 +34,48 @@ async function main() {
     }
   });
 
-  io.on('connection', (socket) => {
-    socket.on('join', (conversationId: string) => socket.join(`conv:${conversationId}`));
-    socket.on('typing', ({ conversationId, isTyping }: { conversationId: string; isTyping: boolean }) => {
-      socket
-        .to(`conv:${conversationId}`)
-        .emit('typing', { conversationId, profileId: socket.data.userId, isTyping });
+  io.on('connection', async (socket) => {
+    const userId: string | undefined = socket.data.userId;
+    if (!userId) return;
+
+    // Mark online on first connection (multiple tabs/devices are ok — count is per-socket).
+    const prev = presenceCount.get(userId) ?? 0;
+    presenceCount.set(userId, prev + 1);
+    await socket.join(`user:${userId}`);
+    if (prev === 0) {
+      io.emit('presence:update', { userId, isOnline: true, at: new Date().toISOString() });
+      // Update DB lastActiveAt for discovery ordering.
+      await prisma.profile
+        .updateMany({ where: { userId }, data: { lastActiveAt: new Date() } })
+        .catch(() => null);
+    }
+
+    socket.on('join', async (conversationId: string) => {
+      await socket.join(`conv:${conversationId}`);
+    });
+    socket.on('leave', async (conversationId: string) => {
+      await socket.leave(`conv:${conversationId}`);
+    });
+    socket.on(
+      'typing',
+      ({ conversationId, isTyping }: { conversationId: string; isTyping: boolean }) => {
+        socket
+          .to(`conv:${conversationId}`)
+          .emit('typing', { conversationId, userId, isTyping });
+      },
+    );
+
+    socket.on('disconnect', async () => {
+      const count = (presenceCount.get(userId) ?? 1) - 1;
+      if (count <= 0) {
+        presenceCount.delete(userId);
+        io.emit('presence:update', { userId, isOnline: false, at: new Date().toISOString() });
+        await prisma.profile
+          .updateMany({ where: { userId }, data: { lastActiveAt: new Date() } })
+          .catch(() => null);
+      } else {
+        presenceCount.set(userId, count);
+      }
     });
   });
 

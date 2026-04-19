@@ -6,6 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { api, hydrateTokens } from '../src/api';
 import { useAuth } from '../src/auth-store';
+import { useIsDark, useThemeStore } from '../src/theme';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
@@ -18,9 +19,12 @@ export default function RootLayout() {
   const router = useRouter();
 
   const syncKeys = useAuth((s) => s.syncEncryptionKeys);
+  const hydrateTheme = useThemeStore((s) => s.hydrate);
+  const isDark = useIsDark();
 
   useEffect(() => {
     (async () => {
+      await hydrateTheme();
       await hydrateTokens();
       try {
         const me = await api.me.get();
@@ -33,7 +37,7 @@ export default function RootLayout() {
       setHydrated(true);
       setBooted(true);
     })();
-  }, [setUser, setHydrated, syncKeys]);
+  }, [setUser, setHydrated, syncKeys, hydrateTheme]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -47,7 +51,7 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
-        <StatusBar style="dark" />
+        <StatusBar style={isDark ? 'light' : 'dark'} />
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(tabs)" />
@@ -58,6 +62,7 @@ export default function RootLayout() {
           />
           <Stack.Screen name="kundli/[otherId]" options={{ headerShown: true, title: 'Kundli' }} />
           <Stack.Screen name="verify/index" options={{ headerShown: true, title: 'Verification' }} />
+          <Stack.Screen name="settings/index" options={{ headerShown: true, title: 'Settings' }} />
           <Stack.Screen name="premium" options={{ headerShown: true, title: 'Go Premium' }} />
           <Stack.Screen name="filters" options={{ headerShown: true, title: 'Filters' }} />
           <Stack.Screen name="(onboarding)" />

@@ -12,7 +12,10 @@ export interface ProfileCardProps {
   onShortlist?: (id: string) => void;
 }
 
-export function ProfileCard({ profile, onPress }: ProfileCardProps) {
+// Re-renders are heavy in discovery grids (every scroll re-evaluates every row). React.memo
+// around ProfileCard short-circuits any re-render where `profile` is referentially equal,
+// which TanStack Query guarantees across non-invalidated fetches.
+function ProfileCardComponent({ profile, onPress }: ProfileCardProps) {
   return (
     <Pressable
       accessibilityRole="button"
@@ -84,3 +87,5 @@ const styles = StyleSheet.create({
   name: { fontSize: fontSizes.md + 1, fontWeight: '700', color: colors.ink, marginBottom: 3 },
   meta: { fontSize: fontSizes.xs + 1, color: colors.textMuted, marginTop: 2 },
 });
+
+export const ProfileCard = React.memo(ProfileCardComponent);

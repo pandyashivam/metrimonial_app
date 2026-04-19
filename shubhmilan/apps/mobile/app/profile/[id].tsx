@@ -1,20 +1,39 @@
 import { Button, Card, Chip, VerificationBadge, colors, fontSizes, spacing } from '@shubhmilan/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { api } from '../../src/api';
+import { haptics } from '../../src/haptics';
 
 export default function ProfileDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
   const qc = useQueryClient();
   const profile = useQuery({ queryKey: ['profile', id], queryFn: () => api.profiles.get(id!) });
+
+  // Log a view (idempotent per day, fire-and-forget).
+  useEffect(() => {
+    if (id) api.views.log(id).catch(() => null);
+  }, [id]);
+
   const sendInterest = useMutation({
     mutationFn: () => api.interests.send(id!),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['interests'] }),
+    onMutate: () => haptics.medium(),
+    onSuccess: () => {
+      haptics.success();
+      qc.invalidateQueries({ queryKey: ['interests'] });
+      qc.invalidateQueries({ queryKey: ['entitlements'] });
+    },
+    onError: () => haptics.error(),
   });
-  const shortlist = useMutation({ mutationFn: () => api.shortlist.add(id!) });
+  const shortlist = useMutation({
+    mutationFn: () => api.shortlist.add(id!),
+    onMutate: () => haptics.light(),
+    onSuccess: () => haptics.success(),
+  });
 
   if (profile.isLoading) return <Text style={{ padding: spacing.xl }}>Loading…</Text>;
   const p = profile.data;
@@ -24,7 +43,12 @@ export default function ProfileDetail() {
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.md }}>
         <Text style={styles.name}>{p.fullName}</Text>
-        <VerificationBadge tier={(p as unknown as { verification?: { tier: 'BASIC' | 'VERIFIED' | 'PREMIUM' } }).verification?.tier ?? 'BASIC'} />
+        <VerificationBadge
+          tier={
+            (p as unknown as { verification?: { tier: 'BASIC' | 'VERIFIED' | 'PREMIUM' } }).verification
+              ?.tier ?? 'BASIC'
+          }
+        />
 
         <Card>
           <Text style={styles.h2}>About</Text>
@@ -45,8 +69,21 @@ export default function ProfileDetail() {
         <Card>
           <Text style={styles.h2}>Career</Text>
           <Text style={styles.body}>{p.education}</Text>
-          <Text style={styles.muted}>{p.occupation}{p.income ? ` · ${p.income}` : ''}</Text>
+          <Text style={styles.muted}>
+            {p.occupation}
+            {p.income ? ` · ${p.income}` : ''}
+          </Text>
         </Card>
+
+        <Button
+          title="View kundli compatibility"
+          variant="outline"
+          onPress={() => {
+            haptics.light();
+            router.push(`/kundli/${id}`);
+          }}
+          block
+        />
 
         <View style={{ flexDirection: 'row', gap: spacing.sm }}>
           <Button

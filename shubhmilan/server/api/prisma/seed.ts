@@ -239,6 +239,135 @@ const SAMPLES = [
   },
 ];
 
+// ---- Programmatic expansion to 30 profiles ----
+// We keep the 8 hand-curated above and synthesize 22 more drawn from realistic Indian
+// naming / city / community pools so discovery + filter testing has meaningful variety.
+type GenSample = (typeof SAMPLES)[number];
+
+const FIRST_M = [
+  'Aarav', 'Vihaan', 'Aditya', 'Karthik', 'Siddharth', 'Nikhil', 'Aniket', 'Harsh', 'Akshay', 'Manav', 'Pranav',
+];
+const FIRST_F = [
+  'Aanya', 'Diya', 'Ishita', 'Meera', 'Riya', 'Tanvi', 'Neha', 'Pooja', 'Swati', 'Naina', 'Aditi',
+];
+const SURNAMES = [
+  'Mehta', 'Desai', 'Nair', 'Menon', 'Chatterjee', 'Banerjee', 'Kulkarni', 'Pillai', 'Shah', 'Rao', 'Gupta',
+];
+const CITIES = [
+  ['Mumbai', 'Maharashtra'],
+  ['Bangalore', 'Karnataka'],
+  ['Kolkata', 'West Bengal'],
+  ['Kochi', 'Kerala'],
+  ['Surat', 'Gujarat'],
+  ['Indore', 'Madhya Pradesh'],
+  ['Bhopal', 'Madhya Pradesh'],
+  ['Kanpur', 'Uttar Pradesh'],
+  ['Patna', 'Bihar'],
+  ['Nagpur', 'Maharashtra'],
+  ['Visakhapatnam', 'Andhra Pradesh'],
+];
+const CASTES_BY_TONGUE: Record<string, string[]> = {
+  Hindi: ['Brahmin', 'Kshatriya', 'Agarwal', 'Gupta', 'Yadav'],
+  Gujarati: ['Patel', 'Jain', 'Lohana'],
+  Marathi: ['Maratha', 'Brahmin', 'Kayastha'],
+  Tamil: ['Iyer', 'Iyengar', 'Nadar'],
+  Telugu: ['Reddy', 'Kamma', 'Kapu'],
+  Kannada: ['Brahmin', 'Vokkaliga', 'Lingayat'],
+  Malayalam: ['Nair', 'Menon', 'Namboodiri'],
+  Bengali: ['Brahmin', 'Kayastha', 'Baidya'],
+  Punjabi: ['Khatri', 'Jat', 'Arora'],
+};
+const TONGUES_BY_STATE: Record<string, string> = {
+  Maharashtra: 'Marathi',
+  Karnataka: 'Kannada',
+  'West Bengal': 'Bengali',
+  Kerala: 'Malayalam',
+  Gujarat: 'Gujarati',
+  'Madhya Pradesh': 'Hindi',
+  'Uttar Pradesh': 'Hindi',
+  Bihar: 'Hindi',
+  'Andhra Pradesh': 'Telugu',
+  'Tamil Nadu': 'Tamil',
+};
+const OCCUPATIONS: Array<[string, string, string]> = [
+  ['B.Tech (IIT)', 'Software Engineer', '₹24 LPA'],
+  ['MBBS', 'Doctor', '₹18 LPA'],
+  ['M.Sc', 'Teacher', '₹7 LPA'],
+  ['MBA', 'Product Manager', '₹35 LPA'],
+  ['CA', 'Auditor', '₹12 LPA'],
+  ['B.Com', 'Banker', '₹10 LPA'],
+  ['B.Arch', 'Architect', '₹9 LPA'],
+  ['M.Tech', 'Data Scientist', '₹28 LPA'],
+  ['PhD', 'Researcher', '₹11 LPA'],
+];
+const HOBBIES_POOL = [
+  'Reading', 'Travel', 'Cooking', 'Yoga', 'Running', 'Photography', 'Cricket', 'Music', 'Gardening', 'Chess',
+];
+const TRAITS_POOL = [
+  'Family-oriented', 'Ambitious', 'Creative', 'Disciplined', 'Easygoing', 'Curious', 'Kind', 'Honest',
+];
+
+function pick<T>(arr: readonly T[], i: number): T {
+  const v = arr[i % arr.length];
+  if (v === undefined) throw new Error('pick: empty array');
+  return v;
+}
+
+function randomDob(minAge: number, maxAge: number, i: number): string {
+  const age = minAge + (i % (maxAge - minAge));
+  const year = new Date().getFullYear() - age;
+  const month = String(1 + (i % 12)).padStart(2, '0');
+  const day = String(1 + (i * 7) % 28).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function gen(i: number): GenSample {
+  const femaleFirst = i % 2 === 0;
+  const first = femaleFirst ? pick(FIRST_F, i) : pick(FIRST_M, i + 1);
+  const last = pick(SURNAMES, i * 3 + 1);
+  const [city, state] = pick(CITIES, i);
+  const motherTongue = TONGUES_BY_STATE[state] ?? 'Hindi';
+  const castePool = CASTES_BY_TONGUE[motherTongue] ?? ['Other'];
+  const caste = pick(castePool, i);
+  const [edu, occ, inc] = pick(OCCUPATIONS, i);
+  const phoneNum = (9900020000 + i * 7).toString();
+
+  return {
+    email: `${first.toLowerCase()}.${last.toLowerCase()}${i}@example.com`,
+    phone: `+91${phoneNum}`,
+    fullName: `${first} ${last}`,
+    gender: femaleFirst ? ('FEMALE' as const) : ('MALE' as const),
+    dob: randomDob(24, 34, i),
+    height: femaleFirst ? "5'4\"" : "5'10\"",
+    maritalStatus: 'NEVER_MARRIED' as const,
+    motherTongue,
+    religion: 'Hindu',
+    caste,
+    subCaste: null,
+    gotra: null,
+    manglik: (i % 5 === 0 ? 'YES' : 'NO') as 'YES' | 'NO',
+    rashi: null,
+    nakshatra: null,
+    education: edu,
+    occupation: occ,
+    income: inc,
+    city,
+    state,
+    country: 'India',
+    diet: ((i % 3 === 0 ? 'NON_VEGETARIAN' : 'VEGETARIAN') as 'VEGETARIAN' | 'NON_VEGETARIAN'),
+    smoking: 'NO' as const,
+    drinking: (i % 4 === 0 ? 'OCCASIONALLY' : 'NO') as 'NO' | 'OCCASIONALLY',
+    aboutMe:
+      `${first} is a warm, family-oriented ${occ.toLowerCase()} based in ${city}. Loves ${pick(HOBBIES_POOL, i)}, ${pick(HOBBIES_POOL, i + 3)} and quiet weekend plans.`,
+    familyValues: ((i % 2 === 0 ? 'TRADITIONAL' : 'MODERATE') as 'TRADITIONAL' | 'MODERATE'),
+    hobbies: [pick(HOBBIES_POOL, i), pick(HOBBIES_POOL, i + 3), pick(HOBBIES_POOL, i + 7)],
+    languages: [motherTongue, 'English'],
+    personalityTraits: [pick(TRAITS_POOL, i), pick(TRAITS_POOL, i + 2), pick(TRAITS_POOL, i + 5)],
+  };
+}
+
+for (let i = 0; i < 22; i++) SAMPLES.push(gen(i));
+
 async function main() {
   console.info('🌱 Seeding ShubhMilan database…');
 

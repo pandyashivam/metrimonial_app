@@ -83,11 +83,15 @@ export default function ChatScreen() {
     api.chat.markRead(conversationId!).catch(() => null);
   }, [historyQuery.data, mySecret, peerKey, myProfileId, conversationId]);
 
-  // Subscribe to realtime deliveries.
+  const [peerTyping, setPeerTyping] = useState(false);
+  const [peerOnline, setPeerOnline] = useState(false);
+
+  // Subscribe to realtime deliveries, typing, and presence.
   useEffect(() => {
     if (!conversationId || !mySecret || !peerKey) return;
     let cancelled = false;
     let socketInstance: Awaited<ReturnType<typeof getSocket>> = null;
+    let typingTimer: ReturnType<typeof setTimeout> | null = null;
     (async () => {
       socketInstance = await getSocket();
       if (!socketInstance || cancelled) return;
@@ -107,12 +111,50 @@ export default function ChatScreen() {
           },
         ]);
       });
+      socketInstance.on(
+        'typing',
+        (e: { conversationId: string; userId: string; isTyping: boolean }) => {
+          if (e.conversationId !== conversationId) return;
+          setPeerTyping(e.isTyping);
+          if (typingTimer) clearTimeout(typingTimer);
+          if (e.isTyping) typingTimer = setTimeout(() => setPeerTyping(false), 3000);
+        },
+      );
+      socketInstance.on(
+        'presence:update',
+        (e: { userId: string; isOnline: boolean }) => {
+          // We don't know the peer's userId here without a lookup; for now, any presence
+          // event can flip the indicator — cheap but honest.
+          if (peerId === e.userId) setPeerOnline(e.isOnline);
+        },
+      );
     })();
     return () => {
       cancelled = true;
-      socketInstance?.off('message:new');
+      if (typingTimer) clearTimeout(typingTimer);
+      if (socketInstance) {
+        socketInstance.emit('leave', conversationId);
+        socketInstance.off('message:new');
+        socketInstance.off('typing');
+        socketInstance.off('presence:update');
+      }
     };
-  }, [conversationId, mySecret, peerKey]);
+  }, [conversationId, mySecret, peerKey, peerId]);
+
+  // Emit typing events while the user composes (debounced).
+  const typingThrottleRef = useRef<number>(0);
+  const emitTyping = useCallback(
+    (isTyping: boolean) => {
+      (async () => {
+        const now = Date.now();
+        if (isTyping && now - typingThrottleRef.current < 1500) return;
+        typingThrottleRef.current = now;
+        const sock = await getSocket();
+        sock?.emit('typing', { conversationId, isTyping });
+      })();
+    },
+    [conversationId],
+  );
 
   const send = useCallback(async () => {
     if (!input.trim() || !mySecret || !peerKey || !conversationId) return;
@@ -130,8 +172,9 @@ export default function ChatScreen() {
 
   const banner = useMemo(() => {
     if (!peerKey) return '🔒 Waiting for peer to install encryption keys…';
+    if (peerOnline) return '🔒 End-to-end encrypted · Online now';
     return '🔒 End-to-end encrypted · The server cannot read these messages';
-  }, [peerKey]);
+  }, [peerKey, peerOnline]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -166,11 +209,18 @@ export default function ChatScreen() {
             </View>
           )}
         />
+        {peerTyping && (
+          <Text style={styles.typing}>Typing…</Text>
+        )}
         <View style={styles.inputBar}>
           <View style={{ flex: 1 }}>
             <Input
               value={input}
-              onChangeText={setInput}
+              onChangeText={(t) => {
+                setInput(t);
+                emitTyping(t.length > 0);
+              }}
+              onBlur={() => emitTyping(false)}
               placeholder="Type a message"
               multiline
             />
@@ -199,6 +249,7 @@ const styles = StyleSheet.create({
   bubbleMine: { alignSelf: 'flex-end', backgroundColor: colors.primary },
   bubbleThem: { alignSelf: 'flex-start', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   bubbleText: { fontSize: fontSizes.sm + 1 },
+  typing: { color: colors.textMuted, fontStyle: 'italic', paddingHorizontal: spacing.md, paddingBottom: 4 },
   inputBar: {
     flexDirection: 'row',
     gap: spacing.sm,

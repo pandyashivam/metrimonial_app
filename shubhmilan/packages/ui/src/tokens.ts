@@ -53,6 +53,35 @@ export const tierColors = {
   PREMIUM: colors.accent,
 } as const;
 
+/**
+ * Dark palette — matches the light palette structurally so either can be assigned to the
+ * same variable name. Screens that need dark mode resolve at runtime via useAppTheme() in
+ * apps/mobile — the raw `colors` export above stays the light default for back-compat.
+ */
+export const darkColors = {
+  primary: '#e85a82',
+  primaryDark: '#b34265',
+  primaryLight: '#f08aa7',
+  primary50: '#2a1921',
+  primary100: '#3a2530',
+  accent: '#dcbd78',
+  accentDark: '#b89a5e',
+  bg: '#0f0f14',
+  surface: '#1a1a22',
+  ink: '#f5f5f7',
+  text: '#d8d8de',
+  textMuted: '#8a8a95',
+  border: '#2a2a33',
+  success: '#3fc288',
+  success50: '#1a2822',
+  danger: '#e87166',
+  danger50: '#2a1a1a',
+  warn: '#e0ad4a',
+  warn50: '#2a2215',
+  info: '#5b9bdd',
+  info50: '#1a2028',
+} as const;
+
 export type Colors = typeof colors;
 export type Radii = typeof radii;
 export type Spacing = typeof spacing;
