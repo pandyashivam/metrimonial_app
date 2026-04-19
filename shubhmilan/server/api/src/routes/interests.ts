@@ -92,17 +92,26 @@ export async function interestRoutes(app: FastifyInstance) {
     });
 
     if (updated.status === 'ACCEPTED') {
+      // Canonicalize the (A,B) tuple so a simultaneous double-accept on either side
+      // collides on the same unique key and the upsert is idempotent. Race-safe: if
+      // another request just created the row, the upsert's `update: {}` is a no-op
+      // and we still end up with exactly one conversation.
       const [a, b] =
         updated.fromProfileId < updated.toProfileId
           ? [updated.fromProfileId, updated.toProfileId]
           : [updated.toProfileId, updated.fromProfileId];
-      await prisma.conversation
-        .upsert({
+      try {
+        await prisma.conversation.upsert({
           where: { profileAId_profileBId: { profileAId: a, profileBId: b } },
           update: {},
           create: { profileAId: a, profileBId: b },
-        })
-        .catch(() => null);
+        });
+      } catch (err) {
+        // P2002 (unique constraint) means another concurrent accept beat us — fine.
+        if ((err as { code?: string }).code !== 'P2002') {
+          request.log.error({ err }, 'failed to open conversation');
+        }
+      }
 
       const [from, recipientProfile] = await Promise.all([
         prisma.profile.findUnique({

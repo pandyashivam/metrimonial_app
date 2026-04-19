@@ -25,7 +25,16 @@ export const metadata: Metadata = {
     locale: 'en_IN',
   },
   twitter: { card: 'summary_large_image' },
-  alternates: { canonical: SITE_URL },
+  alternates: {
+    canonical: SITE_URL,
+    // Hreflang scaffolding for future locale rollout. Each locale should have its own
+    // subpath (/hi, /gu, /ta, /te) once the translated pages ship; x-default points at
+    // the English root today.
+    languages: {
+      'en-IN': SITE_URL,
+      'x-default': SITE_URL,
+    },
+  },
 };
 
 // Organization schema applies site-wide. Page-specific schemas (BlogPosting, FAQPage,

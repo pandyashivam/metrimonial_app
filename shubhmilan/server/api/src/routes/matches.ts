@@ -2,14 +2,20 @@ import type { FastifyInstance } from 'fastify';
 
 import { prisma } from '../db.js';
 import { fail, ok } from '../lib/response.js';
-import { computeTopMatchesForProfile, gunaMilan } from '../services/matching.js';
+import {
+  gunaMilan,
+  logServedMatches,
+  readCachedOrCompute,
+} from '../services/matching.js';
 
 export async function matchRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.requireAuth);
 
   app.get('/ai', async (request, reply) => {
     if (!request.profileId) return ok(reply, []);
-    const matches = await computeTopMatchesForProfile(request.profileId, 25);
+    const matches = await readCachedOrCompute(request.profileId, 25);
+    // Fire-and-forget log so we can A/B test ranking variants offline.
+    void logServedMatches(request.profileId, matches, 'v1');
     return ok(reply, matches);
   });
 

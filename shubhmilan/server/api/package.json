@@ -21,7 +21,9 @@
     "db:migrate:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
-    "db:reset": "prisma migrate reset"
+    "db:reset": "prisma migrate reset",
+    "precompute:matches": "tsx src/jobs/precompute-matches.ts",
+    "precompute:matches:prod": "node dist/jobs/precompute-matches.js"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

@@ -3,7 +3,14 @@ import { z } from 'zod';
 
 import { prisma } from '../db.js';
 import { fail, ok } from '../lib/response.js';
+import { issueTokensForUser } from '../services/auth.js';
 import { pushVerificationApproved } from '../services/push.js';
+import {
+  SETTING_KEYS,
+  getMaintenanceMode,
+  setSetting,
+  type MaintenanceMode,
+} from '../services/settings.js';
 import { markStepSimple } from '../services/verification.js';
 
 /**
@@ -119,6 +126,30 @@ export async function adminRoutes(app: FastifyInstance) {
     },
   );
 
+  // ---------------- Impersonate ----------------
+  // SUPERADMIN-only. Issues a short-lived token pair for the target user so the admin can
+  // reproduce bugs without learning their password. The audit log captures every hop.
+  app.post<{ Params: { id: string }; Body: { reason?: string } }>(
+    '/users/:id/impersonate',
+    { preHandler: [app.requireAuth, app.requireRole('SUPERADMIN')] },
+    async (request, reply) => {
+      const target = await prisma.user.findUnique({ where: { id: request.params.id } });
+      if (!target) return fail(reply, 404, 'NOT_FOUND', 'User not found');
+      if (target.role !== 'USER') {
+        return fail(reply, 400, 'BAD_TARGET', 'Can only impersonate regular users');
+      }
+      const tokens = await issueTokensForUser(target);
+      await audit(request.auth!.sub, 'USER_IMPERSONATE', 'user', target.id, {
+        reason: request.body?.reason ?? null,
+        actingAs: target.email,
+      });
+      return ok(reply, {
+        user: { id: target.id, email: target.email },
+        tokens,
+      });
+    },
+  );
+
   // ---------------- Reports ----------------
   app.get('/reports', async (_req, reply) => {
     const rows = await prisma.report.findMany({
@@ -220,6 +251,34 @@ export async function adminRoutes(app: FastifyInstance) {
     });
     await audit(request.auth!.sub, 'PLAN_UPDATE', 'plan', plan.id, parsed.data);
     return ok(reply, plan);
+  });
+
+  // ---------------- Settings ----------------
+  app.get('/settings/maintenance', async (_req, reply) => {
+    const m = await getMaintenanceMode();
+    return ok(reply, m);
+  });
+
+  const MaintenanceInput = z
+    .object({
+      enabled: z.boolean(),
+      message: z.string().min(1).max(500).optional(),
+      allowUserIds: z.array(z.string().min(1)).max(20).optional(),
+    })
+    .strict();
+
+  app.put('/settings/maintenance', async (request, reply) => {
+    const parsed = MaintenanceInput.safeParse(request.body);
+    if (!parsed.success) return fail(reply, 400, 'VALIDATION', 'Invalid payload');
+    const current = await getMaintenanceMode();
+    const next: MaintenanceMode = {
+      enabled: parsed.data.enabled,
+      message: parsed.data.message ?? current.message,
+      allowUserIds: parsed.data.allowUserIds ?? current.allowUserIds,
+    };
+    await setSetting(SETTING_KEYS.maintenanceMode, next, request.auth!.sub);
+    await audit(request.auth!.sub, 'MAINTENANCE_MODE', 'setting', SETTING_KEYS.maintenanceMode, next);
+    return ok(reply, next);
   });
 
   // ---------------- Audit log ----------------

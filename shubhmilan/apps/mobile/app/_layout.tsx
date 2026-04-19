@@ -1,3 +1,4 @@
+import { ToastProvider } from '@shubhmilan/ui';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -6,6 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { api, hydrateTokens } from '../src/api';
 import { useAuth } from '../src/auth-store';
+import { attachDeepLinks } from '../src/deep-links';
 import { useIsDark, useThemeStore } from '../src/theme';
 
 const queryClient = new QueryClient({
@@ -46,11 +48,19 @@ export default function RootLayout() {
     else if (user && inAuthGroup) router.replace('/(tabs)/home');
   }, [hydrated, user, segments, router]);
 
+  useEffect(() => {
+    if (!hydrated) return;
+    let detach: (() => void) | null = null;
+    attachDeepLinks(router, () => !!useAuth.getState().user).then((d) => (detach = d));
+    return () => detach?.();
+  }, [hydrated, router]);
+
   if (!booted) return null;
 
   return (
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
+        <ToastProvider>
         <StatusBar style={isDark ? 'light' : 'dark'} />
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(auth)" />
@@ -67,6 +77,7 @@ export default function RootLayout() {
           <Stack.Screen name="filters" options={{ headerShown: true, title: 'Filters' }} />
           <Stack.Screen name="(onboarding)" />
         </Stack>
+        </ToastProvider>
       </QueryClientProvider>
     </SafeAreaProvider>
   );

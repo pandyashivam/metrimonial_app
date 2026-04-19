@@ -262,6 +262,83 @@ export async function logServedMatches(
 }
 
 /**
+ * Persists this profile's top-N into MatchScore so cheaper cache reads can serve
+ * subsequent /matches/ai calls. Replaces the entire set (idempotent).
+ */
+export async function persistTopMatches(profileId: string, scores: ScoredProfile[]) {
+  if (!scores.length) return;
+  // Upsert per row so we preserve computedAt history if the row already exists.
+  await Promise.all(
+    scores.map((s) =>
+      prisma.matchScore
+        .upsert({
+          where: { profileAId_profileBId: { profileAId: profileId, profileBId: s.profileId } },
+          update: { score: s.score, reasons: s.reasons as unknown as import('@prisma/client').Prisma.InputJsonValue, computedAt: new Date() },
+          create: {
+            profileAId: profileId,
+            profileBId: s.profileId,
+            score: s.score,
+            reasons: s.reasons as unknown as import('@prisma/client').Prisma.InputJsonValue,
+          },
+        })
+        .catch(() => null),
+    ),
+  );
+}
+
+/** Cache-first read of top matches. Falls through to live compute if the cache is empty
+ *  or stale. Callers typically want this for /matches/ai.
+ *  @param maxAgeMs — if the cache is older than this, recompute on demand.
+ */
+export async function readCachedOrCompute(
+  profileId: string,
+  take = 25,
+  maxAgeMs = 24 * 3600 * 1000,
+): Promise<ScoredProfile[]> {
+  const fresh = await prisma.matchScore.findMany({
+    where: { profileAId: profileId, computedAt: { gt: new Date(Date.now() - maxAgeMs) } },
+    orderBy: { score: 'desc' },
+    take,
+  });
+  if (fresh.length) {
+    return fresh.map((r) => ({
+      profileId: r.profileBId,
+      score: r.score,
+      reasons: (r.reasons as unknown as MatchReason[]) ?? [],
+    }));
+  }
+  const scored = await computeTopMatchesForProfile(profileId, take);
+  void persistTopMatches(profileId, scored);
+  return scored;
+}
+
+/**
+ * Nightly sweep: recompute match scores for every active profile. Called by the cron
+ * runner in `src/jobs/precompute-matches.ts`. Batches so a slow OpenAI account doesn't
+ * hold the whole sweep open.
+ */
+export async function runNightlyMatchPrecompute(opts?: { batchSize?: number; take?: number }) {
+  const batchSize = opts?.batchSize ?? 25;
+  const take = opts?.take ?? 50;
+  const profiles = await prisma.profile.findMany({
+    where: { deletedAt: null },
+    select: { id: true },
+  });
+  let processed = 0;
+  for (let i = 0; i < profiles.length; i += batchSize) {
+    const chunk = profiles.slice(i, i + batchSize);
+    await Promise.all(
+      chunk.map(async (p) => {
+        const scored = await computeTopMatchesForProfile(p.id, take);
+        await persistTopMatches(p.id, scored);
+      }),
+    );
+    processed += chunk.length;
+  }
+  return { total: profiles.length, processed };
+}
+
+/**
  * Ashtakoot (8-point Guna Milan) — simplified. A real implementation uses birth-time
  * ephemeris; this one approximates from nakshatra/rashi/manglik available in our schema.
  */

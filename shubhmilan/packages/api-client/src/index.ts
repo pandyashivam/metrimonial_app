@@ -324,6 +324,16 @@ export function createApiClient(opts: ApiClientOptions) {
         }),
       markRead: (conversationId: string) =>
         request<{ ok: true }>(`/conversations/${conversationId}/read`, { method: 'POST' }),
+      uploadMedia: (file: File | Blob) =>
+        uploadFile<{ key: string; url: string; expiresInSeconds: number }>(
+          '/chat-media/upload',
+          file,
+        ),
+      signMedia: (key: string) =>
+        request<{ url: string; expiresInSeconds: number }>('/chat-media/sign', {
+          method: 'POST',
+          body: JSON.stringify({ key }),
+        }),
     },
     payments: {
       plans: () => request<Plan[]>('/plans'),
@@ -420,6 +430,23 @@ export function createApiClient(opts: ApiClientOptions) {
           body: JSON.stringify({ step }),
         }),
       logs: () => request<unknown>('/admin/logs'),
+      impersonate: (userId: string, reason?: string) =>
+        request<{
+          user: { id: string; email: string };
+          tokens: { accessToken: string; refreshToken: string; expiresIn: number };
+        }>(`/admin/users/${userId}/impersonate`, {
+          method: 'POST',
+          body: JSON.stringify({ reason }),
+        }),
+      getMaintenance: () =>
+        request<{ enabled: boolean; message: string; allowUserIds?: string[] }>(
+          '/admin/settings/maintenance',
+        ),
+      setMaintenance: (body: { enabled: boolean; message?: string; allowUserIds?: string[] }) =>
+        request<{ enabled: boolean; message: string }>('/admin/settings/maintenance', {
+          method: 'PUT',
+          body: JSON.stringify(body),
+        }),
     },
   };
 }

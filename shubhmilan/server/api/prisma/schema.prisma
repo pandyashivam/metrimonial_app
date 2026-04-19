@@ -537,6 +537,19 @@ model Device {
   @@index([userId])
 }
 
+/// Singleton-shaped key/value store for runtime-tunable feature flags (maintenance mode,
+/// feature rollouts, email template overrides). Keys are unique; values are opaque JSON so
+/// each consumer can validate with its own Zod schema.
+model Setting {
+  id         String   @id @default(cuid())
+  key        String   @unique
+  value      Json
+  updatedAt  DateTime @updatedAt
+  updatedBy  String?
+
+  @@index([key])
+}
+
 model AdminLog {
   id           String   @id @default(cuid())
   adminUserId  String

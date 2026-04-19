@@ -8,6 +8,7 @@ import Fastify from 'fastify';
 import { env } from './env.js';
 import { fail } from './lib/response.js';
 import { authPlugin } from './plugins/auth.js';
+import { maintenancePlugin } from './plugins/maintenance.js';
 import { adminRoutes } from './routes/admin.js';
 import { aiRoutes } from './routes/ai.js';
 import { authRoutes } from './routes/auth.js';
@@ -43,6 +44,7 @@ export async function buildApp() {
   await app.register(rateLimit, { max: 300, timeWindow: '1 minute' });
   await app.register(multipart, { limits: { fileSize: 10 * 1024 * 1024, files: 1 } });
   await app.register(authPlugin);
+  await app.register(maintenancePlugin);
 
   app.get('/health', async (_, reply) => reply.send({ ok: true, data: { status: 'healthy' } }));
 

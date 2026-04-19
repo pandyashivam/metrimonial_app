@@ -1,11 +1,26 @@
+import { randomBytes } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 
 import { prisma } from '../db.js';
 import { fail, ok } from '../lib/response.js';
-import { deleteObject, generateObjectKey, publicUrl, putObject, signedGetUrl } from '../services/storage.js';
+import {
+  deleteObject,
+  generateObjectKey,
+  publicUrl,
+  putObject,
+  signedGetUrl,
+} from '../services/storage.js';
 
 const MAX_BYTES = 8 * 1024 * 1024;
 const ALLOWED_MIMES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+
+const CHAT_MEDIA_MAX_BYTES = 12 * 1024 * 1024;
+const CHAT_ALLOWED_MIMES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'application/octet-stream',
+]);
 
 export async function photoRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.requireAuth);
@@ -112,5 +127,39 @@ export async function photoRoutes(app: FastifyInstance) {
     await deleteObject(photo.r2Key).catch(() => null);
     await prisma.photo.delete({ where: { id: photo.id } });
     return ok(reply, { ok: true as const });
+  });
+
+  // ---- Encrypted chat media upload ----
+  // Client encrypts the blob with a per-message symmetric key (wrapped inside the E2E
+  // message ciphertext). The server only sees the opaque encrypted bytes — it stores
+  // them under a random key and returns a short-lived signed URL for retrieval. No
+  // link between the upload and any specific conversation is recorded here; the link
+  // is implicit in the encrypted message payload the recipient receives.
+  app.post('/chat-media/upload', async (request, reply) => {
+    if (!request.profileId) return fail(reply, 400, 'NO_PROFILE', 'Create profile first');
+    const data = await request.file({ limits: { fileSize: CHAT_MEDIA_MAX_BYTES } });
+    if (!data) return fail(reply, 400, 'NO_FILE', 'No file uploaded');
+    if (!CHAT_ALLOWED_MIMES.has(data.mimetype)) {
+      return fail(reply, 415, 'BAD_MIME', 'Unsupported mime');
+    }
+    const buf = await data.toBuffer();
+    if (buf.byteLength > CHAT_MEDIA_MAX_BYTES) {
+      return fail(reply, 413, 'TOO_LARGE', 'Max 12MB per chat attachment');
+    }
+    const key = `chat-media/${request.profileId}/${Date.now()}-${randomBytes(12).toString('hex')}.bin`;
+    await putObject(key, buf, data.mimetype);
+    const url = await signedGetUrl(key, 24 * 3600);
+    return ok(reply, { key, url, expiresInSeconds: 24 * 3600 });
+  });
+
+  // Ephemeral re-sign for chat media — used when a cached URL expires.
+  app.post<{ Body: { key: string } }>('/chat-media/sign', async (request, reply) => {
+    if (!request.profileId) return fail(reply, 400, 'NO_PROFILE', 'Create profile first');
+    const key = request.body?.key;
+    if (!key || !key.startsWith('chat-media/')) {
+      return fail(reply, 400, 'VALIDATION', 'Invalid media key');
+    }
+    const url = await signedGetUrl(key, 3600);
+    return ok(reply, { url, expiresInSeconds: 3600 });
   });
 }
