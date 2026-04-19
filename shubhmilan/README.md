@@ -6,6 +6,67 @@ This repository follows the phased plan in [`../BUILD_INSTRUCTIONS.md`](../BUILD
 
 ---
 
+## One codebase → iOS + Android + Web
+
+The core product ships to three surfaces from **one** set of source files:
+
+```
+                       apps/mobile/ (Expo SDK 51 + Expo Router)
+                              │
+                              ├──────────── packages/ui         (RN components, work on web via react-native-web)
+                              ├──────────── packages/api-client (pure TS fetch wrapper)
+                              ├──────────── packages/types      (pure TS)
+                              └──────────── packages/validation (Zod — also used by the server)
+                              │
+        ┌─────────────────────┼─────────────────────┐
+        ↓                     ↓                     ↓
+   iOS (Xcode)          Android (Gradle)       Web (react-native-web)
+   pnpm mobile:ios      pnpm mobile:android    pnpm mobile:web
+```
+
+- `packages/ui` components (`Button`, `ProfileCard`, `TrustDonut`, `AIScoreBadge`, etc.) are written with React Native primitives (`View`, `Text`, `Pressable`, `StyleSheet`). Metro bundler aliases `react-native` → `react-native-web` automatically at build time — same JSX, three targets.
+- `packages/api-client` is platform-agnostic TypeScript; it uses `fetch` (works everywhere) and `SecureStore` is injected by the caller (mobile wires `expo-secure-store`, admin wires `localStorage`).
+- `packages/validation` Zod schemas are the wire contract — **enforced on both the server AND the mobile app** for every form submission.
+
+Two other Next.js surfaces exist for platform-specific needs that don't benefit from react-native-web:
+
+- `apps/web/` — **marketing & SEO only** (landing, pricing, safety, blog, legal). Server-rendered HTML is better for SEO than an SPA, and marketing pages have 0% overlap with the logged-in experience.
+- `apps/admin/` — **internal admin panel**. Dense tables, data-grid-heavy — native web idioms fit better than RN here.
+
+### Run commands
+
+```bash
+# Single codebase, three platforms:
+pnpm --filter @shubhmilan/mobile ios          # iOS simulator (requires Xcode)
+pnpm --filter @shubhmilan/mobile android      # Android emulator
+pnpm --filter @shubhmilan/mobile web          # web dev server — open in browser
+pnpm --filter @shubhmilan/mobile build:web    # static SPA for CDN deploy
+
+# The other two surfaces (independent Next.js apps):
+pnpm dev:web     # marketing (3000)
+pnpm dev:admin   # admin (3001)
+```
+
+### Platform compatibility matrix (mobile app deps)
+
+| Package | iOS | Android | Web |
+|---|---|---|---|
+| `@shubhmilan/ui` (RN primitives) | ✅ | ✅ | ✅ via react-native-web |
+| `@tanstack/react-query` | ✅ | ✅ | ✅ |
+| `zustand` | ✅ | ✅ | ✅ |
+| `tweetnacl` + `tweetnacl-util` (E2E chat) | ✅ | ✅ | ✅ pure JS |
+| `socket.io-client` | ✅ | ✅ | ✅ |
+| `expo-router` | ✅ | ✅ | ✅ |
+| `expo-secure-store` | ✅ Keychain | ✅ Keystore | ⚠️ falls back to localStorage — see note |
+| `expo-crypto` (random bytes) | ✅ | ✅ | ✅ uses `crypto.getRandomValues` |
+| `expo-image-picker` | ✅ | ✅ | ✅ hidden `<input type=file>` |
+| `expo-image-manipulator` | ✅ | ✅ | ✅ WebAssembly |
+| `expo-notifications` | ✅ APNs | ✅ FCM | ⚠️ Web Push API (limited on iOS Safari) |
+
+**Web security note:** on the web, `expo-secure-store` falls back to `localStorage`. That means the E2E chat private key is in the browser's localStorage rather than iOS Keychain / Android Keystore. This is a known tradeoff — document it in your privacy page and consider migrating to Web Crypto API with non-extractable keys if it becomes a concern. For the mobile app, the private key is properly sealed inside the secure enclave.
+
+---
+
 ## Stack at a glance
 
 | Surface | Tech |
