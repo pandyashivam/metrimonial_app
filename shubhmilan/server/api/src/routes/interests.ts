@@ -3,6 +3,8 @@ import type { FastifyInstance } from 'fastify';
 
 import { prisma } from '../db.js';
 import { fail, ok } from '../lib/response.js';
+import { resolveEntitlements } from '../services/plans.js';
+import { pushInterestAccepted, pushNewInterest } from '../services/push.js';
 
 export async function interestRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.requireAuth);
@@ -13,6 +15,18 @@ export async function interestRoutes(app: FastifyInstance) {
     if (!request.profileId) return fail(reply, 400, 'NO_PROFILE', 'Create profile first');
     if (parsed.data.toProfileId === request.profileId) {
       return fail(reply, 400, 'SELF_INTEREST', 'Cannot send interest to yourself');
+    }
+
+    // Free tier: cap at 5 interests / calendar month. Silver+ is unlimited.
+    const ent = await resolveEntitlements(request.auth!.sub, request.profileId);
+    if (!ent.canSendMoreInterests) {
+      return fail(
+        reply,
+        402,
+        'PLAN_LIMIT',
+        'Monthly interest limit reached — upgrade to Silver or higher',
+        { tier: ent.tier, remaining: 0 },
+      );
     }
 
     const existing = await prisma.interest.findUnique({
@@ -32,6 +46,21 @@ export async function interestRoutes(app: FastifyInstance) {
         note: parsed.data.note,
       },
     });
+
+    // Notify recipient — non-blocking.
+    const [fromProfile, toProfile] = await Promise.all([
+      prisma.profile.findUnique({
+        where: { id: request.profileId },
+        select: { fullName: true },
+      }),
+      prisma.profile.findUnique({
+        where: { id: parsed.data.toProfileId },
+        select: { userId: true },
+      }),
+    ]);
+    if (toProfile?.userId && fromProfile?.fullName) {
+      void pushNewInterest(toProfile.userId, fromProfile.fullName);
+    }
     return ok(reply, interest, 201);
   });
 
@@ -74,6 +103,20 @@ export async function interestRoutes(app: FastifyInstance) {
           create: { profileAId: a, profileBId: b },
         })
         .catch(() => null);
+
+      const [from, recipientProfile] = await Promise.all([
+        prisma.profile.findUnique({
+          where: { id: updated.fromProfileId },
+          select: { userId: true },
+        }),
+        prisma.profile.findUnique({
+          where: { id: updated.toProfileId },
+          select: { fullName: true },
+        }),
+      ]);
+      if (from?.userId && recipientProfile?.fullName) {
+        void pushInterestAccepted(from.userId, recipientProfile.fullName);
+      }
     }
     return ok(reply, updated);
   });
@@ -96,5 +139,10 @@ export async function interestRoutes(app: FastifyInstance) {
       take: 50,
     });
     return ok(reply, list);
+  });
+
+  app.get('/entitlements', async (request, reply) => {
+    const ent = await resolveEntitlements(request.auth!.sub, request.profileId);
+    return ok(reply, ent);
   });
 }

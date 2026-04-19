@@ -249,6 +249,8 @@ export function createApiClient(opts: ApiClientOptions) {
           `/matches/kundli/${encodeURIComponent(otherId)}`,
         ),
       newToday: () => request<ProfileSummary[]>('/matches/new-today'),
+      premium: () => request<ProfileSummary[]>('/matches/premium'),
+      nearby: () => request<ProfileSummary[]>('/matches/nearby'),
     },
     interests: {
       send: (toProfileId: string, note?: string) =>
@@ -263,6 +265,17 @@ export function createApiClient(opts: ApiClientOptions) {
         }),
       sent: () => request<Interest[]>('/interests/sent'),
       received: () => request<Interest[]>('/interests/received'),
+      entitlements: () =>
+        request<{
+          tier: 'FREE' | 'SILVER' | 'GOLD' | 'PLATINUM';
+          canSendMoreInterests: boolean;
+          canSeeWhoViewedMe: boolean;
+          canUseAdvancedFilters: boolean;
+          canChatBeforeMatch: boolean;
+          canSeeContactDetails: boolean;
+          canAccessHoroscopeReport: boolean;
+          interestsRemainingThisMonth: number;
+        }>('/interests/entitlements'),
     },
     shortlist: {
       add: (profileId: string) =>

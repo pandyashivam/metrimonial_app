@@ -1,24 +1,22 @@
-/* eslint-disable no-console */
-import { env } from '../env.js';
+import { otpEmail, sendEmail } from '../services/email.js';
+import { sendSms } from '../services/sms.js';
 
 /**
- * Thin SMS/email facade. In dev, prints the OTP to the console so you don't
- * need Twilio/MSG91 keys. Wire real providers in production.
+ * Thin façade the rest of the code calls. Delegates to real providers (MSG91 / Twilio /
+ * SMTP) and falls back to console logging when credentials aren't configured — so dev
+ * machines without provider keys still surface the OTP for testing.
  */
 export async function sendOtpSms(target: string, code: string, purpose: string) {
-  if (env.NODE_ENV === 'development' || !process.env.TWILIO_ACCOUNT_SID) {
-    console.info(`📱 [DEV SMS] ${target} | ${purpose} | code=${code}`);
-    return;
-  }
-  // TODO: integrate Twilio / MSG91 here.
+  await sendSms({
+    to: target,
+    body: `${code} is your ShubhMilan verification code. Valid for 10 minutes. Do not share with anyone.`,
+    purpose,
+  });
 }
 
 export async function sendOtpEmail(target: string, code: string, purpose: string) {
-  if (env.NODE_ENV === 'development' || !env.SMTP_HOST) {
-    console.info(`✉️  [DEV EMAIL] ${target} | ${purpose} | code=${code}`);
-    return;
-  }
-  // TODO: integrate nodemailer / transactional provider here.
+  const { subject, html } = otpEmail(code, purpose);
+  await sendEmail({ to: target, subject, html, purpose });
 }
 
 export function isEmail(s: string) {

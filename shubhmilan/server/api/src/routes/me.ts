@@ -3,8 +3,11 @@ import {
   HoroscopeInput,
   PartnerPreferenceInput,
   ProfileInput,
+  emailSchema,
+  phoneSchema,
 } from '@shubhmilan/validation';
 import type { FastifyInstance } from 'fastify';
+import { z } from 'zod';
 
 import { prisma } from '../db.js';
 import { fail, ok } from '../lib/response.js';
@@ -17,6 +20,41 @@ export async function meRoutes(app: FastifyInstance) {
     const user = await prisma.user.findUnique({ where: { id: request.auth!.sub } });
     if (!user) return fail(reply, 404, 'NOT_FOUND', 'User not found');
     return ok(reply, toPublicUser(user));
+  });
+
+  // Update email / phone — each change re-arms verification (require a fresh OTP later).
+  const PatchMe = z
+    .object({
+      email: emailSchema.optional(),
+      phone: phoneSchema.optional(),
+    })
+    .strict();
+  app.patch('/', async (request, reply) => {
+    const parsed = PatchMe.safeParse(request.body);
+    if (!parsed.success) return fail(reply, 400, 'VALIDATION', 'Invalid payload');
+    const patch: { email?: string; phone?: string; emailVerifiedAt?: null; phoneVerifiedAt?: null } = {};
+    if (parsed.data.email) {
+      patch.email = parsed.data.email;
+      patch.emailVerifiedAt = null;
+    }
+    if (parsed.data.phone) {
+      patch.phone = parsed.data.phone;
+      patch.phoneVerifiedAt = null;
+    }
+    if (Object.keys(patch).length === 0) {
+      return fail(reply, 400, 'NO_CHANGES', 'No fields to update');
+    }
+    try {
+      const updated = await prisma.user.update({
+        where: { id: request.auth!.sub },
+        data: patch,
+      });
+      return ok(reply, toPublicUser(updated));
+    } catch (err) {
+      const code = (err as { code?: string }).code;
+      if (code === 'P2002') return fail(reply, 409, 'CONFLICT', 'Email or phone already in use');
+      throw err;
+    }
   });
 
   // ------- Profile -------
@@ -110,6 +148,14 @@ export async function meRoutes(app: FastifyInstance) {
   });
 
   // ------- Horoscope -------
+  app.get('/horoscope', async (request, reply) => {
+    const profile = await prisma.profile.findUnique({
+      where: { userId: request.auth!.sub },
+      select: { horoscope: true },
+    });
+    return ok(reply, profile?.horoscope ?? null);
+  });
+
   app.put('/horoscope', async (request, reply) => {
     const parsed = HoroscopeInput.safeParse(request.body);
     if (!parsed.success) return fail(reply, 400, 'VALIDATION', 'Invalid horoscope payload');

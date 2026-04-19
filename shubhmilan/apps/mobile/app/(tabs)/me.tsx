@@ -1,5 +1,6 @@
-import { Button, Card, TrustDonut, VerificationBadge, colors, fontSizes, spacing } from '@shubhmilan/ui';
+import { Button, Card, Chip, TrustDonut, VerificationBadge, colors, fontSizes, spacing } from '@shubhmilan/ui';
 import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -7,6 +8,7 @@ import { api } from '../../src/api';
 import { useAuth } from '../../src/auth-store';
 
 export default function Me() {
+  const router = useRouter();
   const { user, signOut } = useAuth();
   const completeness = useQuery({
     queryKey: ['completeness'],
@@ -16,6 +18,13 @@ export default function Me() {
     queryKey: ['verification'],
     queryFn: () => api.me.verification(),
   });
+  const entitlements = useQuery({
+    queryKey: ['entitlements'],
+    queryFn: () => api.interests.entitlements(),
+  });
+
+  const tier = entitlements.data?.tier ?? 'FREE';
+  const remaining = entitlements.data?.interestsRemainingThisMonth ?? -1;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -28,6 +37,28 @@ export default function Me() {
 
         <Card>
           <View style={{ flexDirection: 'row', gap: spacing.md, alignItems: 'center' }}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.h2}>Plan</Text>
+              <Chip
+                label={tier === 'FREE' ? 'Free forever' : tier}
+                tone={tier === 'FREE' ? 'neutral' : 'accent'}
+              />
+              <Text style={styles.sub}>
+                {tier === 'FREE'
+                  ? `${remaining === -1 ? 'Unlimited' : remaining} interests remaining this month`
+                  : 'Unlimited interests, who-viewed-me, advanced filters'}
+              </Text>
+            </View>
+            <Button
+              title={tier === 'FREE' ? 'Upgrade' : 'Manage'}
+              size="sm"
+              onPress={() => router.push('/premium')}
+            />
+          </View>
+        </Card>
+
+        <Card>
+          <View style={{ flexDirection: 'row', gap: spacing.md, alignItems: 'center' }}>
             <TrustDonut score={verification.data?.trustScore ?? 0} size={76} />
             <View style={{ flex: 1 }}>
               <Text style={styles.h2}>Trust & verification</Text>
@@ -35,6 +66,13 @@ export default function Me() {
               <Text style={styles.sub}>
                 Complete email, phone, Aadhaar, selfie & video KYC to reach Premium.
               </Text>
+              <Button
+                title="Verify now"
+                variant="outline"
+                size="sm"
+                onPress={() => router.push('/verify')}
+                style={{ marginTop: spacing.sm }}
+              />
             </View>
           </View>
         </Card>

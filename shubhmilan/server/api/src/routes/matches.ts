@@ -37,4 +37,49 @@ export async function matchRoutes(app: FastifyInstance) {
     });
     return ok(reply, items.map((p) => ({ id: p.id, fullName: p.fullName, city: p.city })));
   });
+
+  // Premium-tier shortcut: top 20 matches with VERIFIED or PREMIUM trust tier.
+  app.get('/premium', async (request, reply) => {
+    if (!request.profileId) return ok(reply, []);
+    const me = await prisma.profile.findUnique({
+      where: { id: request.profileId },
+      select: { gender: true, religion: true },
+    });
+    if (!me) return ok(reply, []);
+    const oppositeGender =
+      me.gender === 'MALE' ? 'FEMALE' : me.gender === 'FEMALE' ? 'MALE' : undefined;
+    const items = await prisma.profile.findMany({
+      where: {
+        deletedAt: null,
+        userId: { not: request.auth!.sub },
+        ...(oppositeGender && { gender: oppositeGender }),
+        verification: { tier: { in: ['VERIFIED', 'PREMIUM'] } },
+      },
+      take: 20,
+      orderBy: [{ verification: { trustScore: 'desc' } }, { lastActiveAt: 'desc' }],
+      include: { photos: true, verification: true },
+    });
+    return ok(reply, items);
+  });
+
+  // Geo-nearby placeholder — profiles in the same city / state.
+  app.get('/nearby', async (request, reply) => {
+    if (!request.profileId) return ok(reply, []);
+    const me = await prisma.profile.findUnique({
+      where: { id: request.profileId },
+      select: { city: true, state: true },
+    });
+    if (!me) return ok(reply, []);
+    const items = await prisma.profile.findMany({
+      where: {
+        deletedAt: null,
+        userId: { not: request.auth!.sub },
+        OR: [{ city: me.city }, { state: me.state }],
+      },
+      take: 20,
+      orderBy: { lastActiveAt: 'desc' },
+      include: { photos: true, verification: true },
+    });
+    return ok(reply, items);
+  });
 }

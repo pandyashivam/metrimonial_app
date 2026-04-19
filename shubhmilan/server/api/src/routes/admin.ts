@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { prisma } from '../db.js';
 import { fail, ok } from '../lib/response.js';
+import { pushVerificationApproved } from '../services/push.js';
 import { markStepSimple } from '../services/verification.js';
 
 /**
@@ -180,6 +181,14 @@ export async function adminRoutes(app: FastifyInstance) {
     await audit(request.auth!.sub, 'VERIFICATION_APPROVE', 'profile', request.params.profileId, {
       step,
     });
+
+    // Notify the user that their step was approved.
+    const profile = await prisma.profile.findUnique({
+      where: { id: request.params.profileId },
+      select: { userId: true },
+    });
+    if (profile?.userId) void pushVerificationApproved(profile.userId, step);
+
     return ok(reply, { ok: true as const });
   });
 

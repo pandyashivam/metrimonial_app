@@ -3,6 +3,34 @@ import type { FastifyInstance } from 'fastify';
 
 import { prisma } from '../db.js';
 import { fail, ok } from '../lib/response.js';
+import { resolveEntitlements } from '../services/plans.js';
+import { pushNewMessage } from '../services/push.js';
+
+/**
+ * Checks whether `meProfileId` is allowed to chat with `peerProfileId` right now.
+ * Rule (BUILD_INSTRUCTIONS §6 "Chat"): chat is unlocked only when
+ *   (a) there is an ACCEPTED interest in either direction between the two profiles, OR
+ *   (b) the sender has a Gold+ subscription (chat-before-match entitlement).
+ */
+async function canChat(
+  meUserId: string,
+  meProfileId: string,
+  peerProfileId: string,
+): Promise<boolean> {
+  const ent = await resolveEntitlements(meUserId, meProfileId);
+  if (ent.canChatBeforeMatch) return true;
+  const accepted = await prisma.interest.findFirst({
+    where: {
+      status: 'ACCEPTED',
+      OR: [
+        { fromProfileId: meProfileId, toProfileId: peerProfileId },
+        { fromProfileId: peerProfileId, toProfileId: meProfileId },
+      ],
+    },
+    select: { id: true },
+  });
+  return !!accepted;
+}
 
 /**
  * Chat routes. Messages are stored as opaque ciphertext — the server never sees plaintext.
@@ -102,6 +130,17 @@ export async function chatRoutes(app: FastifyInstance) {
       return fail(reply, 403, 'FORBIDDEN', 'Not a participant');
     }
 
+    const peerProfileId =
+      convo.profileAId === request.profileId ? convo.profileBId : convo.profileAId;
+    if (!(await canChat(request.auth!.sub, request.profileId, peerProfileId))) {
+      return fail(
+        reply,
+        402,
+        'CHAT_LOCKED',
+        'Chat is unlocked after mutual interest acceptance, or with a Gold subscription',
+      );
+    }
+
     const message = await prisma.message.create({
       data: {
         conversationId: convo.id,
@@ -132,6 +171,21 @@ export async function chatRoutes(app: FastifyInstance) {
 
     const io = (app as unknown as { io?: { to: (room: string) => { emit: (ev: string, p: unknown) => void } } }).io;
     io?.to(`conv:${convo.id}`).emit('message:new', payload);
+
+    // Push the peer — content stays encrypted; we only surface sender name.
+    const [sender, peer] = await Promise.all([
+      prisma.profile.findUnique({
+        where: { id: request.profileId },
+        select: { fullName: true },
+      }),
+      prisma.profile.findUnique({
+        where: { id: peerProfileId },
+        select: { userId: true },
+      }),
+    ]);
+    if (peer?.userId && sender?.fullName) {
+      void pushNewMessage(peer.userId, sender.fullName, convo.id);
+    }
     return ok(reply, payload, 201);
   });
 

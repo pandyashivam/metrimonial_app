@@ -48,15 +48,30 @@ jobs:
           DATABASE_URL: mysql://shubhmilan:shubhmilan@127.0.0.1:3306/shubhmilan
         run: pnpm --filter @shubhmilan/api db:generate
 
+      - name: Apply migrations
+        working-directory: shubhmilan
+        env:
+          DATABASE_URL: mysql://shubhmilan:shubhmilan@127.0.0.1:3306/shubhmilan
+        run: pnpm --filter @shubhmilan/api db:migrate:deploy
+
       - name: Typecheck all packages
         working-directory: shubhmilan
         run: pnpm typecheck || true
 
-      - name: Run API tests
+      - name: Run unit tests
         working-directory: shubhmilan
         env:
           DATABASE_URL: mysql://shubhmilan:shubhmilan@127.0.0.1:3306/shubhmilan
           JWT_ACCESS_SECRET: test-access-secret-long
           JWT_REFRESH_SECRET: test-refresh-secret-long
           PII_ENCRYPTION_KEY: Zm9vYmFyYmF6cXV4Zm9vYmFyYmF6cXV4Zm9vYmFyYmF6cXV4MDA=
-        run: pnpm --filter @shubhmilan/api test
+        run: pnpm --filter @shubhmilan/api test:unit
+
+      - name: Run integration tests
+        working-directory: shubhmilan
+        env:
+          DATABASE_URL: mysql://shubhmilan:shubhmilan@127.0.0.1:3306/shubhmilan
+          JWT_ACCESS_SECRET: test-access-secret-long
+          JWT_REFRESH_SECRET: test-refresh-secret-long
+          PII_ENCRYPTION_KEY: Zm9vYmFyYmF6cXV4Zm9vYmFyYmF6cXV4Zm9vYmFyYmF6cXV4MDA=
+        run: pnpm --filter @shubhmilan/api test:integration

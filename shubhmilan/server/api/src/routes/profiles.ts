@@ -3,6 +3,18 @@ import type { FastifyInstance } from 'fastify';
 
 import { prisma } from '../db.js';
 import { fail, ok } from '../lib/response.js';
+import { resolveEntitlements } from '../services/plans.js';
+
+// Filters outside this set are considered "advanced" and gated to Silver+.
+const BASIC_FILTER_KEYS = new Set<string>([
+  'gender',
+  'ageMin',
+  'ageMax',
+  'city',
+  'state',
+  'cursor',
+  'limit',
+]);
 
 function calcAge(dob: Date) {
   return Math.floor((Date.now() - dob.getTime()) / (365.25 * 24 * 3600 * 1000));
@@ -44,6 +56,23 @@ export async function profileRoutes(app: FastifyInstance) {
       return fail(reply, 400, 'VALIDATION', 'Invalid filters', parsed.error.flatten());
     }
     const q = parsed.data;
+
+    // Block advanced filters for free tier so Silver has a reason to exist.
+    const advanced = Object.entries(q).filter(
+      ([k, v]) => v !== undefined && v !== null && !BASIC_FILTER_KEYS.has(k),
+    );
+    if (advanced.length > 0) {
+      const ent = await resolveEntitlements(request.auth!.sub, request.profileId);
+      if (!ent.canUseAdvancedFilters) {
+        return fail(
+          reply,
+          402,
+          'PLAN_REQUIRED',
+          'Advanced filters (religion, caste, diet, manglik, education, verified) require Silver or higher',
+          { tier: ent.tier, rejected: advanced.map(([k]) => k) },
+        );
+      }
+    }
 
     const where: import('@prisma/client').Prisma.ProfileWhereInput = {
       deletedAt: null,

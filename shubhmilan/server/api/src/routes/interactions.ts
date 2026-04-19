@@ -3,6 +3,8 @@ import type { FastifyInstance } from 'fastify';
 
 import { prisma } from '../db.js';
 import { fail, ok } from '../lib/response.js';
+import { resolveEntitlements } from '../services/plans.js';
+import { pushProfileViewed } from '../services/push.js';
 
 /**
  * Composite route module: shortlist, block, report, views. All mounted at /api/v1/* via app.ts.
@@ -133,12 +135,31 @@ export async function interactionRoutes(app: FastifyInstance) {
         viewedProfileId: request.params.profileId,
       },
     });
+
+    // Let the viewed profile's owner know someone looked — free tier is blocked from
+    // seeing who, but the notification is visible to everyone (subtle upsell).
+    const viewed = await prisma.profile.findUnique({
+      where: { id: request.params.profileId },
+      select: { userId: true },
+    });
+    if (viewed?.userId) void pushProfileViewed(viewed.userId);
+
     return ok(reply, { ok: true as const });
   });
 
-  // ---------------- Who viewed me ----------------
+  // ---------------- Who viewed me — Silver+ only ----------------
   app.get('/me/viewers', async (request, reply) => {
     if (!request.profileId) return ok(reply, []);
+    const ent = await resolveEntitlements(request.auth!.sub, request.profileId);
+    if (!ent.canSeeWhoViewedMe) {
+      return fail(
+        reply,
+        402,
+        'PLAN_REQUIRED',
+        'Upgrade to Silver or higher to see who viewed your profile',
+        { tier: ent.tier },
+      );
+    }
     const rows = await prisma.profileView.findMany({
       where: { viewedProfileId: request.profileId },
       orderBy: { viewedAt: 'desc' },

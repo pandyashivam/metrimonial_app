@@ -40,6 +40,25 @@ const EnvSchema = z.object({
   SMTP_PORT: z.coerce.number().default(587),
   SMTP_USER: z.string().default(''),
   SMTP_PASS: z.string().default(''),
+  SMTP_SECURE: z.coerce.boolean().default(false),
+
+  // SMS providers (priority: MSG91 → Twilio → dev console)
+  MSG91_AUTH_KEY: z.string().default(''),
+  MSG91_SENDER_ID: z.string().default('SHBMLN'),
+  MSG91_TEMPLATE_ID: z.string().default(''),
+  TWILIO_ACCOUNT_SID: z.string().default(''),
+  TWILIO_AUTH_TOKEN: z.string().default(''),
+  TWILIO_FROM: z.string().default(''),
+
+  // Expo Push (works for iOS+Android+web via Expo)
+  EXPO_ACCESS_TOKEN: z.string().default(''),
+
+  // KYC providers
+  DIGIO_CLIENT_ID: z.string().default(''),
+  DIGIO_CLIENT_SECRET: z.string().default(''),
+  DIGIO_BASE_URL: z.string().default('https://ext.digio.in:444'),
+  HYPERVERGE_APP_ID: z.string().default(''),
+  HYPERVERGE_APP_KEY: z.string().default(''),
 });
 
 const parsed = EnvSchema.safeParse(process.env);
