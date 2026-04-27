@@ -1,15 +1,12 @@
 import { BlockInput, ReportInput } from '@shubhmilan/validation';
+import { Op } from 'sequelize';
 import type { FastifyInstance } from 'fastify';
 
-import { prisma } from '../db.js';
+import { Shortlist, Block, Report, ProfileView, Profile } from '../db.js';
 import { fail, ok } from '../lib/response.js';
 import { resolveEntitlements } from '../services/plans.js';
 import { pushProfileViewed } from '../services/push.js';
 
-/**
- * Composite route module: shortlist, block, report, views. All mounted at /api/v1/* via app.ts.
- * Every handler is auth-gated and derives the acting profile from request.profileId.
- */
 export async function interactionRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.requireAuth);
 
@@ -19,20 +16,16 @@ export async function interactionRoutes(app: FastifyInstance) {
     if (request.params.profileId === request.profileId) {
       return fail(reply, 400, 'SELF_SHORTLIST', 'Cannot shortlist yourself');
     }
-    await prisma.shortlist
-      .create({
-        data: {
-          ownerProfileId: request.profileId,
-          savedProfileId: request.params.profileId,
-        },
-      })
-      .catch(() => null);
+    await Shortlist.create({
+      ownerProfileId: request.profileId,
+      savedProfileId: request.params.profileId,
+    }).catch(() => null);
     return ok(reply, { ok: true as const });
   });
 
   app.delete<{ Params: { profileId: string } }>('/shortlist/:profileId', async (request, reply) => {
     if (!request.profileId) return fail(reply, 400, 'NO_PROFILE', 'Create profile first');
-    await prisma.shortlist.deleteMany({
+    await Shortlist.destroy({
       where: {
         ownerProfileId: request.profileId,
         savedProfileId: request.params.profileId,
@@ -43,24 +36,16 @@ export async function interactionRoutes(app: FastifyInstance) {
 
   app.get('/shortlist', async (request, reply) => {
     if (!request.profileId) return ok(reply, []);
-    const rows = await prisma.shortlist.findMany({
+    const rows = await Shortlist.findAll({
       where: { ownerProfileId: request.profileId },
-      orderBy: { savedAt: 'desc' },
-      include: {
-        savedProfile: {
-          select: {
-            id: true,
-            fullName: true,
-            city: true,
-            religion: true,
-            caste: true,
-            education: true,
-            occupation: true,
-          },
-        },
-      },
+      order: [['savedAt', 'DESC']],
+      include: [{
+        model: Profile,
+        as: 'savedProfile',
+        attributes: ['id', 'fullName', 'city', 'religion', 'caste', 'education', 'occupation'],
+      }],
     });
-    return ok(reply, rows.map((r) => ({ ...r.savedProfile, savedAt: r.savedAt.toISOString() })));
+    return ok(reply, rows.map((r) => ({ ...r.savedProfile!.get({ plain: true }), savedAt: r.savedAt!.toISOString() })));
   });
 
   // ---------------- Block ----------------
@@ -73,22 +58,18 @@ export async function interactionRoutes(app: FastifyInstance) {
       if (request.params.profileId === request.profileId) {
         return fail(reply, 400, 'SELF_BLOCK', 'Cannot block yourself');
       }
-      await prisma.block
-        .create({
-          data: {
-            blockerProfileId: request.profileId,
-            blockedProfileId: request.params.profileId,
-            reason: parsed.data.reason,
-          },
-        })
-        .catch(() => null);
+      await Block.create({
+        blockerProfileId: request.profileId,
+        blockedProfileId: request.params.profileId,
+        reason: parsed.data.reason,
+      }).catch(() => null);
       return ok(reply, { ok: true as const });
     },
   );
 
   app.delete<{ Params: { profileId: string } }>('/block/:profileId', async (request, reply) => {
     if (!request.profileId) return fail(reply, 400, 'NO_PROFILE', 'Create profile first');
-    await prisma.block.deleteMany({
+    await Block.destroy({
       where: {
         blockerProfileId: request.profileId,
         blockedProfileId: request.params.profileId,
@@ -104,13 +85,11 @@ export async function interactionRoutes(app: FastifyInstance) {
       return fail(reply, 400, 'VALIDATION', 'Invalid payload', parsed.error.flatten());
     }
     if (!request.profileId) return fail(reply, 400, 'NO_PROFILE', 'Create profile first');
-    const report = await prisma.report.create({
-      data: {
-        reporterProfileId: request.profileId,
-        reportedProfileId: request.params.profileId,
-        reason: parsed.data.reason,
-        detail: parsed.data.detail,
-      },
+    const report = await Report.create({
+      reporterProfileId: request.profileId,
+      reportedProfileId: request.params.profileId,
+      reason: parsed.data.reason,
+      detail: parsed.data.detail,
     });
     return ok(reply, report, 201);
   });
@@ -121,27 +100,20 @@ export async function interactionRoutes(app: FastifyInstance) {
     if (request.params.profileId === request.profileId) return ok(reply, { skipped: true });
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
-    const existing = await prisma.profileView.findFirst({
+    const existing = await ProfileView.findOne({
       where: {
         viewerProfileId: request.profileId,
         viewedProfileId: request.params.profileId,
-        viewedAt: { gte: todayStart },
+        viewedAt: { [Op.gte]: todayStart },
       },
     });
     if (existing) return ok(reply, { alreadyLogged: true });
-    await prisma.profileView.create({
-      data: {
-        viewerProfileId: request.profileId,
-        viewedProfileId: request.params.profileId,
-      },
+    await ProfileView.create({
+      viewerProfileId: request.profileId,
+      viewedProfileId: request.params.profileId,
     });
 
-    // Let the viewed profile's owner know someone looked — free tier is blocked from
-    // seeing who, but the notification is visible to everyone (subtle upsell).
-    const viewed = await prisma.profile.findUnique({
-      where: { id: request.params.profileId },
-      select: { userId: true },
-    });
+    const viewed = await Profile.findByPk(request.params.profileId, { attributes: ['userId'] });
     if (viewed?.userId) void pushProfileViewed(viewed.userId);
 
     return ok(reply, { ok: true as const });
@@ -160,14 +132,16 @@ export async function interactionRoutes(app: FastifyInstance) {
         { tier: ent.tier },
       );
     }
-    const rows = await prisma.profileView.findMany({
+    const rows = await ProfileView.findAll({
       where: { viewedProfileId: request.profileId },
-      orderBy: { viewedAt: 'desc' },
-      take: 50,
-      include: {
-        viewer: { select: { id: true, fullName: true, city: true } },
-      },
+      order: [['viewedAt', 'DESC']],
+      limit: 50,
+      include: [{
+        model: Profile,
+        as: 'viewer',
+        attributes: ['id', 'fullName', 'city'],
+      }],
     });
-    return ok(reply, rows.map((r) => ({ ...r.viewer, viewedAt: r.viewedAt.toISOString() })));
+    return ok(reply, rows.map((r) => ({ ...r.viewer!.get({ plain: true }), viewedAt: r.viewedAt!.toISOString() })));
   });
 }

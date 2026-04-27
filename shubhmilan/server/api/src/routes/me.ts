@@ -9,7 +9,7 @@ import {
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
-import { prisma } from '../db.js';
+import { User, Profile, Family, Horoscope, PartnerPreference, Photo, Verification } from '../db.js';
 import { fail, ok } from '../lib/response.js';
 import { toPublicUser } from '../services/auth.js';
 
@@ -17,12 +17,11 @@ export async function meRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.requireAuth);
 
   app.get('/', async (request, reply) => {
-    const user = await prisma.user.findUnique({ where: { id: request.auth!.sub } });
+    const user = await User.findByPk(request.auth!.sub);
     if (!user) return fail(reply, 404, 'NOT_FOUND', 'User not found');
     return ok(reply, toPublicUser(user));
   });
 
-  // Update email / phone — each change re-arms verification (require a fresh OTP later).
   const PatchMe = z
     .object({
       email: emailSchema.optional(),
@@ -32,7 +31,7 @@ export async function meRoutes(app: FastifyInstance) {
   app.patch('/', async (request, reply) => {
     const parsed = PatchMe.safeParse(request.body);
     if (!parsed.success) return fail(reply, 400, 'VALIDATION', 'Invalid payload');
-    const patch: { email?: string; phone?: string; emailVerifiedAt?: null; phoneVerifiedAt?: null } = {};
+    const patch: Record<string, unknown> = {};
     if (parsed.data.email) {
       patch.email = parsed.data.email;
       patch.emailVerifiedAt = null;
@@ -45,23 +44,24 @@ export async function meRoutes(app: FastifyInstance) {
       return fail(reply, 400, 'NO_CHANGES', 'No fields to update');
     }
     try {
-      const updated = await prisma.user.update({
-        where: { id: request.auth!.sub },
-        data: patch,
-      });
-      return ok(reply, toPublicUser(updated));
+      const user = await User.findByPk(request.auth!.sub);
+      if (!user) return fail(reply, 404, 'NOT_FOUND', 'User not found');
+      await user.update(patch);
+      return ok(reply, toPublicUser(user));
     } catch (err) {
-      const code = (err as { code?: string }).code;
-      if (code === 'P2002') return fail(reply, 409, 'CONFLICT', 'Email or phone already in use');
+      const name = (err as { name?: string }).name;
+      if (name === 'SequelizeUniqueConstraintError') return fail(reply, 409, 'CONFLICT', 'Email or phone already in use');
       throw err;
     }
   });
 
-  // ------- Profile -------
   app.get('/profile', async (request, reply) => {
-    const profile = await prisma.profile.findUnique({
+    const profile = await Profile.findOne({
       where: { userId: request.auth!.sub },
-      include: { photos: true, verification: true },
+      include: [
+        { model: Photo, as: 'photos' },
+        { model: Verification, as: 'verification' },
+      ],
     });
     if (!profile) return fail(reply, 404, 'NO_PROFILE', 'Profile not yet created');
     return ok(reply, profile);
@@ -73,135 +73,129 @@ export async function meRoutes(app: FastifyInstance) {
       return fail(reply, 400, 'VALIDATION', 'Invalid payload', parsed.error.flatten());
     }
     const data = parsed.data;
-    const profile = await prisma.profile.upsert({
-      where: { userId: request.auth!.sub },
-      update: {
-        ...data,
-        dob: new Date(data.dob),
-        personalityTraits: data.personalityTraits,
-        hobbies: data.hobbies,
-        languages: data.languages,
-        gender: data.gender.toUpperCase() as 'MALE' | 'FEMALE' | 'OTHER',
-        maritalStatus: data.maritalStatus.replace(/\s/g, '_').toUpperCase() as
-          | 'NEVER_MARRIED'
-          | 'DIVORCED'
-          | 'WIDOWED'
-          | 'AWAITING_DIVORCE',
-        diet: data.diet.replace(/[-\s]/g, '_').toUpperCase() as
-          | 'VEGETARIAN'
-          | 'NON_VEGETARIAN'
-          | 'EGGETARIAN'
-          | 'JAIN_VEGETARIAN'
-          | 'VEGAN',
-      },
-      create: {
-        userId: request.auth!.sub,
-        ...data,
-        dob: new Date(data.dob),
-        personalityTraits: data.personalityTraits,
-        hobbies: data.hobbies,
-        languages: data.languages,
-        gender: data.gender.toUpperCase() as 'MALE' | 'FEMALE' | 'OTHER',
-        maritalStatus: data.maritalStatus.replace(/\s/g, '_').toUpperCase() as
-          | 'NEVER_MARRIED'
-          | 'DIVORCED'
-          | 'WIDOWED'
-          | 'AWAITING_DIVORCE',
-        diet: data.diet.replace(/[-\s]/g, '_').toUpperCase() as
-          | 'VEGETARIAN'
-          | 'NON_VEGETARIAN'
-          | 'EGGETARIAN'
-          | 'JAIN_VEGETARIAN'
-          | 'VEGAN',
-        smoking: 'NO',
-        drinking: 'NO',
-        manglik: 'UNKNOWN',
-      },
+    const mapped = {
+      ...data,
+      dob: new Date(data.dob),
+      gender: data.gender.toUpperCase() as 'MALE' | 'FEMALE' | 'OTHER',
+      maritalStatus: data.maritalStatus.replace(/\s/g, '_').toUpperCase() as
+        | 'NEVER_MARRIED' | 'DIVORCED' | 'WIDOWED' | 'AWAITING_DIVORCE',
+      diet: data.diet.replace(/[-\s]/g, '_').toUpperCase() as
+        | 'VEGETARIAN' | 'NON_VEGETARIAN' | 'EGGETARIAN' | 'JAIN_VEGETARIAN' | 'VEGAN',
+    };
+
+    const existing = await Profile.findOne({ where: { userId: request.auth!.sub } });
+    if (existing) {
+      await existing.update(mapped);
+      return ok(reply, existing);
+    }
+    const profile = await Profile.create({
+      userId: request.auth!.sub,
+      ...mapped,
+      smoking: 'NO',
+      drinking: 'NO',
+      manglik: 'UNKNOWN',
     });
     return ok(reply, profile);
   });
 
-  // ------- Family -------
   app.get('/family', async (request, reply) => {
-    const profile = await prisma.profile.findUnique({
+    const profile = await Profile.findOne({
       where: { userId: request.auth!.sub },
-      select: { id: true, family: true },
+      attributes: ['id'],
     });
     if (!profile) return fail(reply, 404, 'NO_PROFILE', 'Create profile first');
-    return ok(reply, profile.family);
+    const family = await Family.findOne({ where: { profileId: profile.id } });
+    return ok(reply, family);
   });
 
   app.put('/family', async (request, reply) => {
     const parsed = FamilyInput.safeParse(request.body);
     if (!parsed.success) return fail(reply, 400, 'VALIDATION', 'Invalid family payload');
-    const profile = await prisma.profile.findUnique({
+    const profile = await Profile.findOne({
       where: { userId: request.auth!.sub },
-      select: { id: true },
+      attributes: ['id'],
     });
     if (!profile) return fail(reply, 404, 'NO_PROFILE', 'Create profile first');
-    const family = await prisma.family.upsert({
-      where: { profileId: profile.id },
-      update: { ...parsed.data, siblings: parsed.data.siblings },
-      create: { profileId: profile.id, ...parsed.data, siblings: parsed.data.siblings },
+    const existing = await Family.findOne({ where: { profileId: profile.id } });
+    if (existing) {
+      await existing.update({ ...parsed.data, siblings: parsed.data.siblings });
+      return ok(reply, existing);
+    }
+    const family = await Family.create({
+      profileId: profile.id,
+      ...parsed.data,
+      siblings: parsed.data.siblings,
     });
     return ok(reply, family);
   });
 
-  // ------- Horoscope -------
   app.get('/horoscope', async (request, reply) => {
-    const profile = await prisma.profile.findUnique({
+    const profile = await Profile.findOne({
       where: { userId: request.auth!.sub },
-      select: { horoscope: true },
+      attributes: ['id'],
     });
-    return ok(reply, profile?.horoscope ?? null);
+    if (!profile) return ok(reply, null);
+    const horoscope = await Horoscope.findOne({ where: { profileId: profile.id } });
+    return ok(reply, horoscope);
   });
 
   app.put('/horoscope', async (request, reply) => {
     const parsed = HoroscopeInput.safeParse(request.body);
     if (!parsed.success) return fail(reply, 400, 'VALIDATION', 'Invalid horoscope payload');
-    const profile = await prisma.profile.findUnique({
+    const profile = await Profile.findOne({
       where: { userId: request.auth!.sub },
-      select: { id: true },
+      attributes: ['id'],
     });
     if (!profile) return fail(reply, 404, 'NO_PROFILE', 'Create profile first');
-    const horoscope = await prisma.horoscope.upsert({
-      where: { profileId: profile.id },
-      update: { ...parsed.data, doshas: parsed.data.doshas },
-      create: { profileId: profile.id, ...parsed.data, doshas: parsed.data.doshas },
+    const existing = await Horoscope.findOne({ where: { profileId: profile.id } });
+    if (existing) {
+      await existing.update({ ...parsed.data, doshas: parsed.data.doshas });
+      return ok(reply, existing);
+    }
+    const horoscope = await Horoscope.create({
+      profileId: profile.id,
+      ...parsed.data,
+      doshas: parsed.data.doshas,
     });
     return ok(reply, horoscope);
   });
 
-  // ------- Preference -------
   app.get('/preference', async (request, reply) => {
-    const profile = await prisma.profile.findUnique({
+    const profile = await Profile.findOne({
       where: { userId: request.auth!.sub },
-      select: { preference: true },
+      attributes: ['id'],
     });
-    return ok(reply, profile?.preference ?? null);
+    if (!profile) return ok(reply, null);
+    const pref = await PartnerPreference.findOne({ where: { profileId: profile.id } });
+    return ok(reply, pref);
   });
 
   app.put('/preference', async (request, reply) => {
     const parsed = PartnerPreferenceInput.safeParse(request.body);
     if (!parsed.success) return fail(reply, 400, 'VALIDATION', 'Invalid preference payload');
-    const profile = await prisma.profile.findUnique({
+    const profile = await Profile.findOne({
       where: { userId: request.auth!.sub },
-      select: { id: true },
+      attributes: ['id'],
     });
     if (!profile) return fail(reply, 404, 'NO_PROFILE', 'Create profile first');
-    const pref = await prisma.partnerPreference.upsert({
-      where: { profileId: profile.id },
-      update: parsed.data,
-      create: { profileId: profile.id, ...parsed.data },
-    });
+    const existing = await PartnerPreference.findOne({ where: { profileId: profile.id } });
+    if (existing) {
+      await existing.update(parsed.data);
+      return ok(reply, existing);
+    }
+    const pref = await PartnerPreference.create({ profileId: profile.id, ...parsed.data });
     return ok(reply, pref);
   });
 
-  // ------- Completeness -------
   app.get('/completeness', async (request, reply) => {
-    const profile = await prisma.profile.findUnique({
+    const profile = await Profile.findOne({
       where: { userId: request.auth!.sub },
-      include: { family: true, horoscope: true, preference: true, photos: true },
+      include: [
+        { model: Family, as: 'family' },
+        { model: Horoscope, as: 'horoscope' },
+        { model: PartnerPreference, as: 'preference' },
+        { model: Photo, as: 'photos' },
+      ],
     });
     if (!profile) return ok(reply, { percent: 0, missing: ['profile'] });
     const missing: string[] = [];
@@ -209,7 +203,7 @@ export async function meRoutes(app: FastifyInstance) {
     if (!profile.family) missing.push('family');
     if (!profile.horoscope) missing.push('horoscope');
     if (!profile.preference) missing.push('preference');
-    if (!profile.photos.length) missing.push('photos');
+    if (!profile.photos?.length) missing.push('photos');
     const sections = 5;
     const completed = sections - missing.length;
     const percent = Math.round((completed / sections) * 100);

@@ -2,18 +2,15 @@ import { createServer } from 'node:http';
 import { Server as SocketIoServer } from 'socket.io';
 
 import { buildApp } from './app.js';
-import { prisma, shutdownDb } from './db.js';
+import { initDb, shutdownDb, Profile } from './db.js';
 import { env } from './env.js';
 import { verifyAccessToken } from './lib/tokens.js';
 
-/**
- * In-memory presence registry. Maps userId → number of live socket connections (0 means
- * offline). For single-instance deploys we keep it in-process; multi-instance deploys
- * should swap this for Redis so presence is consistent across pods.
- */
 const presenceCount = new Map<string, number>();
 
 async function main() {
+  await initDb();
+
   const app = await buildApp();
 
   const httpServer = createServer(app.server as unknown as Parameters<typeof createServer>[1]);
@@ -38,16 +35,12 @@ async function main() {
     const userId: string | undefined = socket.data.userId;
     if (!userId) return;
 
-    // Mark online on first connection (multiple tabs/devices are ok — count is per-socket).
     const prev = presenceCount.get(userId) ?? 0;
     presenceCount.set(userId, prev + 1);
     await socket.join(`user:${userId}`);
     if (prev === 0) {
       io.emit('presence:update', { userId, isOnline: true, at: new Date().toISOString() });
-      // Update DB lastActiveAt for discovery ordering.
-      await prisma.profile
-        .updateMany({ where: { userId }, data: { lastActiveAt: new Date() } })
-        .catch(() => null);
+      await Profile.update({ lastActiveAt: new Date() }, { where: { userId } }).catch(() => null);
     }
 
     socket.on('join', async (conversationId: string) => {
@@ -70,9 +63,7 @@ async function main() {
       if (count <= 0) {
         presenceCount.delete(userId);
         io.emit('presence:update', { userId, isOnline: false, at: new Date().toISOString() });
-        await prisma.profile
-          .updateMany({ where: { userId }, data: { lastActiveAt: new Date() } })
-          .catch(() => null);
+        await Profile.update({ lastActiveAt: new Date() }, { where: { userId } }).catch(() => null);
       } else {
         presenceCount.set(userId, count);
       }

@@ -1,7 +1,6 @@
 import bcrypt from 'bcrypt';
-import type { User } from '@prisma/client';
 
-import { prisma } from '../db.js';
+import { User, RefreshToken } from '../db.js';
 import { env } from '../env.js';
 import {
   generateRefreshToken,
@@ -19,16 +18,14 @@ export async function verifyPassword(plain: string, hash: string) {
 }
 
 export async function issueTokensForUser(user: User) {
-  const accessToken = signAccessToken({ sub: user.id, role: user.role });
+  const accessToken = signAccessToken({ sub: user.id, role: user.role! });
   const refreshToken = generateRefreshToken();
   const tokenHash = hashRefreshToken(refreshToken);
   const ttl = ttlToSeconds(env.JWT_REFRESH_TTL);
-  await prisma.refreshToken.create({
-    data: {
-      userId: user.id,
-      tokenHash,
-      expiresAt: new Date(Date.now() + ttl * 1000),
-    },
+  await RefreshToken.create({
+    userId: user.id,
+    tokenHash,
+    expiresAt: new Date(Date.now() + ttl * 1000),
   });
   return {
     accessToken,
@@ -37,31 +34,26 @@ export async function issueTokensForUser(user: User) {
   };
 }
 
-/**
- * Rotate a refresh token: verify it's active, revoke the old one, issue new pair.
- * Used tokens are invalidated even if they remain within TTL (defense against theft).
- */
 export async function rotateRefreshToken(refreshToken: string) {
   const tokenHash = hashRefreshToken(refreshToken);
-  const row = await prisma.refreshToken.findFirst({
-    where: { tokenHash, revokedAt: null, expiresAt: { gt: new Date() } },
-    include: { user: true },
+  const row = await RefreshToken.findOne({
+    where: { tokenHash, revokedAt: null },
+    include: [{ model: User, as: 'user' }],
   });
-  if (!row) return null;
+  if (!row || !row.expiresAt || row.expiresAt <= new Date()) return null;
 
-  await prisma.refreshToken.update({
-    where: { id: row.id },
-    data: { revokedAt: new Date() },
-  });
+  await row.update({ revokedAt: new Date() });
 
-  return issueTokensForUser(row.user);
+  const user = await User.findByPk(row.userId);
+  if (!user) return null;
+  return issueTokensForUser(user);
 }
 
 export async function revokeAllRefreshTokensForUser(userId: string) {
-  await prisma.refreshToken.updateMany({
-    where: { userId, revokedAt: null },
-    data: { revokedAt: new Date() },
-  });
+  await RefreshToken.update(
+    { revokedAt: new Date() },
+    { where: { userId, revokedAt: null } },
+  );
 }
 
 export function toPublicUser(user: User) {

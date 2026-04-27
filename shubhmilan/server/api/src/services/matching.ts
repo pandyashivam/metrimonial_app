@@ -1,7 +1,7 @@
-import type { PartnerPreference, Profile, Verification } from '@prisma/client';
+import { Op } from 'sequelize';
 
-import { prisma } from '../db.js';
-import { cosineSimilarity, getEmbedding, openaiEnabled } from './openai.js';
+import { Profile, PartnerPreference, Verification, MatchScore, MatchLog } from '../db.js';
+import { cosineSimilarity, getEmbedding, geminiEnabled } from './gemini.js';
 
 export interface MatchReason {
   icon: string;
@@ -20,12 +20,6 @@ type ProfileWithRelations = Profile & {
   verification: Verification | null;
 };
 
-/**
- * Weighted signals (from BUILD_INSTRUCTIONS §11, mirroring prototype's aiMatchScore):
- *   religion (15), mother tongue (10), diet (8), education tier (10),
- *   shared hobbies (12), caste preference (8), manglik (10),
- *   personality overlap (12), trust score (10), family values (5)
- */
 const WEIGHTS = {
   religion: 15,
   motherTongue: 10,
@@ -40,22 +34,11 @@ const WEIGHTS = {
 } as const;
 
 const EDUCATION_TIER: Record<string, number> = {
-  'High School': 1,
-  Diploma: 1,
-  'B.A': 2,
-  'B.Com': 2,
-  'B.Sc': 2,
-  'B.Tech': 3,
-  BBA: 2,
-  MBBS: 4,
-  CA: 4,
-  'M.A': 3,
-  'M.Com': 3,
-  'M.Sc': 3,
-  'M.Tech': 4,
-  MBA: 4,
-  PhD: 5,
-  Other: 2,
+  'High School': 1, Diploma: 1,
+  'B.A': 2, 'B.Com': 2, 'B.Sc': 2, 'B.Tech': 3, BBA: 2,
+  MBBS: 4, CA: 4,
+  'M.A': 3, 'M.Com': 3, 'M.Sc': 3, 'M.Tech': 4, MBA: 4,
+  PhD: 5, Other: 2,
 };
 
 function eduTier(edu: string): number {
@@ -77,111 +60,66 @@ export function aiMatchScore(
   const reasons: MatchReason[] = [];
   let score = 0;
 
-  // --- Religion ---
   if (me.religion === other.religion) {
     score += WEIGHTS.religion;
     reasons.push({ icon: 'om', text: `Same religion (${me.religion})`, weight: WEIGHTS.religion });
   }
 
-  // --- Mother tongue ---
   if (me.motherTongue === other.motherTongue) {
     score += WEIGHTS.motherTongue;
-    reasons.push({
-      icon: 'language',
-      text: `Both speak ${me.motherTongue}`,
-      weight: WEIGHTS.motherTongue,
-    });
+    reasons.push({ icon: 'language', text: `Both speak ${me.motherTongue}`, weight: WEIGHTS.motherTongue });
   }
 
-  // --- Diet ---
   if (me.diet === other.diet) {
     score += WEIGHTS.diet;
     reasons.push({ icon: 'utensils', text: `Same diet (${me.diet})`, weight: WEIGHTS.diet });
   }
 
-  // --- Education tier closeness ---
   const eduDiff = Math.abs(eduTier(me.education) - eduTier(other.education));
   const eduBonus = Math.max(0, WEIGHTS.education - eduDiff * 3);
   if (eduBonus > 0) {
     score += eduBonus;
-    if (eduDiff <= 1)
-      reasons.push({
-        icon: 'graduation-cap',
-        text: 'Comparable education level',
-        weight: eduBonus,
-      });
+    if (eduDiff <= 1) reasons.push({ icon: 'graduation-cap', text: 'Comparable education level', weight: eduBonus });
   }
 
-  // --- Shared hobbies ---
   const myHobbies = new Set(parseJsonArray(me.hobbies).map((s) => s.toLowerCase()));
   const otherHobbies = parseJsonArray(other.hobbies).map((s) => s.toLowerCase());
   const sharedHobbies = otherHobbies.filter((h) => myHobbies.has(h));
   if (sharedHobbies.length) {
     const pts = Math.min(WEIGHTS.hobbies, sharedHobbies.length * 4);
     score += pts;
-    reasons.push({
-      icon: 'heart',
-      text: `${sharedHobbies.length} shared interests`,
-      weight: pts,
-    });
+    reasons.push({ icon: 'heart', text: `${sharedHobbies.length} shared interests`, weight: pts });
   }
 
-  // --- Caste preference ---
   const prefCastes = parseJsonArray(me.preference?.castes);
   if (prefCastes.length === 0 || prefCastes.includes(other.caste)) {
     score += WEIGHTS.caste;
-    reasons.push({
-      icon: 'people-group',
-      text: 'Matches caste preference',
-      weight: WEIGHTS.caste,
-    });
+    reasons.push({ icon: 'people-group', text: 'Matches caste preference', weight: WEIGHTS.caste });
   }
 
-  // --- Manglik ---
   if (me.manglik === other.manglik) {
     score += WEIGHTS.manglik;
-    reasons.push({
-      icon: 'star-of-life',
-      text: 'Manglik status compatible',
-      weight: WEIGHTS.manglik,
-    });
+    reasons.push({ icon: 'star-of-life', text: 'Manglik status compatible', weight: WEIGHTS.manglik });
   }
 
-  // --- Personality traits overlap ---
   const myTraits = new Set(parseJsonArray(me.personalityTraits).map((s) => s.toLowerCase()));
-  const shared = parseJsonArray(other.personalityTraits).filter((t) =>
-    myTraits.has(t.toLowerCase()),
-  );
+  const shared = parseJsonArray(other.personalityTraits).filter((t) => myTraits.has(t.toLowerCase()));
   if (shared.length) {
     const pts = Math.min(WEIGHTS.personality, shared.length * 4);
     score += pts;
-    reasons.push({
-      icon: 'user-group',
-      text: `${shared.length} shared personality traits`,
-      weight: pts,
-    });
+    reasons.push({ icon: 'user-group', text: `${shared.length} shared personality traits`, weight: pts });
   }
 
-  // --- Trust score ---
   const trust = other.verification?.trustScore ?? 0;
   const trustBonus = Math.round((trust / 100) * WEIGHTS.trust);
   if (trustBonus > 0) {
     score += trustBonus;
-    reasons.push({
-      icon: 'shield-check',
-      text: `Trust score ${trust}/100`,
-      weight: trustBonus,
-    });
+    reasons.push({ icon: 'shield-check', text: `Trust score ${trust}/100`, weight: trustBonus });
   }
 
-  // --- Family values ---
   if (me.familyValues === other.familyValues) {
     score += WEIGHTS.familyValues;
-    reasons.push({
-      icon: 'home',
-      text: `Same family values (${me.familyValues})`,
-      weight: WEIGHTS.familyValues,
-    });
+    reasons.push({ icon: 'home', text: `Same family values (${me.familyValues})`, weight: WEIGHTS.familyValues });
   }
 
   const clamped = Math.max(0, Math.min(100, Math.round(score)));
@@ -190,27 +128,30 @@ export function aiMatchScore(
 }
 
 export async function computeTopMatchesForProfile(profileId: string, take = 25) {
-  const me = await prisma.profile.findUnique({
-    where: { id: profileId },
-    include: { preference: true, verification: true },
-  });
+  const me = await Profile.findByPk(profileId, {
+    include: [
+      { model: PartnerPreference, as: 'preference' },
+      { model: Verification, as: 'verification' },
+    ],
+  }) as ProfileWithRelations | null;
   if (!me) return [];
 
-  const candidates = await prisma.profile.findMany({
+  const candidates = await Profile.findAll({
     where: {
-      id: { not: me.id },
+      id: { [Op.ne]: me.id },
       deletedAt: null,
-      gender: me.gender === 'MALE' ? 'FEMALE' : me.gender === 'FEMALE' ? 'MALE' : undefined,
+      ...(me.gender === 'MALE' ? { gender: 'FEMALE' } : me.gender === 'FEMALE' ? { gender: 'MALE' } : {}),
     },
-    include: { preference: true, verification: true },
-    take: 500,
-  });
+    include: [
+      { model: PartnerPreference, as: 'preference' },
+      { model: Verification, as: 'verification' },
+    ],
+    limit: 500,
+  }) as ProfileWithRelations[];
 
   const baseScores = candidates.map((c) => aiMatchScore(me, c));
 
-  // Optional hybrid rerank: blend heuristic (70%) + OpenAI embedding cosine (30%).
-  // Gracefully degrades to heuristic-only when the OpenAI key isn't configured.
-  if (openaiEnabled()) {
+  if (geminiEnabled()) {
     const myVec = await getEmbedding(me.id);
     if (myVec) {
       const boosted = await Promise.all(
@@ -241,64 +182,47 @@ export async function computeTopMatchesForProfile(profileId: string, take = 25) 
   return baseScores.slice(0, take);
 }
 
-/** Logs served matches for online learning / A/B analysis. Fire-and-forget. */
-export async function logServedMatches(
-  viewerProfileId: string,
-  matches: ScoredProfile[],
-  variant = 'v1',
-) {
+export async function logServedMatches(viewerProfileId: string, matches: ScoredProfile[], variant = 'v1') {
   if (!matches.length) return;
-  await prisma.matchLog
-    .createMany({
-      data: matches.map((m, i) => ({
-        viewerProfileId,
-        candidateId: m.profileId,
-        rank: i,
-        score: m.score,
-        variant,
-      })),
-    })
-    .catch(() => null);
+  await MatchLog.bulkCreate(
+    matches.map((m, i) => ({
+      viewerProfileId,
+      candidateId: m.profileId,
+      rank: i,
+      score: m.score,
+      variant,
+    })),
+  ).catch(() => null);
 }
 
-/**
- * Persists this profile's top-N into MatchScore so cheaper cache reads can serve
- * subsequent /matches/ai calls. Replaces the entire set (idempotent).
- */
 export async function persistTopMatches(profileId: string, scores: ScoredProfile[]) {
   if (!scores.length) return;
-  // Upsert per row so we preserve computedAt history if the row already exists.
-  await Promise.all(
-    scores.map((s) =>
-      prisma.matchScore
-        .upsert({
-          where: { profileAId_profileBId: { profileAId: profileId, profileBId: s.profileId } },
-          update: { score: s.score, reasons: s.reasons as unknown as import('@prisma/client').Prisma.InputJsonValue, computedAt: new Date() },
-          create: {
-            profileAId: profileId,
-            profileBId: s.profileId,
-            score: s.score,
-            reasons: s.reasons as unknown as import('@prisma/client').Prisma.InputJsonValue,
-          },
-        })
-        .catch(() => null),
-    ),
-  );
+  for (const s of scores) {
+    const existing = await MatchScore.findOne({
+      where: { profileAId: profileId, profileBId: s.profileId },
+    });
+    if (existing) {
+      await existing.update({ score: s.score, reasons: s.reasons, computedAt: new Date() });
+    } else {
+      await MatchScore.create({
+        profileAId: profileId,
+        profileBId: s.profileId,
+        score: s.score,
+        reasons: s.reasons,
+      }).catch(() => null);
+    }
+  }
 }
 
-/** Cache-first read of top matches. Falls through to live compute if the cache is empty
- *  or stale. Callers typically want this for /matches/ai.
- *  @param maxAgeMs — if the cache is older than this, recompute on demand.
- */
 export async function readCachedOrCompute(
   profileId: string,
   take = 25,
   maxAgeMs = 24 * 3600 * 1000,
 ): Promise<ScoredProfile[]> {
-  const fresh = await prisma.matchScore.findMany({
-    where: { profileAId: profileId, computedAt: { gt: new Date(Date.now() - maxAgeMs) } },
-    orderBy: { score: 'desc' },
-    take,
+  const fresh = await MatchScore.findAll({
+    where: { profileAId: profileId, computedAt: { [Op.gt]: new Date(Date.now() - maxAgeMs) } },
+    order: [['score', 'DESC']],
+    limit: take,
   });
   if (fresh.length) {
     return fresh.map((r) => ({
@@ -312,17 +236,12 @@ export async function readCachedOrCompute(
   return scored;
 }
 
-/**
- * Nightly sweep: recompute match scores for every active profile. Called by the cron
- * runner in `src/jobs/precompute-matches.ts`. Batches so a slow OpenAI account doesn't
- * hold the whole sweep open.
- */
 export async function runNightlyMatchPrecompute(opts?: { batchSize?: number; take?: number }) {
   const batchSize = opts?.batchSize ?? 25;
   const take = opts?.take ?? 50;
-  const profiles = await prisma.profile.findMany({
+  const profiles = await Profile.findAll({
     where: { deletedAt: null },
-    select: { id: true },
+    attributes: ['id'],
   });
   let processed = 0;
   for (let i = 0; i < profiles.length; i += batchSize) {
@@ -338,10 +257,6 @@ export async function runNightlyMatchPrecompute(opts?: { batchSize?: number; tak
   return { total: profiles.length, processed };
 }
 
-/**
- * Ashtakoot (8-point Guna Milan) — simplified. A real implementation uses birth-time
- * ephemeris; this one approximates from nakshatra/rashi/manglik available in our schema.
- */
 export function gunaMilan(
   a: { nakshatra?: string | null; rashi?: string | null; manglik: string },
   b: { nakshatra?: string | null; rashi?: string | null; manglik: string },

@@ -1,12 +1,9 @@
+import { Op } from 'sequelize';
 import type { FastifyInstance } from 'fastify';
 
-import { prisma } from '../db.js';
+import { Profile, Photo, Verification } from '../db.js';
 import { fail, ok } from '../lib/response.js';
-import {
-  gunaMilan,
-  logServedMatches,
-  readCachedOrCompute,
-} from '../services/matching.js';
+import { gunaMilan, logServedMatches, readCachedOrCompute } from '../services/matching.js';
 
 export async function matchRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.requireAuth);
@@ -14,20 +11,17 @@ export async function matchRoutes(app: FastifyInstance) {
   app.get('/ai', async (request, reply) => {
     if (!request.profileId) return ok(reply, []);
     const matches = await readCachedOrCompute(request.profileId, 25);
-    // Fire-and-forget log so we can A/B test ranking variants offline.
     void logServedMatches(request.profileId, matches, 'v1');
     return ok(reply, matches);
   });
 
   app.get<{ Params: { otherId: string } }>('/kundli/:otherId', async (request, reply) => {
     if (!request.profileId) return fail(reply, 400, 'NO_PROFILE', 'Create profile first');
-    const me = await prisma.profile.findUnique({
-      where: { id: request.profileId },
-      select: { nakshatra: true, rashi: true, manglik: true },
+    const me = await Profile.findByPk(request.profileId, {
+      attributes: ['nakshatra', 'rashi', 'manglik'],
     });
-    const other = await prisma.profile.findUnique({
-      where: { id: request.params.otherId },
-      select: { nakshatra: true, rashi: true, manglik: true },
+    const other = await Profile.findByPk(request.params.otherId, {
+      attributes: ['nakshatra', 'rashi', 'manglik'],
     });
     if (!me || !other) return fail(reply, 404, 'NOT_FOUND', 'Profile not found');
     return ok(reply, gunaMilan(me, other));
@@ -35,56 +29,55 @@ export async function matchRoutes(app: FastifyInstance) {
 
   app.get('/new-today', async (request, reply) => {
     const since = new Date(Date.now() - 24 * 3600 * 1000);
-    const items = await prisma.profile.findMany({
-      where: { createdAt: { gte: since }, deletedAt: null, userId: { not: request.auth!.sub } },
-      take: 20,
-      orderBy: { createdAt: 'desc' },
-      include: { photos: true, verification: true },
+    const items = await Profile.findAll({
+      where: { createdAt: { [Op.gte]: since }, deletedAt: null, userId: { [Op.ne]: request.auth!.sub } },
+      limit: 20,
+      order: [['createdAt', 'DESC']],
+      include: [
+        { model: Photo, as: 'photos' },
+        { model: Verification, as: 'verification' },
+      ],
     });
     return ok(reply, items.map((p) => ({ id: p.id, fullName: p.fullName, city: p.city })));
   });
 
-  // Premium-tier shortcut: top 20 matches with VERIFIED or PREMIUM trust tier.
   app.get('/premium', async (request, reply) => {
     if (!request.profileId) return ok(reply, []);
-    const me = await prisma.profile.findUnique({
-      where: { id: request.profileId },
-      select: { gender: true, religion: true },
-    });
+    const me = await Profile.findByPk(request.profileId, { attributes: ['gender', 'religion'] });
     if (!me) return ok(reply, []);
-    const oppositeGender =
-      me.gender === 'MALE' ? 'FEMALE' : me.gender === 'FEMALE' ? 'MALE' : undefined;
-    const items = await prisma.profile.findMany({
+    const oppositeGender = me.gender === 'MALE' ? 'FEMALE' : me.gender === 'FEMALE' ? 'MALE' : undefined;
+    const items = await Profile.findAll({
       where: {
         deletedAt: null,
-        userId: { not: request.auth!.sub },
+        userId: { [Op.ne]: request.auth!.sub },
         ...(oppositeGender && { gender: oppositeGender }),
-        verification: { tier: { in: ['VERIFIED', 'PREMIUM'] } },
       },
-      take: 20,
-      orderBy: [{ verification: { trustScore: 'desc' } }, { lastActiveAt: 'desc' }],
-      include: { photos: true, verification: true },
+      limit: 20,
+      order: [['lastActiveAt', 'DESC']],
+      include: [
+        { model: Photo, as: 'photos' },
+        { model: Verification, as: 'verification', where: { tier: { [Op.in]: ['VERIFIED', 'PREMIUM'] } } },
+      ],
     });
     return ok(reply, items);
   });
 
-  // Geo-nearby placeholder — profiles in the same city / state.
   app.get('/nearby', async (request, reply) => {
     if (!request.profileId) return ok(reply, []);
-    const me = await prisma.profile.findUnique({
-      where: { id: request.profileId },
-      select: { city: true, state: true },
-    });
+    const me = await Profile.findByPk(request.profileId, { attributes: ['city', 'state'] });
     if (!me) return ok(reply, []);
-    const items = await prisma.profile.findMany({
+    const items = await Profile.findAll({
       where: {
         deletedAt: null,
-        userId: { not: request.auth!.sub },
-        OR: [{ city: me.city }, { state: me.state }],
+        userId: { [Op.ne]: request.auth!.sub },
+        [Op.or]: [{ city: me.city }, { state: me.state }],
       },
-      take: 20,
-      orderBy: { lastActiveAt: 'desc' },
-      include: { photos: true, verification: true },
+      limit: 20,
+      order: [['lastActiveAt', 'DESC']],
+      include: [
+        { model: Photo, as: 'photos' },
+        { model: Verification, as: 'verification' },
+      ],
     });
     return ok(reply, items);
   });

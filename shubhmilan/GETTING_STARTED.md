@@ -12,7 +12,7 @@ Install these once:
 | --- | --- | --- |
 | **Node.js** | 20.x | [nodejs.org](https://nodejs.org) or `nvm install 20 && nvm use 20` |
 | **pnpm** | 9.x | `npm install -g pnpm` |
-| **Docker Desktop** | any recent | [docker.com](https://www.docker.com/products/docker-desktop) — used to run MySQL, Redis, and MinIO locally |
+| **MySQL** | 8.x | Install via [mysql.com](https://dev.mysql.com/downloads/) or use SQLYog with a local MySQL instance |
 | **Git** | any | [git-scm.com](https://git-scm.com) |
 | **Xcode** (for iOS) | 15+ | Mac App Store — only needed if you want to run on the iOS simulator |
 | **Android Studio** (for Android) | Flamingo+ | [developer.android.com](https://developer.android.com/studio) — only needed if you want to run on an Android emulator |
@@ -22,11 +22,11 @@ Verify:
 ```bash
 node --version     # → v20.x.x
 pnpm --version     # → 9.x.x
-docker --version
+mysql --version    # → mysql  Ver 8.x.x
 ```
 
 ### Windows tip
-If you're on Windows, run pnpm and Docker commands from **Git Bash**, **WSL2**, or **PowerShell 7**. The shell in `.claude` worktrees is already Git Bash.
+If you're on Windows, run pnpm commands from **Git Bash**, **WSL2**, or **PowerShell 7**. You can manage MySQL using **SQLYog** or any other MySQL GUI.
 
 ---
 
@@ -46,62 +46,40 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 # → paste output into PII_ENCRYPTION_KEY in .env
 ```
 
-The default `.env` is wired for local Docker services — you don't need to edit anything else to get running.
+The default `.env` is wired for a local MySQL on `localhost:3306` with user `root` and no password. Edit `DB_*` variables if your setup differs.
 
 ---
 
-## 3. Start the local data stack
+## 3. Create the database
 
-```bash
-pnpm db:up
+Using SQLYog, MySQL CLI, or any client:
+
+```sql
+CREATE DATABASE IF NOT EXISTS shubhmilan
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
 ```
 
-This runs `docker compose` and starts:
-
-| Service | Port | Purpose |
-| --- | --- | --- |
-| **MySQL 8** | 3306 | Primary DB. User/pass: `shubhmilan` / `shubhmilan`, db: `shubhmilan` |
-| **Redis 7** | 6379 | Cache, queues |
-| **MinIO** | 9000 (S3) · 9001 (console) | S3-compatible photo storage — stand-in for Cloudflare R2. Console login: `minioadmin` / `minioadmin` |
-| **minio-init** | — | One-shot job that creates the `shubhmilan-photos` bucket |
-
-Check everything is healthy:
+Or via CLI:
 
 ```bash
-docker ps
-```
-
-You should see all four containers running. If MySQL is still initialising, wait ~10 seconds before moving on.
-
-### Stop the stack
-
-```bash
-pnpm db:down              # stop containers, keep data
-# or
-docker compose -f infra/docker/docker-compose.yml down -v   # also wipe volumes
+mysql -u root -e "CREATE DATABASE IF NOT EXISTS shubhmilan CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 ```
 
 ---
 
-## 4. Apply the schema + seed demo data
+## 4. Sync schema + seed data
 
 ```bash
 # From shubhmilan/
-pnpm db:migrate            # runs Prisma migrate dev — creates tables
-pnpm db:seed               # loads 8 sample profiles + 4 plans + superadmin
-```
-
-You can explore the database visually:
-
-```bash
-pnpm db:studio             # opens Prisma Studio on http://localhost:5555
+pnpm db:sync               # runs Sequelize sync — creates/alters all tables
+pnpm db:seed               # loads plans + superadmin user
 ```
 
 ### What got seeded
 
-- **Superadmin** — `support@tenderfy.org` / `Admin#12345`
-- **8 demo users** (Priya, Rahul, Anjali, Arjun, Kavya, Vikram, Sneha, Rohan) — each with an `ACTIVE` verification tier. Password for all: `Demo#12345`
-- **4 plans** — Free, Silver ₹999/3mo, Gold ₹1999/6mo, Platinum ₹2999/12mo
+- **Superadmin** — `admin@shubhmilan.com` / `Admin@123`
+- **4 plans** — Free, Silver (₹499/3mo), Gold (₹999/6mo), Platinum (₹1999/12mo)
 
 ---
 
@@ -146,36 +124,22 @@ pnpm dev:mobile     # → http://localhost:8081      (Expo dev tools)
 4. The backend writes an OTP to the server log — look for a line like:
 
     ```
-    📱 [DEV SMS] +919900020001 | SIGNUP | code=482913
+    [DEV SMS] +919900020001 | SIGNUP | code=482913
     ```
 
 5. Enter the OTP in the app; you'll be logged in and dropped into Home.
 
-### b. Log in as a seeded user
-
-Use `priya.sharma@example.com` (or any sample) with password `Demo#12345`. Home, Matches, and Me all pull real data.
-
-### c. Try the AI match API directly
+### b. Try the AI match API directly
 
 ```bash
-# Get an access token for Priya
+# Get an access token
 curl -s http://localhost:4000/api/v1/auth/login \
   -H 'content-type: application/json' \
-  -d '{"identifier":"priya.sharma@example.com","password":"Demo#12345"}' | jq
+  -d '{"identifier":"admin@shubhmilan.com","password":"Admin@123"}' | jq
 
 # Use the accessToken from above:
 TOKEN="<paste here>"
-curl -s http://localhost:4000/api/v1/matches/ai \
-  -H "authorization: Bearer $TOKEN" | jq
-```
-
-You'll get ranked matches with reasons (religion, mother tongue, shared hobbies, etc).
-
-### d. Ashtakoot (Guna Milan) kundli match
-
-```bash
-# Priya's profile id → grab from /api/v1/me/profile, then compare with Rahul's id from /profiles
-curl -s http://localhost:4000/api/v1/matches/kundli/<rahul_profile_id> \
+curl -s http://localhost:4000/api/v1/ai/status \
   -H "authorization: Bearer $TOKEN" | jq
 ```
 
@@ -185,17 +149,23 @@ curl -s http://localhost:4000/api/v1/matches/kundli/<rahul_profile_id> \
 
 ### Reset the database
 
+Drop and recreate the database, then re-sync:
+
 ```bash
-pnpm --filter @shubhmilan/api db:reset
+mysql -u root -e "DROP DATABASE shubhmilan; CREATE DATABASE shubhmilan CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+pnpm db:sync
 pnpm db:seed
 ```
 
-### Create a new migration
+### Change a model
+
+Edit `server/api/src/db.ts`, then run:
 
 ```bash
-# Edit server/api/prisma/schema.prisma, then:
-pnpm --filter @shubhmilan/api db:migrate -- --name add_something
+pnpm db:sync
 ```
+
+Sequelize `sync({ alter: true })` will add/modify columns to match.
 
 ### Lint & typecheck everything
 
@@ -218,14 +188,12 @@ pnpm clean
 
 ---
 
-## 8. Useful URLs & dashboards
+## 8. Useful URLs
 
 | What | URL |
 | --- | --- |
 | API root | http://localhost:4000 |
 | API v1 prefix | http://localhost:4000/api/v1 |
-| Prisma Studio | http://localhost:5555 (after `pnpm db:studio`) |
-| MinIO console | http://localhost:9001 — `minioadmin` / `minioadmin` |
 | Marketing | http://localhost:3000 |
 | Admin | http://localhost:3001 |
 | Expo dev tools | http://localhost:8081 |
@@ -237,30 +205,28 @@ pnpm clean
 
 **`pnpm install` errors with peer dep warnings** — those are safe; the monorepo uses explicit workspace linking.
 
-**API can't connect to MySQL** — give the container ~10s after `pnpm db:up`. Run `docker logs shubhmilan-mysql` to confirm it reports "ready for connections".
+**API can't connect to MySQL** — check that MySQL is running and the `DB_*` variables in `.env` match your setup. Test with `mysql -u root -e "SELECT 1"`.
 
-**OTP not arriving** — in dev, OTPs print to the API server log (stdout). Look for `📱 [DEV SMS]` or `✉️  [DEV EMAIL]`. To wire real SMS, set `TWILIO_*` in `.env`.
+**OTP not arriving** — in dev, OTPs print to the API server log (stdout). Look for `[DEV SMS]` or `[DEV EMAIL]`. To wire real SMS, set `TWILIO_*` in `.env`.
 
 **Port already in use** — something else is bound. `lsof -i :4000` on macOS/Linux or `netstat -ano | findstr 4000` on Windows to find the culprit.
 
 **Expo QR code doesn't work on phone** — make sure the phone and laptop are on the same Wi-Fi. If not, use `pnpm dev:mobile -- --tunnel` to get a ngrok-style link.
 
-**Prisma migration fails** — run `docker logs shubhmilan-mysql` to check the DB is up. If the DB exists but tables are broken, nuke and reseed: `pnpm --filter @shubhmilan/api db:reset && pnpm db:seed`.
-
 **"Cannot find module '@shubhmilan/*'"** — run `pnpm install` from the monorepo root. Workspace packages are linked automatically via pnpm.
 
 ---
 
-## 10. OpenAI integration
+## 10. Gemini AI integration
 
-The AI features (match re-ranking, aboutMe rewriting, trait suggestion, coach chat) use OpenAI. The key lives **only** on the API server.
+The AI features (match re-ranking, aboutMe rewriting, trait suggestion, coach chat) use Google Gemini. The key lives **only** on the API server.
 
 Set it in `.env` when you're ready:
 
 ```
-OPENAI_API_KEY=sk-…
-OPENAI_EMBEDDING_MODEL=text-embedding-3-small
-OPENAI_CHAT_MODEL=gpt-4o-mini
+GEMINI_API_KEY=AIza...
+GEMINI_MODEL=gemini-1.5-flash
+GEMINI_EMBEDDING_MODEL=text-embedding-004
 ```
 
 When the key is missing, every AI endpoint returns `AI_DISABLED` and the mobile UI shows a "feature unavailable" state. The server falls back to the pure-heuristic matching score. Endpoints:
@@ -282,28 +248,28 @@ Chat uses Curve25519 + XSalsa20-Poly1305 (`nacl.box`) for authenticated, forward
 - Receiving: client decrypts with `nacl.box.open(…, peerPublicKey, secretKey)`.
 - Server persists opaque ciphertext + nonce only. Moderation uses metadata + user reports — never message content.
 
-Rotating devices creates a new keypair. Old threads on the new device can't be decrypted; this is intentional. A future "key backup" feature could change that.
-
 ---
 
 ## 12. Admin panel
 
 Admin UI runs at **http://localhost:3001** and is gated behind ADMIN / SUPERADMIN role.
 
-- Login: `support@tenderfy.org` / `Admin#12345` (seeded SUPERADMIN).
+- Login: `admin@shubhmilan.com` / `Admin@123` (seeded SUPERADMIN).
 - Surfaces: Dashboard, Users, Verifications queue, Reports, Plans, Transactions, Audit log, Settings.
 - Every mutating admin action is captured in the `AdminLog` table for forensic traceability.
 
 ---
 
-## 13. Next steps
+## 13. AWS S3 Storage
 
-Once you're running, the natural flow of work is:
+Photos and chat media are stored in AWS S3. Set the following in `.env`:
 
-1. Swap dev KYC stubs (`/me/verification/*`) with a real Digio / HyperVerge integration.
-2. Replace Razorpay dev fallback by setting `RAZORPAY_*` — then the real order flow exercises mobile SDK `RazorpayCheckout`.
-3. Add your OpenAI key — the server immediately starts blending semantic similarity into match ranking.
-4. Wire FCM for iOS (APNs → Expo Push) and Android and enable push categories.
-5. Add Playwright E2E covering signup → onboarding → interest → encrypted chat → payment.
+```
+AWS_S3_REGION=ap-south-1
+AWS_S3_ACCESS_KEY_ID=your-key
+AWS_S3_SECRET_ACCESS_KEY=your-secret
+AWS_S3_BUCKET=shubhmilan-photos
+AWS_S3_PUBLIC_URL=https://your-bucket.s3.ap-south-1.amazonaws.com
+```
 
-See `../BUILD_INSTRUCTIONS.md` §22 for the week-one delivery order the project was planned against.
+When credentials are provided, photo uploads and chat media will use S3. The `AWS_S3_PUBLIC_URL` is optional — if not set, public URLs default to `https://{bucket}.s3.{region}.amazonaws.com/{key}`.

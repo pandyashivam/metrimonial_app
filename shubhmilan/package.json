@@ -19,11 +19,8 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "clean": "turbo run clean && rm -rf node_modules",
-    "db:up": "docker compose -f infra/docker/docker-compose.yml up -d",
-    "db:down": "docker compose -f infra/docker/docker-compose.yml down",
-    "db:migrate": "pnpm --filter @shubhmilan/api db:migrate",
+    "db:sync": "pnpm --filter @shubhmilan/api db:sync",
     "db:seed": "pnpm --filter @shubhmilan/api db:seed",
-    "db:studio": "pnpm --filter @shubhmilan/api db:studio",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\""
   },

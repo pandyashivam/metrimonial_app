@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
-import { prisma } from '../db.js';
+import { Content } from '../db.js';
 import { fail, ok } from '../lib/response.js';
 
 const KIND = z.enum(['SUCCESS_STORY', 'BLOG_POST', 'EVENT']);
@@ -25,31 +25,17 @@ const ContentInput = z
   })
   .strict();
 
-/**
- * Public read endpoints — no auth. The marketing site + admin both consume these.
- * Published items only unless the caller explicitly asks for ?status=DRAFT (admin UI).
- */
 export async function publicContentRoutes(app: FastifyInstance) {
   app.get<{ Querystring: { kind?: string; limit?: string } }>('/', async (request, reply) => {
     const kind = KIND.safeParse(request.query.kind);
     const limit = Math.min(Math.max(parseInt(request.query.limit ?? '20', 10) || 20, 1), 50);
-    const rows = await prisma.content.findMany({
-      where: {
-        status: 'PUBLISHED',
-        ...(kind.success ? { kind: kind.data } : {}),
-      },
-      orderBy: { publishedAt: 'desc' },
-      take: limit,
-      select: {
-        id: true,
-        kind: true,
-        slug: true,
-        title: true,
-        excerpt: true,
-        coverKey: true,
-        publishedAt: true,
-        meta: true,
-      },
+    const where: Record<string, unknown> = { status: 'PUBLISHED' };
+    if (kind.success) where.kind = kind.data;
+    const rows = await Content.findAll({
+      where,
+      order: [['publishedAt', 'DESC']],
+      limit,
+      attributes: ['id', 'kind', 'slug', 'title', 'excerpt', 'coverKey', 'publishedAt', 'meta'],
     });
     return ok(reply, rows);
   });
@@ -57,7 +43,7 @@ export async function publicContentRoutes(app: FastifyInstance) {
   app.get<{ Params: { kind: string; slug: string } }>('/:kind/:slug', async (request, reply) => {
     const kind = KIND.safeParse(request.params.kind);
     if (!kind.success) return fail(reply, 400, 'VALIDATION', 'Invalid kind');
-    const row = await prisma.content.findFirst({
+    const row = await Content.findOne({
       where: { kind: kind.data, slug: request.params.slug, status: 'PUBLISHED' },
     });
     if (!row) return fail(reply, 404, 'NOT_FOUND', 'Not found');
@@ -65,11 +51,6 @@ export async function publicContentRoutes(app: FastifyInstance) {
   });
 }
 
-/**
- * Admin CRUD — mounted with RBAC at /admin/content/*. All mutations write an AdminLog
- * entry via the shared audit helper exposed on the admin router (we pull it via a
- * simple closure when registering).
- */
 export async function adminContentRoutes(
   app: FastifyInstance,
   audit: (
@@ -86,13 +67,13 @@ export async function adminContentRoutes(
       const kind = KIND.safeParse(request.query.kind);
       const status = STATUS.safeParse(request.query.status);
       const limit = Math.min(Math.max(parseInt(request.query.limit ?? '50', 10) || 50, 1), 200);
-      const rows = await prisma.content.findMany({
-        where: {
-          ...(kind.success ? { kind: kind.data } : {}),
-          ...(status.success ? { status: status.data } : {}),
-        },
-        orderBy: { updatedAt: 'desc' },
-        take: limit,
+      const where: Record<string, unknown> = {};
+      if (kind.success) where.kind = kind.data;
+      if (status.success) where.status = status.data;
+      const rows = await Content.findAll({
+        where,
+        order: [['updatedAt', 'DESC']],
+        limit,
       });
       return ok(reply, rows);
     },
@@ -102,23 +83,19 @@ export async function adminContentRoutes(
     const parsed = ContentInput.safeParse(request.body);
     if (!parsed.success) return fail(reply, 400, 'VALIDATION', 'Invalid payload', parsed.error.flatten());
     const data = parsed.data;
-    const existing = await prisma.content.findUnique({
-      where: { kind_slug: { kind: data.kind, slug: data.slug } },
-    });
+    const existing = await Content.findOne({ where: { kind: data.kind, slug: data.slug } });
     if (existing) return fail(reply, 409, 'CONFLICT', 'Slug already exists for this kind');
 
-    const row = await prisma.content.create({
-      data: {
-        ...data,
-        authorId: request.auth!.sub,
-        publishedAt:
-          data.status === 'PUBLISHED' && !data.publishedAt
-            ? new Date()
-            : data.publishedAt
-              ? new Date(data.publishedAt)
-              : null,
-        meta: (data.meta ?? null) as unknown as import('@prisma/client').Prisma.InputJsonValue,
-      },
+    const row = await Content.create({
+      ...data,
+      authorId: request.auth!.sub,
+      publishedAt:
+        data.status === 'PUBLISHED' && !data.publishedAt
+          ? new Date()
+          : data.publishedAt
+            ? new Date(data.publishedAt)
+            : null,
+      meta: data.meta ?? null,
     });
     await audit(request.auth!.sub, 'CONTENT_CREATE', 'content', row.id, { kind: row.kind, slug: row.slug });
     return ok(reply, row, 201);
@@ -127,7 +104,7 @@ export async function adminContentRoutes(
   app.patch<{ Params: { id: string } }>('/:id', async (request, reply) => {
     const parsed = ContentInput.partial().safeParse(request.body);
     if (!parsed.success) return fail(reply, 400, 'VALIDATION', 'Invalid payload');
-    const existing = await prisma.content.findUnique({ where: { id: request.params.id } });
+    const existing = await Content.findByPk(request.params.id);
     if (!existing) return fail(reply, 404, 'NOT_FOUND', 'Not found');
 
     const publishedAt =
@@ -137,23 +114,13 @@ export async function adminContentRoutes(
           ? new Date(parsed.data.publishedAt)
           : existing.publishedAt;
 
-    const row = await prisma.content.update({
-      where: { id: existing.id },
-      data: {
-        ...parsed.data,
-        publishedAt,
-        meta:
-          parsed.data.meta !== undefined
-            ? (parsed.data.meta as unknown as import('@prisma/client').Prisma.InputJsonValue)
-            : undefined,
-      },
-    });
-    await audit(request.auth!.sub, 'CONTENT_UPDATE', 'content', row.id, parsed.data);
-    return ok(reply, row);
+    await existing.update({ ...parsed.data, publishedAt, meta: parsed.data.meta !== undefined ? parsed.data.meta : undefined });
+    await audit(request.auth!.sub, 'CONTENT_UPDATE', 'content', existing.id, parsed.data);
+    return ok(reply, existing);
   });
 
   app.delete<{ Params: { id: string } }>('/:id', async (request, reply) => {
-    await prisma.content.delete({ where: { id: request.params.id } }).catch(() => null);
+    await Content.destroy({ where: { id: request.params.id } }).catch(() => null);
     await audit(request.auth!.sub, 'CONTENT_DELETE', 'content', request.params.id);
     return ok(reply, { ok: true as const });
   });

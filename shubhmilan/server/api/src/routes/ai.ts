@@ -1,96 +1,85 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
-import { prisma } from '../db.js';
+import { Profile } from '../db.js';
 import { fail, ok } from '../lib/response.js';
 import {
   improveAboutMe,
-  openaiEnabled,
+  geminiEnabled,
   suggestTraits,
   upsertProfileEmbedding,
-} from '../services/openai.js';
+} from '../services/gemini.js';
 
 const ImproveInput = z.object({ aboutMe: z.string().min(20).max(2000) }).strict();
 
-/**
- * AI endpoints. All calls go server-side — the OpenAI key is never exposed to clients.
- * Every endpoint returns a deterministic error when OPENAI_API_KEY isn't set so UIs can
- * show a "feature unavailable" state instead of crashing.
- */
 export async function aiRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.requireAuth);
 
-  app.get('/status', async (_req, reply) => ok(reply, { enabled: openaiEnabled() }));
+  app.get('/status', async (_req, reply) => ok(reply, { enabled: geminiEnabled() }));
 
-  // Rewrite aboutMe.
   app.post('/improve-about', async (request, reply) => {
-    if (!openaiEnabled()) return fail(reply, 503, 'AI_DISABLED', 'OpenAI not configured');
+    if (!geminiEnabled()) return fail(reply, 503, 'AI_DISABLED', 'Gemini not configured');
     const parsed = ImproveInput.safeParse(request.body);
     if (!parsed.success) return fail(reply, 400, 'VALIDATION', 'Invalid payload');
     const improved = await improveAboutMe(parsed.data.aboutMe);
-    if (!improved) return fail(reply, 502, 'UPSTREAM', 'OpenAI returned no content');
+    if (!improved) return fail(reply, 502, 'UPSTREAM', 'Gemini returned no content');
     return ok(reply, { improved });
   });
 
-  // Suggest traits + hobbies from a bio.
   app.post('/suggest-traits', async (request, reply) => {
-    if (!openaiEnabled()) return fail(reply, 503, 'AI_DISABLED', 'OpenAI not configured');
+    if (!geminiEnabled()) return fail(reply, 503, 'AI_DISABLED', 'Gemini not configured');
     const parsed = ImproveInput.safeParse(request.body);
     if (!parsed.success) return fail(reply, 400, 'VALIDATION', 'Invalid payload');
     const out = await suggestTraits(parsed.data.aboutMe);
-    if (!out) return fail(reply, 502, 'UPSTREAM', 'OpenAI returned no content');
+    if (!out) return fail(reply, 502, 'UPSTREAM', 'Gemini returned no content');
     return ok(reply, out);
   });
 
-  // Trigger an embedding refresh (also runs nightly).
   app.post('/reindex-self', async (request, reply) => {
-    if (!openaiEnabled()) return fail(reply, 503, 'AI_DISABLED', 'OpenAI not configured');
+    if (!geminiEnabled()) return fail(reply, 503, 'AI_DISABLED', 'Gemini not configured');
     if (!request.profileId) return fail(reply, 400, 'NO_PROFILE', 'Create profile first');
     const vec = await upsertProfileEmbedding(request.profileId);
     return ok(reply, { indexed: !!vec, dimension: vec?.length ?? 0 });
   });
 
-  // Conversational profile coach (short bounded usage).
   const CoachInput = z.object({ question: z.string().min(1).max(500) }).strict();
   app.post('/coach', async (request, reply) => {
-    if (!openaiEnabled()) return fail(reply, 503, 'AI_DISABLED', 'OpenAI not configured');
+    if (!geminiEnabled()) return fail(reply, 503, 'AI_DISABLED', 'Gemini not configured');
     const parsed = CoachInput.safeParse(request.body);
     if (!parsed.success) return fail(reply, 400, 'VALIDATION', 'Invalid payload');
 
-    // Lazily import to avoid bundling OpenAI into routes that don't use it.
-    const { default: OpenAI } = await import('openai');
+    const { GoogleGenerativeAI } = await import('@google/generative-ai');
     const { env } = await import('../env.js');
-    const client = new OpenAI({ apiKey: env.OPENAI_API_KEY });
+    const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: env.GEMINI_MODEL });
 
     const profile = request.profileId
-      ? await prisma.profile.findUnique({
-          where: { id: request.profileId },
-          select: { fullName: true, aboutMe: true, city: true, religion: true },
+      ? await Profile.findByPk(request.profileId, {
+          attributes: ['fullName', 'aboutMe', 'city', 'religion'],
         })
       : null;
 
-    const res = await client.chat.completions.create({
-      model: env.OPENAI_CHAT_MODEL,
-      temperature: 0.5,
-      max_tokens: 400,
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are ShubhMilan coach — help the user craft a respectful, authentic matrimonial profile. ' +
-            'Be concise. Avoid generic platitudes. Suggest concrete wording.',
-        },
-        ...(profile
-          ? [
-              {
-                role: 'user' as const,
-                content: `Context about me: ${JSON.stringify(profile)}`,
-              },
-            ]
-          : []),
-        { role: 'user', content: parsed.data.question },
-      ],
+    const systemPrompt =
+      'You are ShubhMilan coach — help the user craft a respectful, authentic matrimonial profile. ' +
+      'Be concise. Avoid generic platitudes. Suggest concrete wording.';
+
+    const contextParts: string[] = [];
+    if (profile) {
+      contextParts.push(`Context about me: ${JSON.stringify({
+        fullName: profile.fullName,
+        aboutMe: profile.aboutMe,
+        city: profile.city,
+        religion: profile.religion,
+      })}`);
+    }
+    contextParts.push(parsed.data.question);
+
+    const result = await model.generateContent({
+      contents: [{ role: 'user', parts: contextParts.map((text) => ({ text })) }],
+      systemInstruction: { role: 'user', parts: [{ text: systemPrompt }] },
+      generationConfig: { temperature: 0.5, maxOutputTokens: 400 },
     });
-    return ok(reply, { reply: res.choices[0]?.message?.content ?? '' });
+    const text = result.response.text();
+    return ok(reply, { reply: text });
   });
 }

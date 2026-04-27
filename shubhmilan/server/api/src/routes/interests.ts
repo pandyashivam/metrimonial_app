@@ -1,7 +1,7 @@
 import { RespondInterestInput, SendInterestInput } from '@shubhmilan/validation';
 import type { FastifyInstance } from 'fastify';
 
-import { prisma } from '../db.js';
+import { Interest, Profile, Conversation } from '../db.js';
 import { fail, ok } from '../lib/response.js';
 import { resolveEntitlements } from '../services/plans.js';
 import { pushInterestAccepted, pushNewInterest } from '../services/push.js';
@@ -17,46 +17,28 @@ export async function interestRoutes(app: FastifyInstance) {
       return fail(reply, 400, 'SELF_INTEREST', 'Cannot send interest to yourself');
     }
 
-    // Free tier: cap at 5 interests / calendar month. Silver+ is unlimited.
     const ent = await resolveEntitlements(request.auth!.sub, request.profileId);
     if (!ent.canSendMoreInterests) {
-      return fail(
-        reply,
-        402,
-        'PLAN_LIMIT',
+      return fail(reply, 402, 'PLAN_LIMIT',
         'Monthly interest limit reached — upgrade to Silver or higher',
         { tier: ent.tier, remaining: 0 },
       );
     }
 
-    const existing = await prisma.interest.findUnique({
-      where: {
-        fromProfileId_toProfileId: {
-          fromProfileId: request.profileId,
-          toProfileId: parsed.data.toProfileId,
-        },
-      },
+    const existing = await Interest.findOne({
+      where: { fromProfileId: request.profileId, toProfileId: parsed.data.toProfileId },
     });
     if (existing) return ok(reply, existing);
 
-    const interest = await prisma.interest.create({
-      data: {
-        fromProfileId: request.profileId,
-        toProfileId: parsed.data.toProfileId,
-        note: parsed.data.note,
-      },
+    const interest = await Interest.create({
+      fromProfileId: request.profileId,
+      toProfileId: parsed.data.toProfileId,
+      note: parsed.data.note,
     });
 
-    // Notify recipient — non-blocking.
     const [fromProfile, toProfile] = await Promise.all([
-      prisma.profile.findUnique({
-        where: { id: request.profileId },
-        select: { fullName: true },
-      }),
-      prisma.profile.findUnique({
-        where: { id: parsed.data.toProfileId },
-        select: { userId: true },
-      }),
+      Profile.findByPk(request.profileId, { attributes: ['fullName'] }),
+      Profile.findByPk(parsed.data.toProfileId, { attributes: ['userId'] }),
     ]);
     if (toProfile?.userId && fromProfile?.fullName) {
       void pushNewInterest(toProfile.userId, fromProfile.fullName);
@@ -67,7 +49,7 @@ export async function interestRoutes(app: FastifyInstance) {
   app.patch<{ Params: { id: string } }>('/:id', async (request, reply) => {
     const parsed = RespondInterestInput.safeParse(request.body);
     if (!parsed.success) return fail(reply, 400, 'VALIDATION', 'Invalid payload');
-    const interest = await prisma.interest.findUnique({ where: { id: request.params.id } });
+    const interest = await Interest.findByPk(request.params.id);
     if (!interest) return fail(reply, 404, 'NOT_FOUND', 'Interest not found');
 
     const isRecipient = interest.toProfileId === request.profileId;
@@ -80,72 +62,53 @@ export async function interestRoutes(app: FastifyInstance) {
       return fail(reply, 403, 'FORBIDDEN', 'Only recipient can respond');
     }
 
-    const statusMap = {
-      ACCEPT: 'ACCEPTED',
-      DECLINE: 'DECLINED',
-      WITHDRAW: 'WITHDRAWN',
-    } as const;
+    const statusMap = { ACCEPT: 'ACCEPTED', DECLINE: 'DECLINED', WITHDRAW: 'WITHDRAWN' } as const;
+    await interest.update({ status: statusMap[parsed.data.action], respondedAt: new Date() });
 
-    const updated = await prisma.interest.update({
-      where: { id: interest.id },
-      data: { status: statusMap[parsed.data.action], respondedAt: new Date() },
-    });
-
-    if (updated.status === 'ACCEPTED') {
-      // Canonicalize the (A,B) tuple so a simultaneous double-accept on either side
-      // collides on the same unique key and the upsert is idempotent. Race-safe: if
-      // another request just created the row, the upsert's `update: {}` is a no-op
-      // and we still end up with exactly one conversation.
+    if (interest.status === 'ACCEPTED') {
       const [a, b] =
-        updated.fromProfileId < updated.toProfileId
-          ? [updated.fromProfileId, updated.toProfileId]
-          : [updated.toProfileId, updated.fromProfileId];
+        interest.fromProfileId < interest.toProfileId
+          ? [interest.fromProfileId, interest.toProfileId]
+          : [interest.toProfileId, interest.fromProfileId];
       try {
-        await prisma.conversation.upsert({
-          where: { profileAId_profileBId: { profileAId: a, profileBId: b } },
-          update: {},
-          create: { profileAId: a, profileBId: b },
+        await Conversation.findOrCreate({
+          where: { profileAId: a, profileBId: b },
+          defaults: { profileAId: a, profileBId: b },
         });
       } catch (err) {
-        // P2002 (unique constraint) means another concurrent accept beat us — fine.
-        if ((err as { code?: string }).code !== 'P2002') {
+        const name = (err as { name?: string }).name;
+        if (name !== 'SequelizeUniqueConstraintError') {
           request.log.error({ err }, 'failed to open conversation');
         }
       }
 
       const [from, recipientProfile] = await Promise.all([
-        prisma.profile.findUnique({
-          where: { id: updated.fromProfileId },
-          select: { userId: true },
-        }),
-        prisma.profile.findUnique({
-          where: { id: updated.toProfileId },
-          select: { fullName: true },
-        }),
+        Profile.findByPk(interest.fromProfileId, { attributes: ['userId'] }),
+        Profile.findByPk(interest.toProfileId, { attributes: ['fullName'] }),
       ]);
       if (from?.userId && recipientProfile?.fullName) {
         void pushInterestAccepted(from.userId, recipientProfile.fullName);
       }
     }
-    return ok(reply, updated);
+    return ok(reply, interest);
   });
 
   app.get('/sent', async (request, reply) => {
     if (!request.profileId) return ok(reply, []);
-    const list = await prisma.interest.findMany({
+    const list = await Interest.findAll({
       where: { fromProfileId: request.profileId },
-      orderBy: { sentAt: 'desc' },
-      take: 50,
+      order: [['sentAt', 'DESC']],
+      limit: 50,
     });
     return ok(reply, list);
   });
 
   app.get('/received', async (request, reply) => {
     if (!request.profileId) return ok(reply, []);
-    const list = await prisma.interest.findMany({
+    const list = await Interest.findAll({
       where: { toProfileId: request.profileId },
-      orderBy: { sentAt: 'desc' },
-      take: 50,
+      order: [['sentAt', 'DESC']],
+      limit: 50,
     });
     return ok(reply, list);
   });

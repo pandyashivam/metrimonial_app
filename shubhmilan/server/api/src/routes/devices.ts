@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
-import { prisma } from '../db.js';
+import { Device } from '../db.js';
 import { fail, ok } from '../lib/response.js';
 
 const RegisterDeviceInput = z
@@ -11,28 +11,25 @@ const RegisterDeviceInput = z
   })
   .strict();
 
-/**
- * Push-notification token registry. Clients call on login + on FCM refresh.
- * Tokens are unique globally; we replace-or-update so the same handset can't create dupes.
- */
 export async function deviceRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.requireAuth);
 
   app.post('/me/devices', async (request, reply) => {
     const parsed = RegisterDeviceInput.safeParse(request.body);
     if (!parsed.success) return fail(reply, 400, 'VALIDATION', 'Invalid payload');
-    const device = await prisma.device.upsert({
-      where: { fcmToken: parsed.data.fcmToken },
-      update: {
+    const existing = await Device.findOne({ where: { fcmToken: parsed.data.fcmToken } });
+    if (existing) {
+      await existing.update({
         userId: request.auth!.sub,
         platform: parsed.data.platform,
         lastSeenAt: new Date(),
-      },
-      create: {
-        userId: request.auth!.sub,
-        fcmToken: parsed.data.fcmToken,
-        platform: parsed.data.platform,
-      },
+      });
+      return ok(reply, { id: existing.id }, 201);
+    }
+    const device = await Device.create({
+      userId: request.auth!.sub,
+      fcmToken: parsed.data.fcmToken,
+      platform: parsed.data.platform,
     });
     return ok(reply, { id: device.id }, 201);
   });
@@ -40,7 +37,7 @@ export async function deviceRoutes(app: FastifyInstance) {
   app.delete<{ Body: { fcmToken: string } }>('/me/devices', async (request, reply) => {
     const token = request.body?.fcmToken;
     if (!token) return fail(reply, 400, 'VALIDATION', 'fcmToken required');
-    await prisma.device.deleteMany({
+    await Device.destroy({
       where: { userId: request.auth!.sub, fcmToken: token },
     });
     return ok(reply, { ok: true as const });

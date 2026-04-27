@@ -1,4 +1,4 @@
-import { prisma } from '../db.js';
+import { Verification } from '../db.js';
 
 export type VerificationStep =
   | 'email'
@@ -41,10 +41,6 @@ export function tierFromScore(score: number): 'BASIC' | 'VERIFIED' | 'PREMIUM' {
   return 'BASIC';
 }
 
-/**
- * Marks a verification step complete and recomputes trust score + tier.
- * Idempotent: re-calling for the same step is a no-op on score.
- */
 export async function markStepSimple(profileId: string, step: VerificationStep): Promise<void> {
   const field =
     step === 'email'
@@ -59,24 +55,23 @@ export async function markStepSimple(profileId: string, step: VerificationStep):
               ? 'videoKycVerified'
               : 'backgroundVerified';
 
-  const row = await prisma.verification.upsert({
-    where: { profileId },
-    update: { [field]: true },
-    create: {
+  let row = await Verification.findOne({ where: { profileId } });
+  if (row) {
+    await row.update({ [field]: true });
+  } else {
+    row = await Verification.create({
       profileId,
       [field]: true,
-      emailVerified: step === 'email',
-      phoneVerified: step === 'phone',
-      aadhaarVerified: step === 'aadhaar',
-      selfieVerified: step === 'selfie',
-      videoKycVerified: step === 'video',
-      backgroundVerified: step === 'background',
-    },
-  });
+    });
+  }
 
-  const trustScore = computeTrustScore(row);
-  await prisma.verification.update({
-    where: { profileId },
-    data: { trustScore, tier: tierFromScore(trustScore) },
+  const trustScore = computeTrustScore({
+    emailVerified: row.emailVerified ?? false,
+    phoneVerified: row.phoneVerified ?? false,
+    aadhaarVerified: row.aadhaarVerified ?? false,
+    selfieVerified: row.selfieVerified ?? false,
+    videoKycVerified: row.videoKycVerified ?? false,
+    backgroundVerified: row.backgroundVerified ?? false,
   });
+  await row.update({ trustScore, tier: tierFromScore(trustScore) });
 }

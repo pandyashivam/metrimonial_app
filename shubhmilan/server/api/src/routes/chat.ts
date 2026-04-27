@@ -1,62 +1,45 @@
 import { ListMessagesQuery, SendMessageInput } from '@shubhmilan/validation';
+import { Op } from 'sequelize';
 import type { FastifyInstance } from 'fastify';
 
-import { prisma } from '../db.js';
+import { Interest, Conversation, Message, Profile } from '../db.js';
 import { fail, ok } from '../lib/response.js';
 import { resolveEntitlements } from '../services/plans.js';
 import { pushNewMessage } from '../services/push.js';
 
-/**
- * Checks whether `meProfileId` is allowed to chat with `peerProfileId` right now.
- * Rule (BUILD_INSTRUCTIONS §6 "Chat"): chat is unlocked only when
- *   (a) there is an ACCEPTED interest in either direction between the two profiles, OR
- *   (b) the sender has a Gold+ subscription (chat-before-match entitlement).
- */
-async function canChat(
-  meUserId: string,
-  meProfileId: string,
-  peerProfileId: string,
-): Promise<boolean> {
+async function canChat(meUserId: string, meProfileId: string, peerProfileId: string): Promise<boolean> {
   const ent = await resolveEntitlements(meUserId, meProfileId);
   if (ent.canChatBeforeMatch) return true;
-  const accepted = await prisma.interest.findFirst({
+  const accepted = await Interest.findOne({
     where: {
       status: 'ACCEPTED',
-      OR: [
+      [Op.or]: [
         { fromProfileId: meProfileId, toProfileId: peerProfileId },
         { fromProfileId: peerProfileId, toProfileId: meProfileId },
       ],
     },
-    select: { id: true },
+    attributes: ['id'],
   });
   return !!accepted;
 }
 
-/**
- * Chat routes. Messages are stored as opaque ciphertext — the server never sees plaintext.
- * Access is gated by: mutual-interest acceptance OR an active premium subscription.
- */
 export async function chatRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.requireAuth);
 
   app.get('/conversations', async (request, reply) => {
     if (!request.profileId) return ok(reply, []);
-    const convos = await prisma.conversation.findMany({
+    const convos = await Conversation.findAll({
       where: {
-        OR: [{ profileAId: request.profileId }, { profileBId: request.profileId }],
+        [Op.or]: [{ profileAId: request.profileId }, { profileBId: request.profileId }],
       },
-      orderBy: { lastMessageAt: 'desc' },
-      include: {
-        profileA: {
-          select: { id: true, fullName: true, publicKey: true, photos: true },
-        },
-        profileB: {
-          select: { id: true, fullName: true, publicKey: true, photos: true },
-        },
-      },
+      order: [['lastMessageAt', 'DESC']],
+      include: [
+        { model: Profile, as: 'profileA', attributes: ['id', 'fullName', 'publicKey'] },
+        { model: Profile, as: 'profileB', attributes: ['id', 'fullName', 'publicKey'] },
+      ],
     });
     const mapped = convos.map((c) => {
-      const peer = c.profileAId === request.profileId ? c.profileB : c.profileA;
+      const peer = c.profileAId === request.profileId ? c.profileB! : c.profileA!;
       return {
         id: c.id,
         peerId: peer.id,
@@ -76,22 +59,21 @@ export async function chatRoutes(app: FastifyInstance) {
       const parsed = ListMessagesQuery.safeParse(request.query);
       if (!parsed.success) return fail(reply, 400, 'VALIDATION', 'Invalid query');
 
-      const convo = await prisma.conversation.findUnique({ where: { id: request.params.id } });
+      const convo = await Conversation.findByPk(request.params.id);
       if (!convo) return fail(reply, 404, 'NOT_FOUND', 'Conversation not found');
-      if (
-        convo.profileAId !== request.profileId &&
-        convo.profileBId !== request.profileId
-      ) {
+      if (convo.profileAId !== request.profileId && convo.profileBId !== request.profileId) {
         return fail(reply, 403, 'FORBIDDEN', 'Not a participant');
       }
 
       const { limit, cursor } = parsed.data;
       const take = limit + 1;
-      const rows = await prisma.message.findMany({
-        where: { conversationId: convo.id },
-        orderBy: { createdAt: 'desc' },
-        take,
-        ...(cursor && { cursor: { id: cursor }, skip: 1 }),
+      const where: Record<string, unknown> = { conversationId: convo.id };
+      if (cursor) where.id = { [Op.lt]: cursor };
+
+      const rows = await Message.findAll({
+        where,
+        order: [['createdAt', 'DESC']],
+        limit: take,
       });
       const hasMore = rows.length > limit;
       const items = rows.slice(0, limit).map((m) => ({
@@ -116,46 +98,31 @@ export async function chatRoutes(app: FastifyInstance) {
 
   app.post<{ Params: { id: string } }>('/conversations/:id/messages', async (request, reply) => {
     const parsed = SendMessageInput.safeParse(request.body);
-    if (!parsed.success) {
-      return fail(reply, 400, 'VALIDATION', 'Invalid payload', parsed.error.flatten());
-    }
+    if (!parsed.success) return fail(reply, 400, 'VALIDATION', 'Invalid payload', parsed.error.flatten());
     if (!request.profileId) return fail(reply, 400, 'NO_PROFILE', 'Create profile first');
 
-    const convo = await prisma.conversation.findUnique({ where: { id: request.params.id } });
+    const convo = await Conversation.findByPk(request.params.id);
     if (!convo) return fail(reply, 404, 'NOT_FOUND', 'Conversation not found');
-    if (
-      convo.profileAId !== request.profileId &&
-      convo.profileBId !== request.profileId
-    ) {
+    if (convo.profileAId !== request.profileId && convo.profileBId !== request.profileId) {
       return fail(reply, 403, 'FORBIDDEN', 'Not a participant');
     }
 
-    const peerProfileId =
-      convo.profileAId === request.profileId ? convo.profileBId : convo.profileAId;
+    const peerProfileId = convo.profileAId === request.profileId ? convo.profileBId : convo.profileAId;
     if (!(await canChat(request.auth!.sub, request.profileId, peerProfileId))) {
-      return fail(
-        reply,
-        402,
-        'CHAT_LOCKED',
-        'Chat is unlocked after mutual interest acceptance, or with a Gold subscription',
-      );
+      return fail(reply, 402, 'CHAT_LOCKED',
+        'Chat is unlocked after mutual interest acceptance, or with a Gold subscription');
     }
 
-    const message = await prisma.message.create({
-      data: {
-        conversationId: convo.id,
-        senderProfileId: request.profileId,
-        body: parsed.data.ciphertext,
-        nonce: parsed.data.nonce,
-        encrypted: true,
-        mediaUrl: parsed.data.mediaUrl ?? null,
-        mediaMime: parsed.data.mediaMime ?? null,
-      },
+    const message = await Message.create({
+      conversationId: convo.id,
+      senderProfileId: request.profileId,
+      body: parsed.data.ciphertext,
+      nonce: parsed.data.nonce,
+      encrypted: true,
+      mediaUrl: parsed.data.mediaUrl ?? null,
+      mediaMime: parsed.data.mediaMime ?? null,
     });
-    await prisma.conversation.update({
-      where: { id: convo.id },
-      data: { lastMessageAt: message.createdAt },
-    });
+    await convo.update({ lastMessageAt: message.createdAt });
 
     const payload = {
       id: message.id,
@@ -172,16 +139,9 @@ export async function chatRoutes(app: FastifyInstance) {
     const io = (app as unknown as { io?: { to: (room: string) => { emit: (ev: string, p: unknown) => void } } }).io;
     io?.to(`conv:${convo.id}`).emit('message:new', payload);
 
-    // Push the peer — content stays encrypted; we only surface sender name.
     const [sender, peer] = await Promise.all([
-      prisma.profile.findUnique({
-        where: { id: request.profileId },
-        select: { fullName: true },
-      }),
-      prisma.profile.findUnique({
-        where: { id: peerProfileId },
-        select: { userId: true },
-      }),
+      Profile.findByPk(request.profileId, { attributes: ['fullName'] }),
+      Profile.findByPk(peerProfileId, { attributes: ['userId'] }),
     ]);
     if (peer?.userId && sender?.fullName) {
       void pushNewMessage(peer.userId, sender.fullName, convo.id);
@@ -189,25 +149,23 @@ export async function chatRoutes(app: FastifyInstance) {
     return ok(reply, payload, 201);
   });
 
-  // Mark messages as read (client calls on viewport entry).
   app.post<{ Params: { id: string } }>('/conversations/:id/read', async (request, reply) => {
     if (!request.profileId) return fail(reply, 400, 'NO_PROFILE', 'Create profile first');
-    const convo = await prisma.conversation.findUnique({ where: { id: request.params.id } });
+    const convo = await Conversation.findByPk(request.params.id);
     if (!convo) return fail(reply, 404, 'NOT_FOUND', 'Conversation not found');
-    if (
-      convo.profileAId !== request.profileId &&
-      convo.profileBId !== request.profileId
-    ) {
+    if (convo.profileAId !== request.profileId && convo.profileBId !== request.profileId) {
       return fail(reply, 403, 'FORBIDDEN', 'Not a participant');
     }
-    await prisma.message.updateMany({
-      where: {
-        conversationId: convo.id,
-        senderProfileId: { not: request.profileId },
-        readAt: null,
+    await Message.update(
+      { readAt: new Date() },
+      {
+        where: {
+          conversationId: convo.id,
+          senderProfileId: { [Op.ne]: request.profileId },
+          readAt: null,
+        },
       },
-      data: { readAt: new Date() },
-    });
+    );
     const io = (app as unknown as { io?: { to: (room: string) => { emit: (ev: string, p: unknown) => void } } }).io;
     io?.to(`conv:${convo.id}`).emit('message:read', {
       conversationId: convo.id,

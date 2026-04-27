@@ -1,7 +1,7 @@
 import fp from 'fastify-plugin';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 
-import { prisma } from '../db.js';
+import { Profile } from '../db.js';
 import { fail } from '../lib/response.js';
 import { verifyAccessToken, type AccessTokenClaims } from '../lib/tokens.js';
 
@@ -26,9 +26,9 @@ export const authPlugin = fp(async (app: FastifyInstance) => {
       try {
         const claims = verifyAccessToken(header.slice(7));
         request.auth = claims;
-        const profile = await prisma.profile.findUnique({
+        const profile = await Profile.findOne({
           where: { userId: claims.sub },
-          select: { id: true },
+          attributes: ['id'],
         });
         request.profileId = profile?.id;
       } catch {
