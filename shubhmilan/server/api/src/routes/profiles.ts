@@ -2,7 +2,7 @@ import { DiscoveryFilter } from '@shubhmilan/validation';
 import { Op } from 'sequelize';
 import type { FastifyInstance } from 'fastify';
 
-import { Profile, Photo, Verification, ProfileView } from '../db.js';
+import { Profile, Photo, Verification, ProfileView, Family, Horoscope } from '../db.js';
 import { fail, ok } from '../lib/response.js';
 import { resolveEntitlements } from '../services/plans.js';
 
@@ -73,7 +73,11 @@ export async function profileRoutes(app: FastifyInstance) {
     if (q.state) where.state = q.state;
 
     const take = q.limit + 1;
-    const findOpts: Record<string, unknown> = {
+    if (q.cursor) {
+      where.id = { [Op.gt]: q.cursor };
+    }
+
+    const profiles = await Profile.findAll({
       where,
       limit: take,
       order: [['lastActiveAt', 'DESC'], ['id', 'ASC']],
@@ -81,12 +85,7 @@ export async function profileRoutes(app: FastifyInstance) {
         { model: Photo, as: 'photos', where: { moderationStatus: 'APPROVED' }, required: false },
         { model: Verification, as: 'verification' },
       ],
-    };
-    if (q.cursor) {
-      where.id = { [Op.gt]: q.cursor };
-    }
-
-    const profiles = await Profile.findAll(findOpts as never);
+    });
 
     let items = profiles.map(toSummary);
     if (q.ageMin || q.ageMax) {
@@ -107,8 +106,8 @@ export async function profileRoutes(app: FastifyInstance) {
       include: [
         { model: Photo, as: 'photos', where: { moderationStatus: 'APPROVED' }, required: false },
         { model: Verification, as: 'verification' },
-        { model: (await import('../db.js')).Family, as: 'family' },
-        { model: (await import('../db.js')).Horoscope, as: 'horoscope' },
+        { model: Family, as: 'family' },
+        { model: Horoscope, as: 'horoscope' },
       ],
     });
     if (!profile) return fail(reply, 404, 'NOT_FOUND', 'Profile not found');
