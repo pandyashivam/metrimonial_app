@@ -64,18 +64,20 @@ export default function RootLayout() {
   }, [lockNow]);
 
   useEffect(() => {
-    if (!hydrated) return;
+    // Wait for the Stack to mount before navigating; otherwise expo-router
+    // throws "Attempted to navigate before mounting the Root Layout".
+    if (!booted || !hydrated) return;
     const inAuthGroup = segments[0] === '(auth)';
     if (!user && !inAuthGroup) router.replace('/(auth)/welcome');
     else if (user && inAuthGroup) router.replace('/(tabs)/home');
-  }, [hydrated, user, segments, router]);
+  }, [booted, hydrated, user, segments, router]);
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (!booted || !hydrated) return;
     let detach: (() => void) | null = null;
     attachDeepLinks(router, () => !!useAuth.getState().user).then((d) => (detach = d));
     return () => detach?.();
-  }, [hydrated, router]);
+  }, [booted, hydrated, router]);
 
   if (!booted) return null;
 

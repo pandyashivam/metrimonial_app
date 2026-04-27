@@ -16,16 +16,18 @@ config.resolver.nodeModulesPaths = [
   path.resolve(monorepoRoot, 'node_modules'),
 ];
 
+// 2a. Force a single copy of React/React-DOM/React-Native to avoid
+//     "Invalid hook call" errors when workspace packages bring their own.
+//     Use resolver.resolveRequest below to alias these — extraNodeModules
+//     alone won't override modules that already resolve from pnpm paths.
+
 // 3. Fix .js extension imports in .ts files (ESM convention used by shared packages).
-//    When Metro encounters `from './foo.js'` inside a .ts file, it can't find `foo.js`
-//    because the actual file is `foo.ts`. We strip the .js and let Metro re-resolve.
 const originalResolveRequest = config.resolver.resolveRequest;
 config.resolver.resolveRequest = (context, moduleName, platform) => {
-  // Only transform relative imports ending in .js
+  // Only transform relative imports ending in .js (.ts -> .js ESM workaround)
   if (moduleName.startsWith('.') && moduleName.endsWith('.js')) {
     const stripped = moduleName.slice(0, -3);
     try {
-      // Try resolving without .js first (will find .ts, .tsx, etc.)
       if (originalResolveRequest) {
         return originalResolveRequest(context, stripped, platform);
       }
