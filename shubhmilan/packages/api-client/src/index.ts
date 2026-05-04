@@ -460,7 +460,11 @@ export function createApiClient(opts: ApiClientOptions) {
           method: 'PATCH',
           body: JSON.stringify({ status }),
         }),
-      reports: () => request<unknown>('/admin/reports'),
+      reports: (q: Record<string, string | number | undefined> = {}) => {
+        const params = new URLSearchParams();
+        for (const [k, v] of Object.entries(q)) if (v != null) params.set(k, String(v));
+        return request<unknown>(`/admin/reports?${params.toString()}`);
+      },
       resolveReport: (id: string, status: 'RESOLVED' | 'DISMISSED') =>
         request<unknown>(`/admin/reports/${id}`, {
           method: 'PATCH',
@@ -478,11 +482,10 @@ export function createApiClient(opts: ApiClientOptions) {
         for (const [k, v] of Object.entries(q)) if (v) params.set(k, v);
         return request<unknown>(`/admin/transactions?${params.toString()}`);
       },
-      contentList: (kind?: string, status?: string) => {
+      contentList: (q: { kind?: string; status?: string; limit?: number; offset?: number } = {}) => {
         const params = new URLSearchParams();
-        if (kind) params.set('kind', kind);
-        if (status) params.set('status', status);
-        return request<unknown[]>(`/admin/content?${params.toString()}`);
+        for (const [k, v] of Object.entries(q)) if (v != null && v !== '') params.set(k, String(v));
+        return request<unknown>(`/admin/content?${params.toString()}`);
       },
       contentCreate: (body: {
         kind: 'SUCCESS_STORY' | 'BLOG_POST' | 'EVENT';
@@ -498,6 +501,23 @@ export function createApiClient(opts: ApiClientOptions) {
         request<unknown>(`/admin/content/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
       contentDelete: (id: string) =>
         request<{ ok: true }>(`/admin/content/${id}`, { method: 'DELETE' }),
+      createPlan: (body: {
+        name: string;
+        priceInr: number;
+        durationDays: number;
+        features: string[];
+        active: boolean;
+      }) => request<Plan>('/admin/plans', { method: 'POST', body: JSON.stringify(body) }),
+      updatePlan: (
+        id: string,
+        body: Partial<{
+          name: string;
+          priceInr: number;
+          durationDays: number;
+          features: string[];
+          active: boolean;
+        }>,
+      ) => request<Plan>(`/admin/plans/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
       impersonate: (userId: string, reason?: string) =>
         request<{
           user: { id: string; email: string };

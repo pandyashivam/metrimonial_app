@@ -51,6 +51,7 @@ export async function adminRoutes(app: FastifyInstance) {
     q: z.string().max(100).optional(),
     status: z.enum(['ACTIVE', 'SUSPENDED', 'DELETED']).optional(),
     cursor: z.string().optional(),
+    offset: z.coerce.number().int().min(0).optional(),
     limit: z.coerce.number().int().min(1).max(100).default(25),
   }).strict();
 
@@ -68,20 +69,29 @@ export async function adminRoutes(app: FastifyInstance) {
     }
     if (q.cursor) where.id = { [Op.lt]: q.cursor };
 
+    const useOffset = q.offset !== undefined && !q.cursor;
     const rows = await User.findAll({
       where,
       order: [['createdAt', 'DESC']],
-      limit: q.limit + 1,
+      limit: q.limit + (useOffset ? 0 : 1),
+      offset: useOffset ? q.offset : undefined,
       include: [{
         model: Profile, as: 'profile',
         attributes: ['id', 'fullName', 'city'],
         include: [{ model: Verification, as: 'verification' }],
       }],
     });
-    const hasMore = rows.length > q.limit;
-    const items = rows.slice(0, q.limit);
+    let total: number | null = null;
+    if (useOffset) {
+      total = await User.count({ where });
+    }
+    const hasMore = useOffset ? (q.offset! + rows.length) < (total ?? 0) : rows.length > q.limit;
+    const items = useOffset ? rows : rows.slice(0, q.limit);
     return ok(reply, {
-      items, nextCursor: hasMore ? items[items.length - 1]?.id ?? null : null, hasMore,
+      items,
+      nextCursor: !useOffset && hasMore ? items[items.length - 1]?.id ?? null : null,
+      hasMore,
+      total,
     });
   });
 
@@ -113,16 +123,31 @@ export async function adminRoutes(app: FastifyInstance) {
     },
   );
 
-  app.get('/reports', async (_req, reply) => {
-    const rows = await Report.findAll({
-      where: { status: 'OPEN' },
-      order: [['createdAt', 'DESC']],
-      include: [
-        { model: Profile, as: 'reporter', attributes: ['id', 'fullName'] },
-        { model: Profile, as: 'reported', attributes: ['id', 'fullName'] },
-      ],
-    });
-    return ok(reply, rows);
+  const ReportList = z.object({
+    status: z.enum(['OPEN', 'RESOLVED', 'DISMISSED']).default('OPEN'),
+    offset: z.coerce.number().int().min(0).default(0),
+    limit: z.coerce.number().int().min(1).max(100).default(25),
+  }).strict();
+
+  app.get('/reports', async (request, reply) => {
+    const parsed = ReportList.safeParse(request.query);
+    if (!parsed.success) return fail(reply, 400, 'VALIDATION', 'Invalid query');
+    const q = parsed.data;
+    const where = { status: q.status };
+    const [items, total] = await Promise.all([
+      Report.findAll({
+        where,
+        order: [['createdAt', 'DESC']],
+        limit: q.limit,
+        offset: q.offset,
+        include: [
+          { model: Profile, as: 'reporter', attributes: ['id', 'fullName'] },
+          { model: Profile, as: 'reported', attributes: ['id', 'fullName'] },
+        ],
+      }),
+      Report.count({ where }),
+    ]);
+    return ok(reply, { items, total, hasMore: q.offset + items.length < total });
   });
 
   app.patch<{ Params: { id: string }; Body: { status: 'RESOLVED' | 'DISMISSED' } }>(

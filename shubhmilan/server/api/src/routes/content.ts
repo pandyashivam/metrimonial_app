@@ -61,21 +61,26 @@ export async function adminContentRoutes(
     meta?: Record<string, unknown>,
   ) => Promise<void>,
 ) {
-  app.get<{ Querystring: { kind?: string; status?: string; limit?: string } }>(
+  app.get<{ Querystring: { kind?: string; status?: string; limit?: string; offset?: string } }>(
     '/',
     async (request, reply) => {
       const kind = KIND.safeParse(request.query.kind);
       const status = STATUS.safeParse(request.query.status);
-      const limit = Math.min(Math.max(parseInt(request.query.limit ?? '50', 10) || 50, 1), 200);
+      const limit = Math.min(Math.max(parseInt(request.query.limit ?? '25', 10) || 25, 1), 200);
+      const offset = Math.max(parseInt(request.query.offset ?? '0', 10) || 0, 0);
       const where: Record<string, unknown> = {};
       if (kind.success) where.kind = kind.data;
       if (status.success) where.status = status.data;
-      const rows = await Content.findAll({
-        where,
-        order: [['updatedAt', 'DESC']],
-        limit,
-      });
-      return ok(reply, rows);
+      const [items, total] = await Promise.all([
+        Content.findAll({
+          where,
+          order: [['updatedAt', 'DESC']],
+          limit,
+          offset,
+        }),
+        Content.count({ where }),
+      ]);
+      return ok(reply, { items, total, hasMore: offset + items.length < total });
     },
   );
 

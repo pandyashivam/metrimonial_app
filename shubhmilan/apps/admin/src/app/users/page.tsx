@@ -2,77 +2,134 @@
 import { useEffect, useState } from 'react';
 
 import { api } from '../../lib/api';
+import {
+  Banner,
+  Button,
+  Chip,
+  EmptyState,
+  Field,
+  PageHeader,
+  Pagination,
+  Skeleton,
+  inputStyle,
+} from '../../lib/ui';
 
 interface UserRow {
   id: string;
   email: string;
   phone: string;
-  status: string;
+  status: 'ACTIVE' | 'SUSPENDED' | 'DELETED';
   role: string;
   createdAt: string;
   profile?: { fullName?: string; city?: string };
 }
 
+const PAGE_SIZE = 25;
+
 export default function Users() {
   const [users, setUsers] = useState<UserRow[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [q, setQ] = useState('');
+  const [committedQ, setCommittedQ] = useState('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
-  async function load() {
+  async function load(targetPage: number, query: string) {
     setLoading(true);
+    setError(null);
     try {
-      const res = (await api.admin.users({ q: q || undefined, limit: 50 })) as { items: UserRow[] };
+      const res = (await api.admin.users({
+        q: query || undefined,
+        limit: PAGE_SIZE,
+        offset: (targetPage - 1) * PAGE_SIZE,
+      })) as { items: UserRow[]; total: number };
       setUsers(res.items);
+      setTotal(res.total ?? 0);
+      setPage(targetPage);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load users.');
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    load(1, '');
   }, []);
 
   async function setStatus(id: string, status: 'ACTIVE' | 'SUSPENDED' | 'DELETED') {
-    await api.admin.setUserStatus(id, status);
-    load();
+    try {
+      await api.admin.setUserStatus(id, status);
+      setNotice(`Status updated.`);
+      load(page, committedQ);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not update status.');
+    }
   }
 
   async function impersonate(user: UserRow) {
-    const reason = prompt(
+    const reason = window.prompt(
       `Impersonate ${user.email}?\n\nThis is logged to AdminLog. Brief reason:`,
       '',
     );
     if (reason === null) return;
     try {
       const res = await api.admin.impersonate(user.id, reason || undefined);
-      // Stash the tokens in a separate pair of keys so an admin can come back to their
-      // own session after the impersonation window closes.
       window.localStorage.setItem('shubhmilan.admin.impersonating', user.email);
       window.localStorage.setItem('shubhmilan.admin.impersonate.access', res.tokens.accessToken);
       window.localStorage.setItem('shubhmilan.admin.impersonate.refresh', res.tokens.refreshToken);
-      alert(
-        `Impersonation tokens issued for ${user.email}. Use them in a new browser profile — they're stored under shubhmilan.admin.impersonate.*`,
+      setNotice(
+        `Impersonation tokens issued for ${user.email}. They're stored under shubhmilan.admin.impersonate.* — use them in a fresh browser profile.`,
       );
     } catch (e) {
-      alert('Impersonation failed: ' + (e instanceof Error ? e.message : String(e)));
+      setError('Impersonation failed: ' + (e instanceof Error ? e.message : String(e)));
     }
   }
 
   return (
     <>
-      <h1 style={{ marginTop: 0 }}>Users</h1>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Search by name, email, phone"
-          style={{ flex: 1, padding: 10, border: '1px solid #d8d8df', borderRadius: 8 }}
-        />
-        <button onClick={load} className="kpi-label" style={{ padding: '10px 16px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700 }}>
-          Search
-        </button>
-      </div>
+      <PageHeader
+        kicker="Members"
+        title="Users"
+        subtitle="Search, suspend, restore, or impersonate any account on the platform."
+      />
+      {error ? <Banner>{error}</Banner> : null}
+      {notice ? <Banner variant="success">{notice}</Banner> : null}
+
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          setCommittedQ(q);
+          load(1, q);
+        }}
+        style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'flex-end' }}
+      >
+        <div style={{ flex: 1 }}>
+          <Field label="Search">
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Name, email, or phone"
+              style={inputStyle}
+            />
+          </Field>
+        </div>
+        <Button type="submit">Search</Button>
+        {committedQ ? (
+          <Button
+            variant="outline"
+            onClick={() => {
+              setQ('');
+              setCommittedQ('');
+              load(1, '');
+            }}
+          >
+            Clear
+          </Button>
+        ) : null}
+      </form>
 
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         <table>
@@ -84,65 +141,80 @@ export default function Users() {
               <th>Role</th>
               <th>Status</th>
               <th>Created</th>
-              <th>Actions</th>
+              <th style={{ width: 220 }}>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {loading && (
+            {loading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i}>
+                  <td colSpan={7}>
+                    <Skeleton height={14} style={{ margin: '6px 0' }} />
+                  </td>
+                </tr>
+              ))
+            ) : users.length === 0 ? (
               <tr>
-                <td colSpan={7} style={{ textAlign: 'center', color: 'var(--muted)', padding: 24 }}>
-                  Loading…
+                <td colSpan={7} style={{ padding: 0 }}>
+                  <EmptyState
+                    title={committedQ ? 'No matches' : 'No users yet'}
+                    description={committedQ ? 'Try a different search term.' : 'New signups will appear here.'}
+                  />
                 </td>
               </tr>
+            ) : (
+              users.map((u) => (
+                <tr key={u.id}>
+                  <td style={{ fontWeight: 600 }}>{u.profile?.fullName ?? '—'}</td>
+                  <td>{u.email}</td>
+                  <td>{u.phone}</td>
+                  <td>
+                    <Chip
+                      label={u.role}
+                      tone={u.role === 'SUPERADMIN' ? 'accent' : u.role === 'ADMIN' ? 'primary' : 'neutral'}
+                    />
+                  </td>
+                  <td>
+                    <Chip
+                      label={u.status}
+                      tone={u.status === 'ACTIVE' ? 'success' : u.status === 'SUSPENDED' ? 'warn' : 'danger'}
+                    />
+                  </td>
+                  <td>{new Date(u.createdAt).toLocaleDateString()}</td>
+                  <td>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      {u.status !== 'SUSPENDED' && u.role === 'USER' ? (
+                        <Button size="sm" variant="outline" onClick={() => setStatus(u.id, 'SUSPENDED')}>
+                          Suspend
+                        </Button>
+                      ) : null}
+                      {u.status !== 'ACTIVE' ? (
+                        <Button size="sm" onClick={() => setStatus(u.id, 'ACTIVE')}>
+                          Restore
+                        </Button>
+                      ) : null}
+                      {u.role === 'USER' ? (
+                        <Button size="sm" variant="ghost" onClick={() => impersonate(u)}>
+                          Impersonate
+                        </Button>
+                      ) : null}
+                    </div>
+                  </td>
+                </tr>
+              ))
             )}
-            {users.map((u) => (
-              <tr key={u.id}>
-                <td>{u.profile?.fullName ?? '—'}</td>
-                <td>{u.email}</td>
-                <td>{u.phone}</td>
-                <td>{u.role}</td>
-                <td>
-                  <span style={{ padding: '3px 8px', borderRadius: 10, background: u.status === 'ACTIVE' ? '#e6f5ee' : '#fbecea', color: u.status === 'ACTIVE' ? '#1e8a5f' : '#c0392b', fontSize: 12, fontWeight: 700 }}>
-                    {u.status}
-                  </span>
-                </td>
-                <td>{new Date(u.createdAt).toLocaleDateString()}</td>
-                <td style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  {u.status !== 'SUSPENDED' && (
-                    <button onClick={() => setStatus(u.id, 'SUSPENDED')} style={btn('warn')}>
-                      Suspend
-                    </button>
-                  )}
-                  {u.status !== 'ACTIVE' && (
-                    <button onClick={() => setStatus(u.id, 'ACTIVE')} style={btn('ok')}>
-                      Restore
-                    </button>
-                  )}
-                  {u.role === 'USER' && (
-                    <button onClick={() => impersonate(u)} style={btn('ok')}>
-                      Impersonate
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
           </tbody>
         </table>
       </div>
+
+      {total > 0 ? (
+        <Pagination
+          page={page}
+          pageSize={PAGE_SIZE}
+          total={total}
+          onChange={(p) => load(p, committedQ)}
+        />
+      ) : null}
     </>
   );
-}
-
-function btn(kind: 'ok' | 'warn' | 'danger') {
-  const bg = kind === 'ok' ? '#1e8a5f' : kind === 'warn' ? '#b57a00' : '#c0392b';
-  return {
-    background: bg,
-    color: '#fff',
-    border: 'none',
-    borderRadius: 6,
-    padding: '4px 10px',
-    fontSize: 12,
-    fontWeight: 700,
-    cursor: 'pointer',
-  } as const;
 }

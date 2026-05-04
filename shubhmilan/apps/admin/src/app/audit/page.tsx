@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 
 import { api } from '../../lib/api';
+import { Banner, Chip, EmptyState, PageHeader, Skeleton } from '../../lib/ui';
 
 interface LogEntry {
   id: string;
@@ -14,15 +15,24 @@ interface LogEntry {
 }
 
 export default function Audit() {
-  const [rows, setRows] = useState<LogEntry[]>([]);
+  const [rows, setRows] = useState<LogEntry[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.admin.logs().then((r) => setRows(r as LogEntry[]));
+    api.admin
+      .logs()
+      .then((r) => setRows(r as LogEntry[]))
+      .catch((e) => setError(e instanceof Error ? e.message : 'Failed to load audit log.'));
   }, []);
 
   return (
     <>
-      <h1 style={{ marginTop: 0 }}>Audit log</h1>
+      <PageHeader
+        kicker="Compliance"
+        title="Audit log"
+        subtitle="Every admin action is recorded here. Read-only."
+      />
+      {error ? <Banner>{error}</Banner> : null}
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         <table>
           <thead>
@@ -35,19 +45,31 @@ export default function Audit() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
-              <tr key={r.id}>
-                <td>{new Date(r.createdAt).toLocaleString()}</td>
-                <td>{r.admin?.email}</td>
-                <td style={{ fontWeight: 700, fontSize: 12 }}>{r.action}</td>
-                <td>
-                  {r.targetType} {r.targetId}
-                </td>
-                <td style={{ color: 'var(--muted)', fontSize: 12, fontFamily: 'monospace' }}>
-                  {r.meta ? JSON.stringify(r.meta) : ''}
+            {rows === null ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i}><td colSpan={5}><Skeleton height={14} style={{ margin: '6px 0' }} /></td></tr>
+              ))
+            ) : rows.length === 0 ? (
+              <tr>
+                <td colSpan={5} style={{ padding: 0 }}>
+                  <EmptyState title="No admin activity yet" description="Once admins act, the trail shows up here." />
                 </td>
               </tr>
-            ))}
+            ) : (
+              rows.map((r) => (
+                <tr key={r.id}>
+                  <td>{new Date(r.createdAt).toLocaleString()}</td>
+                  <td>{r.admin?.email ?? '—'}</td>
+                  <td><Chip label={r.action} tone="primary" /></td>
+                  <td style={{ color: 'var(--muted)', fontSize: 13 }}>
+                    {r.targetType} {r.targetId}
+                  </td>
+                  <td style={{ color: 'var(--muted)', fontSize: 12, fontFamily: 'monospace', maxWidth: 360, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {r.meta ? JSON.stringify(r.meta) : ''}
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

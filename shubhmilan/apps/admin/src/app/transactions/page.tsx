@@ -2,6 +2,14 @@
 import { useEffect, useState } from 'react';
 
 import { api } from '../../lib/api';
+import {
+  Banner,
+  Chip,
+  EmptyState,
+  PageHeader,
+  Skeleton,
+  inputStyle,
+} from '../../lib/ui';
 
 interface Tx {
   id: string;
@@ -29,12 +37,10 @@ export default function Transactions() {
     setLoading(true);
     setErr(null);
     try {
-      const res = (await api.admin.transactions(
-        status ? { status } : {},
-      )) as { items: Tx[] };
+      const res = (await api.admin.transactions(status ? { status } : {})) as { items: Tx[] };
       setItems(res.items);
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Failed to load');
+      setErr(e instanceof Error ? e.message : 'Failed to load transactions.');
     } finally {
       setLoading(false);
     }
@@ -51,31 +57,31 @@ export default function Transactions() {
 
   return (
     <>
-      <h1 style={{ marginTop: 0 }}>Transactions</h1>
-      <p style={{ color: 'var(--muted)' }}>
-        Local subscription ledger — webhooks write rows on <code>payment.captured</code> /
-        <code>payment.failed</code>. Cross-reference with Razorpay dashboard for upstream state.
-      </p>
+      <PageHeader
+        kicker="Payments"
+        title="Transactions"
+        subtitle="Local subscription ledger — webhooks write rows on payment events. Cross-reference with the Razorpay dashboard for upstream state."
+      />
+      {err ? <Banner>{err}</Banner> : null}
 
-      <div style={{ display: 'flex', gap: 12, alignItems: 'center', margin: '20px 0' }}>
-        <label style={{ fontSize: 13, color: 'var(--muted)' }}>Status:</label>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'center', margin: '0 0 16px', flexWrap: 'wrap' }}>
+        <label style={{ fontSize: 13, color: 'var(--muted)' }}>Status</label>
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value)}
-          style={{ padding: 8, border: '1px solid #d8d8df', borderRadius: 8 }}
+          style={{ ...inputStyle, width: 'auto', padding: '8px 12px' }}
         >
           {STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s || 'All'}
-            </option>
+            <option key={s} value={s}>{s || 'All'}</option>
           ))}
         </select>
-        <div style={{ marginLeft: 'auto', fontWeight: 700 }}>
-          Active revenue: ₹{(totalRevenue / 100).toLocaleString('en-IN')}
+        <div style={{ marginLeft: 'auto', fontSize: 14, color: 'var(--muted)' }}>
+          Active revenue:{' '}
+          <strong style={{ color: 'var(--ink)' }}>
+            ₹{(totalRevenue / 100).toLocaleString('en-IN')}
+          </strong>
         </div>
       </div>
-
-      {err && <p style={{ color: '#c0392b' }}>{err}</p>}
 
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         <table>
@@ -91,35 +97,33 @@ export default function Transactions() {
             </tr>
           </thead>
           <tbody>
-            {loading && (
+            {loading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i}><td colSpan={7}><Skeleton height={14} style={{ margin: '6px 0' }} /></td></tr>
+              ))
+            ) : items.length === 0 ? (
               <tr>
-                <td colSpan={7} style={{ textAlign: 'center', color: 'var(--muted)', padding: 24 }}>
-                  Loading…
+                <td colSpan={7} style={{ padding: 0 }}>
+                  <EmptyState
+                    title="No transactions"
+                    description={status ? `No ${status.toLowerCase()} transactions yet.` : 'Subscriptions will appear here once they start.'}
+                  />
                 </td>
               </tr>
-            )}
-            {!loading &&
+            ) : (
               items.map((t) => (
                 <tr key={t.id}>
                   <td>{t.user?.email ?? t.userId}</td>
-                  <td>{t.plan?.name ?? t.planId}</td>
-                  <td>
-                    <span style={statusChip(t.status)}>{t.status}</span>
-                  </td>
+                  <td style={{ fontWeight: 600 }}>{t.plan?.name ?? t.planId}</td>
+                  <td><Chip label={t.status} tone={statusTone(t.status)} /></td>
                   <td>₹{((t.plan?.priceInr ?? 0) / 100).toLocaleString('en-IN')}</td>
                   <td>{new Date(t.startsAt).toLocaleDateString()}</td>
                   <td>{new Date(t.endsAt).toLocaleDateString()}</td>
-                  <td style={{ fontFamily: 'monospace', fontSize: 12 }}>
+                  <td style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--muted)' }}>
                     {t.razorpayPaymentId ?? t.razorpayOrderId ?? '—'}
                   </td>
                 </tr>
-              ))}
-            {!loading && items.length === 0 && (
-              <tr>
-                <td colSpan={7} style={{ textAlign: 'center', color: 'var(--muted)', padding: 24 }}>
-                  No transactions.
-                </td>
-              </tr>
+              ))
             )}
           </tbody>
         </table>
@@ -128,20 +132,9 @@ export default function Transactions() {
   );
 }
 
-function statusChip(s: Tx['status']) {
-  const map = {
-    ACTIVE: { bg: '#e6f5ee', fg: '#1e8a5f' },
-    PENDING: { bg: '#fff6e0', fg: '#b57a00' },
-    EXPIRED: { bg: '#f2f2f5', fg: '#6e6e78' },
-    CANCELLED: { bg: '#f2f2f5', fg: '#6e6e78' },
-    FAILED: { bg: '#fbecea', fg: '#c0392b' },
-  }[s];
-  return {
-    padding: '3px 8px',
-    borderRadius: 10,
-    background: map.bg,
-    color: map.fg,
-    fontSize: 12,
-    fontWeight: 700,
-  } as const;
+function statusTone(s: Tx['status']): 'success' | 'warn' | 'neutral' | 'danger' {
+  if (s === 'ACTIVE') return 'success';
+  if (s === 'PENDING') return 'warn';
+  if (s === 'FAILED') return 'danger';
+  return 'neutral';
 }
