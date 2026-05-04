@@ -1,8 +1,18 @@
-import { Button, Card, Chip, Input, colors, fontSizes, spacing } from '@shubhmilan/ui';
+import {
+  Button,
+  Card,
+  Chip,
+  Input,
+  PageFrame,
+  ScreenHeader,
+  colors,
+  fontSizes,
+  spacing,
+} from '@shubhmilan/ui';
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { KeyboardSafe } from '../src/KeyboardSafe';
 import { useFilters } from '../src/filter-store';
 
 type Gender = 'Male' | 'Female' | 'Other';
@@ -14,16 +24,15 @@ export default function Filters() {
   const f = useFilters();
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
-      <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.md }}>
-        <Card>
-          <Text style={styles.h1}>Find your match</Text>
-          <Text style={styles.sub}>
-            All filters are optional. Advanced filters require a Silver plan or higher.
-          </Text>
-        </Card>
+    <KeyboardSafe>
+      <PageFrame>
+        <ScreenHeader
+          kicker="Refine"
+          title="Find your match"
+          subtitle="Filters are optional. Some advanced filters require a Silver plan or higher."
+        />
 
-        <Card>
+        <Card style={styles.card}>
           <Text style={styles.h2}>Gender</Text>
           <View style={styles.chipRow}>
             {(['Male', 'Female', 'Other'] as Gender[]).map((g) => (
@@ -37,7 +46,7 @@ export default function Filters() {
           </View>
         </Card>
 
-        <Card>
+        <Card style={styles.card}>
           <Text style={styles.h2}>Age range</Text>
           <View style={{ flexDirection: 'row', gap: spacing.md }}>
             <View style={{ flex: 1 }}>
@@ -61,46 +70,24 @@ export default function Filters() {
           </View>
         </Card>
 
-        <Card>
+        <Card style={styles.card}>
           <Text style={styles.h2}>Location</Text>
-          <Input
-            label="City"
-            value={f.city ?? ''}
-            onChangeText={(t) => f.set({ city: t || undefined })}
-          />
-          <Input
-            label="State"
-            value={f.state ?? ''}
-            onChangeText={(t) => f.set({ state: t || undefined })}
-          />
+          <Input label="City" value={f.city ?? ''} onChangeText={(t) => f.set({ city: t || undefined })} autoComplete="address-line2" />
+          <Input label="State" value={f.state ?? ''} onChangeText={(t) => f.set({ state: t || undefined })} />
         </Card>
 
-        <Card>
-          <Text style={styles.h2}>Background (Silver+)</Text>
-          <Input
-            label="Religion"
-            value={f.religion ?? ''}
-            onChangeText={(t) => f.set({ religion: t || undefined })}
-          />
-          <Input
-            label="Caste"
-            value={f.caste ?? ''}
-            onChangeText={(t) => f.set({ caste: t || undefined })}
-          />
-          <Input
-            label="Mother tongue"
-            value={f.motherTongue ?? ''}
-            onChangeText={(t) => f.set({ motherTongue: t || undefined })}
-          />
-          <Input
-            label="Education"
-            value={f.education ?? ''}
-            onChangeText={(t) => f.set({ education: t || undefined })}
-          />
+        <Card style={styles.card}>
+          <Text style={styles.h2}>Background</Text>
+          <Text style={styles.tierHint}>Silver and above</Text>
+          <Input label="Religion" value={f.religion ?? ''} onChangeText={(t) => f.set({ religion: t || undefined })} />
+          <Input label="Caste" value={f.caste ?? ''} onChangeText={(t) => f.set({ caste: t || undefined })} />
+          <Input label="Mother tongue" value={f.motherTongue ?? ''} onChangeText={(t) => f.set({ motherTongue: t || undefined })} />
+          <Input label="Education" value={f.education ?? ''} onChangeText={(t) => f.set({ education: t || undefined })} />
         </Card>
 
-        <Card>
-          <Text style={styles.h2}>Diet (Silver+)</Text>
+        <Card style={styles.card}>
+          <Text style={styles.h2}>Diet</Text>
+          <Text style={styles.tierHint}>Silver and above</Text>
           <View style={styles.chipRow}>
             {DIETS.map((d) => (
               <ChipButton
@@ -113,8 +100,9 @@ export default function Filters() {
           </View>
         </Card>
 
-        <Card>
-          <Text style={styles.h2}>Manglik (Silver+)</Text>
+        <Card style={styles.card}>
+          <Text style={styles.h2}>Manglik</Text>
+          <Text style={styles.tierHint}>Silver and above</Text>
           <View style={styles.chipRow}>
             {MANGLIK.map((m) => (
               <ChipButton
@@ -127,7 +115,7 @@ export default function Filters() {
           </View>
         </Card>
 
-        <Card>
+        <Card style={styles.card}>
           <Text style={styles.h2}>Trust & availability</Text>
           <View style={styles.chipRow}>
             <ChipButton
@@ -143,10 +131,10 @@ export default function Filters() {
           </View>
         </Card>
 
-        <Button title="Apply filters" onPress={() => router.back()} block />
-        <Button title="Reset all" variant="ghost" onPress={() => f.reset()} block />
-      </ScrollView>
-    </SafeAreaView>
+        <Button title="Apply filters" size="lg" onPress={() => router.back()} block />
+        <Button title="Reset all" variant="ghost" size="lg" onPress={() => f.reset()} block style={{ marginTop: spacing.sm }} />
+      </PageFrame>
+    </KeyboardSafe>
   );
 }
 
@@ -160,15 +148,27 @@ function ChipButton({
   onPress: () => void;
 }) {
   return (
-    <Pressable onPress={onPress}>
+    <Pressable onPress={onPress} hitSlop={4}>
       <Chip label={label} tone={active ? 'primary' : 'neutral'} />
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  h1: { fontSize: fontSizes.xl, fontWeight: '800', color: colors.ink },
-  h2: { fontSize: fontSizes.md, fontWeight: '700', color: colors.ink, marginBottom: spacing.sm },
-  sub: { color: colors.textMuted, marginTop: 4 },
+  card: { marginBottom: spacing.md },
+  h2: {
+    fontSize: fontSizes.sm,
+    fontWeight: '700',
+    color: colors.textMuted,
+    marginBottom: 6,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+  },
+  tierHint: {
+    fontSize: fontSizes.xs,
+    color: colors.accentDark,
+    fontWeight: '600',
+    marginBottom: spacing.sm,
+  },
   chipRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
 });

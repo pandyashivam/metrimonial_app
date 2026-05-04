@@ -51,6 +51,9 @@ const EnvSchema = z.object({
   TWILIO_FROM: z.string().default(''),
 
   EXPO_ACCESS_TOKEN: z.string().default(''),
+  VAPID_PUBLIC_KEY: z.string().default(''),
+  VAPID_PRIVATE_KEY: z.string().default(''),
+  VAPID_SUBJECT: z.string().default('mailto:support@shubhmilan.local'),
 
   DIGIO_CLIENT_ID: z.string().default(''),
   DIGIO_CLIENT_SECRET: z.string().default(''),

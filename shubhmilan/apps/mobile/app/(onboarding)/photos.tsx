@@ -1,14 +1,28 @@
-import { Button, Card, EmptyState, colors, fontSizes, spacing } from '@shubhmilan/ui';
+import {
+  Button,
+  Card,
+  EmptyState,
+  ScreenHeader,
+  colors,
+  fontSizes,
+  spacing,
+} from '@shubhmilan/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import * as ImageManipulator from 'expo-image-manipulator';
-import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { api } from '../../src/api';
+import { pickImage } from '../../src/photo-picker';
 
+const COLUMN_MAX = 540;
+
+/**
+ * Photos screen uses a FlatList for grid rendering rather than the standard
+ * PageFrame ScrollView; we apply the same visual rules (cream bg + max-width
+ * column on web) ourselves via the FlatList container.
+ */
 export default function Photos() {
   const router = useRouter();
   const qc = useQueryClient();
@@ -27,23 +41,9 @@ export default function Photos() {
   async function pickAndUpload() {
     setBusy(true);
     try {
-      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!perm.granted) return;
-      const res = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        quality: 0.9,
-      });
-      if (res.canceled || !res.assets.length) return;
-      const asset = res.assets[0]!;
-      // Compress to max width 1600 + 80% quality before upload; protects bandwidth + storage.
-      const manipulated = await ImageManipulator.manipulateAsync(
-        asset.uri,
-        [{ resize: { width: 1600 } }],
-        { compress: 0.82, format: ImageManipulator.SaveFormat.JPEG },
-      );
-      const blob = await (await fetch(manipulated.uri)).blob();
-      await api.me.uploadPhoto(blob);
+      const picked = await pickImage();
+      if (!picked) return;
+      await api.me.uploadPhoto(picked.blob);
       await qc.invalidateQueries({ queryKey: ['my-photos'] });
     } finally {
       setBusy(false);
@@ -51,61 +51,94 @@ export default function Photos() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View style={styles.header}>
-        <Text style={styles.step}>Step 5 of 6</Text>
-        <Text style={styles.title}>Photos</Text>
-        <Text style={styles.sub}>Add at least one photo to start getting matches. Set privacy per photo.</Text>
-      </View>
-
-      <FlatList
-        data={photos.data ?? []}
-        keyExtractor={(p) => p.id}
-        numColumns={3}
-        columnWrapperStyle={{ gap: spacing.sm }}
-        contentContainerStyle={{ padding: spacing.md, gap: spacing.sm }}
-        renderItem={({ item }) => (
-          <Card style={{ flex: 1, padding: 0 }} padded={false}>
-            <Image source={{ uri: item.url }} style={styles.photo} />
-            <View style={{ padding: 8, gap: 6 }}>
-              {!item.isPrimary && (
-                <Pressable onPress={() => setPrimary.mutate(item.id)}>
-                  <Text style={styles.action}>Set primary</Text>
+    <SafeAreaView style={styles.safe}>
+      <View style={styles.column}>
+        <View style={styles.header}>
+          <ScreenHeader
+            kicker="Step 5 of 6"
+            title="Photos"
+            subtitle="Add at least one photo to start getting matches. You can mark any photo private later."
+          />
+        </View>
+        <FlatList
+          data={photos.data ?? []}
+          keyExtractor={(p) => p.id}
+          numColumns={3}
+          columnWrapperStyle={{ gap: spacing.sm }}
+          contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: spacing.xl, gap: spacing.sm }}
+          renderItem={({ item }) => (
+            <Card style={{ flex: 1, padding: 0 }} padded={false}>
+              <Image source={{ uri: item.url }} style={styles.photo} />
+              <View style={{ padding: 10, gap: 6 }}>
+                {!item.isPrimary ? (
+                  <Pressable onPress={() => setPrimary.mutate(item.id)} hitSlop={6}>
+                    <Text style={styles.action}>Set primary</Text>
+                  </Pressable>
+                ) : (
+                  <Text style={styles.primaryFlag}>Primary</Text>
+                )}
+                <Pressable onPress={() => del.mutate(item.id)} hitSlop={6}>
+                  <Text style={[styles.action, { color: colors.danger }]}>Delete</Text>
                 </Pressable>
-              )}
-              <Pressable onPress={() => del.mutate(item.id)}>
-                <Text style={[styles.action, { color: colors.danger }]}>Delete</Text>
-              </Pressable>
-            </View>
-          </Card>
-        )}
-        ListEmptyComponent={
-          !photos.isLoading ? (
-            <EmptyState title="No photos yet" description="Add one to boost match quality." />
-          ) : null
-        }
-      />
-
-      <View style={styles.footer}>
-        <Button title={busy ? 'Uploading…' : 'Upload photo'} onPress={pickAndUpload} loading={busy} block />
-        <Button
-          title="Next: Verify identity"
-          variant="outline"
-          onPress={() => router.push('/(onboarding)/verify')}
-          block
-          style={{ marginTop: spacing.sm }}
+              </View>
+            </Card>
+          )}
+          ListEmptyComponent={
+            !photos.isLoading ? (
+              <View style={styles.emptyWrap}>
+                <EmptyState
+                  title="No photos yet"
+                  description="Profiles with at least one photo get up to 5× more interest. Add yours to get started."
+                />
+              </View>
+            ) : null
+          }
         />
+        <View style={styles.footer}>
+          <Button
+            title={busy ? 'Uploading…' : 'Upload photo'}
+            size="lg"
+            onPress={pickAndUpload}
+            loading={busy}
+            block
+          />
+          <Button
+            title="Next: Verify identity"
+            variant="outline"
+            size="lg"
+            onPress={() => router.push('/(onboarding)/verify')}
+            block
+            style={{ marginTop: spacing.sm }}
+          />
+        </View>
       </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  header: { padding: spacing.lg },
-  step: { color: colors.primary, fontWeight: '700', letterSpacing: 1, fontSize: fontSizes.xs + 1, textTransform: 'uppercase' },
-  title: { fontSize: 26, fontWeight: '800', color: colors.ink, marginTop: 4 },
-  sub: { color: colors.textMuted, marginTop: 6 },
+  safe: { flex: 1, backgroundColor: colors.bg },
+  column: {
+    flex: 1,
+    width: '100%',
+    maxWidth: COLUMN_MAX,
+    alignSelf: 'center',
+  },
+  header: { paddingHorizontal: spacing.lg, paddingTop: spacing.lg },
   photo: { width: '100%', aspectRatio: 1, backgroundColor: colors.primary100 },
-  action: { fontSize: fontSizes.xs + 1, color: colors.primary, fontWeight: '700' },
-  footer: { padding: spacing.lg, borderTopWidth: 1, borderColor: colors.border, backgroundColor: '#fff' },
+  action: { fontSize: fontSizes.xs, color: colors.primary, fontWeight: '700' },
+  primaryFlag: {
+    fontSize: fontSizes.xs,
+    color: colors.success,
+    fontWeight: '700',
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+  },
+  emptyWrap: { paddingTop: spacing.xl, paddingHorizontal: spacing.lg },
+  footer: {
+    padding: spacing.lg,
+    borderTopWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
 });

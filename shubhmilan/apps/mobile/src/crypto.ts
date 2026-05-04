@@ -2,7 +2,8 @@
  * End-to-end encryption for chat messages.
  *
  *   • Keypair: Curve25519 (nacl.box)
- *   • Private key: stored in SecureStore (iOS Keychain / Android Keystore). Never leaves device.
+ *   • Private key: persisted via the platform secureStorage adapter — Keychain/Keystore
+ *     on native, localStorage on web. Never leaves the device.
  *   • Public key: uploaded to the server so peers can encrypt messages to us.
  *   • Each message: sender does nacl.box(plaintext, nonce, peerPublicKey, senderSecretKey).
  *     Both parties can decrypt using nacl.box.open(ciphertext, nonce, otherPublicKey, mySecret).
@@ -14,9 +15,10 @@
  */
 
 import * as Crypto from 'expo-crypto';
-import * as SecureStore from 'expo-secure-store';
 import nacl from 'tweetnacl';
 import naclUtil from 'tweetnacl-util';
+
+import { secureStorage } from './secure-storage';
 
 const SECRET_KEY_STORAGE = 'shubhmilan.chat.secretKey';
 const PUBLIC_KEY_STORAGE = 'shubhmilan.chat.publicKey';
@@ -44,27 +46,27 @@ export async function generateKeyPair(): Promise<KeyPair> {
 
 /** Ensure a keypair exists on this device, creating one on first use. */
 export async function ensureKeyPair(): Promise<KeyPair> {
-  const existingSecret = await SecureStore.getItemAsync(SECRET_KEY_STORAGE);
-  const existingPublic = await SecureStore.getItemAsync(PUBLIC_KEY_STORAGE);
+  const existingSecret = await secureStorage.getItem(SECRET_KEY_STORAGE);
+  const existingPublic = await secureStorage.getItem(PUBLIC_KEY_STORAGE);
   if (existingSecret && existingPublic) {
     return { secretKey: existingSecret, publicKey: existingPublic };
   }
   const kp = await generateKeyPair();
-  await SecureStore.setItemAsync(SECRET_KEY_STORAGE, kp.secretKey);
-  await SecureStore.setItemAsync(PUBLIC_KEY_STORAGE, kp.publicKey);
+  await secureStorage.setItem(SECRET_KEY_STORAGE, kp.secretKey);
+  await secureStorage.setItem(PUBLIC_KEY_STORAGE, kp.publicKey);
   return kp;
 }
 
 export async function getMyKeyPair(): Promise<KeyPair | null> {
-  const secret = await SecureStore.getItemAsync(SECRET_KEY_STORAGE);
-  const pub = await SecureStore.getItemAsync(PUBLIC_KEY_STORAGE);
+  const secret = await secureStorage.getItem(SECRET_KEY_STORAGE);
+  const pub = await secureStorage.getItem(PUBLIC_KEY_STORAGE);
   if (!secret || !pub) return null;
   return { secretKey: secret, publicKey: pub };
 }
 
 export async function clearKeyPair() {
-  await SecureStore.deleteItemAsync(SECRET_KEY_STORAGE);
-  await SecureStore.deleteItemAsync(PUBLIC_KEY_STORAGE);
+  await secureStorage.removeItem(SECRET_KEY_STORAGE);
+  await secureStorage.removeItem(PUBLIC_KEY_STORAGE);
 }
 
 /** Encrypt a UTF-8 string for a peer. Returns base64 ciphertext + nonce. */

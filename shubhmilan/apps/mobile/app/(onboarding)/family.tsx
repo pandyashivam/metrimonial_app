@@ -1,10 +1,9 @@
-import { Button, Input, colors, fontSizes, spacing } from '@shubhmilan/ui';
+import { Banner, Button, Input, PageFrame, ScreenHeader } from '@shubhmilan/ui';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { api } from '../../src/api';
+import { KeyboardSafe } from '../../src/KeyboardSafe';
 import { useOnboarding } from '../../src/onboarding-store';
 
 export default function Family() {
@@ -36,31 +35,23 @@ export default function Family() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={styles.scroll}>
-          <Text style={styles.step}>Step 2 of 6</Text>
-          <Text style={styles.title}>Family</Text>
-
-          <Input label="Father's name" required value={s.fatherName} onChangeText={(t) => s.set({ fatherName: t })} />
-          <Input label="Father's occupation" value={s.fatherOccupation} onChangeText={(t) => s.set({ fatherOccupation: t })} />
-          <Input label="Mother's name" required value={s.motherName} onChangeText={(t) => s.set({ motherName: t })} />
-          <Input label="Mother's occupation" value={s.motherOccupation} onChangeText={(t) => s.set({ motherOccupation: t })} />
-          <Input label="Family type" placeholder="Nuclear / Joint" value={s.familyType} onChangeText={(t) => s.set({ familyType: t as 'Nuclear' | 'Joint' })} />
-          <Input label="Family status" value={s.familyStatus} onChangeText={(t) => s.set({ familyStatus: t })} hint="e.g. Middle Class, Upper Middle Class" />
-          <Input label="Native place" value={s.nativePlace} onChangeText={(t) => s.set({ nativePlace: t })} />
-
-          {err ? <Text style={styles.err}>{err}</Text> : null}
-          <Button title="Continue" onPress={next} loading={saving} block />
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+    <KeyboardSafe>
+      <PageFrame>
+        <ScreenHeader
+          kicker="Step 2 of 6"
+          title="Your family"
+          subtitle="Family context helps matchmakers and families find common ground."
+        />
+        <Input label="Father's name" required value={s.fatherName} onChangeText={(t) => s.set({ fatherName: t })} autoComplete="name" />
+        <Input label="Father's occupation" value={s.fatherOccupation} onChangeText={(t) => s.set({ fatherOccupation: t })} />
+        <Input label="Mother's name" required value={s.motherName} onChangeText={(t) => s.set({ motherName: t })} autoComplete="name" />
+        <Input label="Mother's occupation" value={s.motherOccupation} onChangeText={(t) => s.set({ motherOccupation: t })} />
+        <Input label="Family type" placeholder="Nuclear or Joint" value={s.familyType} onChangeText={(t) => s.set({ familyType: t as 'Nuclear' | 'Joint' })} />
+        <Input label="Family status" placeholder="e.g. Middle Class" value={s.familyStatus} onChangeText={(t) => s.set({ familyStatus: t })} />
+        <Input label="Native place" value={s.nativePlace} onChangeText={(t) => s.set({ nativePlace: t })} />
+        {err ? <Banner>{err}</Banner> : null}
+        <Button title="Continue" size="lg" onPress={next} loading={saving} block />
+      </PageFrame>
+    </KeyboardSafe>
   );
 }
-
-const styles = StyleSheet.create({
-  scroll: { padding: spacing.xl, paddingBottom: spacing.xxxl },
-  step: { color: colors.primary, fontWeight: '700', letterSpacing: 1, fontSize: fontSizes.xs + 1, textTransform: 'uppercase' },
-  title: { fontSize: 26, fontWeight: '800', color: colors.ink, marginTop: 4, marginBottom: spacing.lg },
-  err: { color: colors.danger, marginBottom: spacing.sm, fontWeight: '600' },
-});

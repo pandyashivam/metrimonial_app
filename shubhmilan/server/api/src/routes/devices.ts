@@ -6,7 +6,10 @@ import { fail, ok } from '../lib/response.js';
 
 const RegisterDeviceInput = z
   .object({
-    fcmToken: z.string().min(10).max(256),
+    // Native Expo tokens are short (~50 chars). Web Push subscriptions ship as
+    // stringified JSON (~500 chars typical) — both share this column, so the
+    // upper bound here matches the Device.fcmToken column width.
+    fcmToken: z.string().min(10).max(2048),
     platform: z.enum(['ios', 'android', 'web']),
   })
   .strict();

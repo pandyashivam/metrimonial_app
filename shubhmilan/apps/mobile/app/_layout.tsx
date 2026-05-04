@@ -12,6 +12,7 @@ import { LockScreen } from '../src/LockScreen';
 import { useAuth } from '../src/auth-store';
 import { attachDeepLinks } from '../src/deep-links';
 import { useIsDark, useThemeStore } from '../src/theme';
+import { loadWebFonts } from '../src/web-fonts';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
@@ -32,6 +33,7 @@ export default function RootLayout() {
   const appState = useRef<AppStateStatus>(AppState.currentState);
 
   useEffect(() => {
+    loadWebFonts();
     (async () => {
       await hydrateTheme();
       await hydrateLock();

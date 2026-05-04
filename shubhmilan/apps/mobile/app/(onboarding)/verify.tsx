@@ -1,8 +1,17 @@
-import { Button, Card, TrustDonut, VerificationBadge, colors, fontSizes, spacing } from '@shubhmilan/ui';
+import {
+  Button,
+  Card,
+  PageFrame,
+  ScreenHeader,
+  TrustDonut,
+  VerificationBadge,
+  colors,
+  fontSizes,
+  spacing,
+} from '@shubhmilan/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { api } from '../../src/api';
 
@@ -11,40 +20,41 @@ export default function VerifyPromo() {
   const status = useQuery({ queryKey: ['verification'], queryFn: () => api.verification.get() });
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
-      <ScrollView contentContainerStyle={{ padding: spacing.xl, gap: spacing.md }}>
-        <Text style={styles.step}>Step 6 of 6</Text>
-        <Text style={styles.title}>Build trust, unlock premium matches</Text>
-        <Text style={styles.sub}>
-          Verified profiles get 3× more responses. Complete any of the six steps below.
-        </Text>
-
-        <Card>
-          <View style={{ flexDirection: 'row', gap: spacing.md, alignItems: 'center' }}>
-            <TrustDonut score={status.data?.trustScore ?? 0} size={80} />
-            <View style={{ flex: 1 }}>
-              <VerificationBadge tier={status.data?.tier ?? 'BASIC'} />
-              <Text style={{ color: colors.textMuted, marginTop: 4 }}>
-                Basic (0–40) · Verified (41–80) · Premium Trust (81–100)
-              </Text>
-            </View>
+    <PageFrame>
+      <ScreenHeader
+        kicker="Step 6 of 6"
+        title="Build trust, unlock premium matches"
+        subtitle="Verified profiles get 3× more responses. Pick any step below — you can finish the rest later."
+      />
+      <Card style={{ marginBottom: spacing.lg }}>
+        <View style={styles.summary}>
+          <TrustDonut score={status.data?.trustScore ?? 0} size={84} />
+          <View style={{ flex: 1, gap: 6 }}>
+            <VerificationBadge tier={status.data?.tier ?? 'BASIC'} />
+            <Text style={styles.tierBands}>
+              Basic 0–40  ·  Verified 41–80  ·  Premium Trust 81–100
+            </Text>
           </View>
-        </Card>
-
-        <Button title="Verify now" onPress={() => router.push('/verify')} block />
-        <Button
-          title="Skip and finish"
-          variant="ghost"
-          onPress={() => router.replace('/(tabs)/home')}
-          block
-        />
-      </ScrollView>
-    </SafeAreaView>
+        </View>
+      </Card>
+      <Button title="Verify now" size="lg" onPress={() => router.push('/verify')} block />
+      <Button
+        title="Skip and finish"
+        variant="ghost"
+        size="lg"
+        onPress={() => router.replace('/(tabs)/home')}
+        block
+        style={{ marginTop: spacing.sm }}
+      />
+    </PageFrame>
   );
 }
 
 const styles = StyleSheet.create({
-  step: { color: colors.primary, fontWeight: '700', letterSpacing: 1, fontSize: fontSizes.xs + 1, textTransform: 'uppercase' },
-  title: { fontSize: 26, fontWeight: '800', color: colors.ink, marginTop: 4 },
-  sub: { color: colors.textMuted, marginBottom: spacing.lg },
+  summary: { flexDirection: 'row', gap: spacing.md, alignItems: 'center' },
+  tierBands: {
+    color: colors.textMuted,
+    fontSize: fontSizes.xs,
+    letterSpacing: 0.3,
+  },
 });

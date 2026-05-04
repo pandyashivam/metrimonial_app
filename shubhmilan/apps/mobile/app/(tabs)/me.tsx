@@ -1,8 +1,18 @@
-import { Button, Card, Chip, TrustDonut, VerificationBadge, colors, fontSizes, spacing } from '@shubhmilan/ui';
+import {
+  Button,
+  Card,
+  Chip,
+  PageFrame,
+  ScreenHeader,
+  TrustDonut,
+  VerificationBadge,
+  colors,
+  fontSizes,
+  spacing,
+} from '@shubhmilan/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { api } from '../../src/api';
 import { useAuth } from '../../src/auth-store';
@@ -25,79 +35,126 @@ export default function Me() {
 
   const tier = entitlements.data?.tier ?? 'FREE';
   const remaining = entitlements.data?.interestsRemainingThisMonth ?? -1;
+  const percent = completeness.data?.percent ?? 0;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
-      <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.md }}>
-        <Card>
-          <Text style={styles.h1}>Your account</Text>
-          <Text style={styles.sub}>{user?.email}</Text>
-          <Text style={styles.sub}>{user?.phone}</Text>
-        </Card>
+    <PageFrame>
+      <ScreenHeader
+        kicker="Your account"
+        title={user?.email?.split('@')[0] ?? 'Profile'}
+        subtitle={[user?.email, user?.phone].filter(Boolean).join(' · ')}
+        size="md"
+      />
 
-        <Card>
-          <View style={{ flexDirection: 'row', gap: spacing.md, alignItems: 'center' }}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.h2}>Plan</Text>
+      <Card style={styles.card}>
+        <View style={styles.row}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.h2}>Plan</Text>
+            <View style={{ flexDirection: 'row', marginBottom: 6 }}>
               <Chip
                 label={tier === 'FREE' ? 'Free forever' : tier}
                 tone={tier === 'FREE' ? 'neutral' : 'accent'}
               />
-              <Text style={styles.sub}>
-                {tier === 'FREE'
-                  ? `${remaining === -1 ? 'Unlimited' : remaining} interests remaining this month`
-                  : 'Unlimited interests, who-viewed-me, advanced filters'}
-              </Text>
             </View>
+            <Text style={styles.sub}>
+              {tier === 'FREE'
+                ? `${remaining === -1 ? 'Unlimited' : remaining} interests remaining this month`
+                : 'Unlimited interests, who-viewed-me, advanced filters'}
+            </Text>
+          </View>
+          <Button
+            title={tier === 'FREE' ? 'Upgrade' : 'Manage'}
+            variant={tier === 'FREE' ? 'primary' : 'outline'}
+            size="md"
+            onPress={() => router.push('/premium')}
+          />
+        </View>
+      </Card>
+
+      <Card style={styles.card}>
+        <View style={styles.row}>
+          <TrustDonut score={verification.data?.trustScore ?? 0} size={76} />
+          <View style={{ flex: 1, gap: 6 }}>
+            <Text style={styles.h2}>Trust & verification</Text>
+            <View style={{ flexDirection: 'row' }}>
+              <VerificationBadge tier={verification.data?.tier ?? 'BASIC'} />
+            </View>
+            <Text style={styles.sub}>
+              Complete email, phone, Aadhaar, selfie and video KYC to reach Premium Trust.
+            </Text>
             <Button
-              title={tier === 'FREE' ? 'Upgrade' : 'Manage'}
-              size="sm"
-              onPress={() => router.push('/premium')}
+              title="Verify now"
+              variant="outline"
+              size="md"
+              onPress={() => router.push('/verify')}
+              style={{ marginTop: spacing.xs, alignSelf: 'flex-start' }}
             />
           </View>
-        </Card>
+        </View>
+      </Card>
 
-        <Card>
-          <View style={{ flexDirection: 'row', gap: spacing.md, alignItems: 'center' }}>
-            <TrustDonut score={verification.data?.trustScore ?? 0} size={76} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.h2}>Trust & verification</Text>
-              <VerificationBadge tier={verification.data?.tier ?? 'BASIC'} />
-              <Text style={styles.sub}>
-                Complete email, phone, Aadhaar, selfie & video KYC to reach Premium.
-              </Text>
-              <Button
-                title="Verify now"
-                variant="outline"
-                size="sm"
-                onPress={() => router.push('/verify')}
-                style={{ marginTop: spacing.sm }}
-              />
-            </View>
-          </View>
-        </Card>
+      <Card style={styles.card}>
+        <Text style={styles.h2}>Profile completeness</Text>
+        <Text style={styles.bigNumber}>
+          {percent}<Text style={styles.bigPct}>%</Text>
+        </Text>
+        <View style={styles.progressTrack}>
+          <View style={[styles.progressFill, { width: `${Math.min(100, percent)}%` }]} />
+        </View>
+        {completeness.data?.missing?.length ? (
+          <Text style={styles.sub}>Missing: {completeness.data.missing.join(', ')}</Text>
+        ) : (
+          <Text style={styles.sub}>All sections complete.</Text>
+        )}
+      </Card>
 
-        <Card>
-          <Text style={styles.h2}>Profile completeness</Text>
-          <Text style={styles.big}>{completeness.data?.percent ?? 0}%</Text>
-          {completeness.data?.missing?.length ? (
-            <Text style={styles.sub}>
-              Missing: {completeness.data.missing.join(', ')}
-            </Text>
-          ) : (
-            <Text style={styles.sub}>All sections complete 🎉</Text>
-          )}
-        </Card>
-
-        <Button title="Sign out" variant="outline" onPress={signOut} block />
-      </ScrollView>
-    </SafeAreaView>
+      <Card style={styles.card}>
+        <Text style={styles.h2}>More</Text>
+        <Button
+          title="Settings"
+          variant="outline"
+          size="md"
+          onPress={() => router.push('/settings')}
+          block
+          style={{ marginBottom: spacing.sm }}
+        />
+        <Button title="Sign out" variant="ghost" size="md" onPress={signOut} block />
+      </Card>
+    </PageFrame>
   );
 }
 
 const styles = StyleSheet.create({
-  h1: { fontSize: fontSizes.xl, fontWeight: '800', color: colors.ink },
-  h2: { fontSize: fontSizes.lg, fontWeight: '700', color: colors.ink, marginBottom: 4 },
-  sub: { color: colors.textMuted, marginTop: 4 },
-  big: { fontSize: 40, fontWeight: '800', color: colors.primary, marginVertical: 8 },
+  card: { marginBottom: spacing.md },
+  row: { flexDirection: 'row', gap: spacing.md, alignItems: 'center' },
+  h2: {
+    fontSize: fontSizes.sm,
+    fontWeight: '700',
+    color: colors.textMuted,
+    marginBottom: 6,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+  },
+  sub: {
+    color: colors.textMuted,
+    fontSize: fontSizes.sm,
+    marginTop: 4,
+    lineHeight: fontSizes.sm * 1.5,
+  },
+  bigNumber: {
+    fontSize: 48,
+    fontWeight: '800',
+    color: colors.primary,
+    marginVertical: 4,
+  },
+  bigPct: { fontSize: fontSizes.xl, color: colors.textMuted, fontWeight: '500' },
+  progressTrack: {
+    height: 6,
+    borderRadius: 999,
+    backgroundColor: colors.surfaceMuted,
+    overflow: 'hidden',
+    marginTop: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  progressFill: { height: '100%', backgroundColor: colors.primary, borderRadius: 999 },
 });

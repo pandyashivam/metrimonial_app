@@ -3,11 +3,15 @@ import type { Router } from 'expo-router';
 
 /**
  * Deep-link URL patterns supported by the app. Mirrored in:
- *   - apps/web/src/app/login/page.tsx  (desktop → QR / mobile → scheme redirect)
- *   - apps/mobile/app.json             (scheme / associatedDomains / intentFilters)
+ *   - apps/mobile/app.json  (scheme / associatedDomains / intentFilters)
  *
  * Both custom scheme (`shubhmilan://`) and universal links (`https://shubhmilan.com/...`)
  * route to the same handler so share links work in both forms.
+ *
+ * Web build caveat: custom-scheme links (`shubhmilan://...`) DO NOT resolve on
+ * web — `Linking.parse` returns null for non-HTTP URLs. Outbound communications
+ * (emails, marketing, push notifications) targeting the web build must therefore
+ * use HTTPS URLs. Native apps continue to handle both.
  */
 const PATTERNS: Array<{ match: RegExp; route: (m: RegExpMatchArray) => string }> = [
   { match: /^\/?profile\/([a-zA-Z0-9_-]+)$/i, route: (m) => `/profile/${m[1]}` },

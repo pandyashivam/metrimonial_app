@@ -1,10 +1,9 @@
-import { Button, Input, colors, fontSizes, spacing } from '@shubhmilan/ui';
+import { Banner, Button, Input, PageFrame, ScreenHeader, spacing } from '@shubhmilan/ui';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { api } from '../../src/api';
+import { KeyboardSafe } from '../../src/KeyboardSafe';
 import { useOnboarding } from '../../src/onboarding-store';
 
 export default function Horoscope() {
@@ -24,46 +23,35 @@ export default function Horoscope() {
       });
       router.push('/(onboarding)/preference');
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Skip or fill with known values');
+      setErr(e instanceof Error ? e.message : 'Could not save. Try again or skip for now.');
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={styles.scroll}>
-          <Text style={styles.step}>Step 3 of 6</Text>
-          <Text style={styles.title}>Horoscope</Text>
-          <Text style={styles.sub}>
-            Needed for Ashtakoot (Guna Milan) kundli matching. Optional — you can skip and fill later.
-          </Text>
-
-          <Input label="Birth time" placeholder="HH:MM (24-hour)" value={s.birthTime} onChangeText={(t) => s.set({ birthTime: t })} />
-          <Input label="Birth place" value={s.birthPlace} onChangeText={(t) => s.set({ birthPlace: t })} />
-          <Input label="Rashi (moon sign)" value={s.rashi} onChangeText={(t) => s.set({ rashi: t })} />
-          <Input label="Nakshatra" value={s.nakshatra} onChangeText={(t) => s.set({ nakshatra: t })} />
-
-          {err ? <Text style={styles.err}>{err}</Text> : null}
-          <Button title="Continue" onPress={next} loading={saving} block />
-          <Button
-            title="Skip for now"
-            variant="ghost"
-            onPress={() => router.push('/(onboarding)/preference')}
-            block
-            style={{ marginTop: spacing.sm }}
-          />
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+    <KeyboardSafe>
+      <PageFrame>
+        <ScreenHeader
+          kicker="Step 3 of 6"
+          title="Horoscope"
+          subtitle="Used for Ashtakoot (Guna Milan) compatibility. Optional — you can fill these later from your profile."
+        />
+        <Input label="Birth time" placeholder="HH:MM (24-hour)" value={s.birthTime} onChangeText={(t) => s.set({ birthTime: t })} inputMode="numeric" />
+        <Input label="Birth place" value={s.birthPlace} onChangeText={(t) => s.set({ birthPlace: t })} />
+        <Input label="Rashi (moon sign)" value={s.rashi} onChangeText={(t) => s.set({ rashi: t })} />
+        <Input label="Nakshatra" value={s.nakshatra} onChangeText={(t) => s.set({ nakshatra: t })} />
+        {err ? <Banner>{err}</Banner> : null}
+        <Button title="Continue" size="lg" onPress={next} loading={saving} block />
+        <Button
+          title="Skip for now"
+          variant="ghost"
+          size="lg"
+          onPress={() => router.push('/(onboarding)/preference')}
+          block
+          style={{ marginTop: spacing.sm }}
+        />
+      </PageFrame>
+    </KeyboardSafe>
   );
 }
-
-const styles = StyleSheet.create({
-  scroll: { padding: spacing.xl, paddingBottom: spacing.xxxl },
-  step: { color: colors.primary, fontWeight: '700', letterSpacing: 1, fontSize: fontSizes.xs + 1, textTransform: 'uppercase' },
-  title: { fontSize: 26, fontWeight: '800', color: colors.ink, marginTop: 4 },
-  sub: { color: colors.textMuted, marginBottom: spacing.lg, marginTop: 6 },
-  err: { color: colors.danger, marginBottom: spacing.sm, fontWeight: '600' },
-});

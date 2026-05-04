@@ -1,9 +1,17 @@
-import { Button, Card, Chip, colors, fontSizes, spacing } from '@shubhmilan/ui';
+import {
+  Banner,
+  Button,
+  Card,
+  Chip,
+  PageFrame,
+  ScreenHeader,
+  fontSizes,
+  spacing,
+} from '@shubhmilan/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Platform, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { api } from '../../src/api';
 import { useAppLock } from '../../src/app-lock';
@@ -47,10 +55,7 @@ export default function Settings() {
     mutationFn: (patch: Partial<Record<PrefKey, boolean>>) => api.me.setNotificationPrefs(patch),
     onMutate: (patch) => {
       const prev = qc.getQueryData(['notification-prefs']);
-      qc.setQueryData(['notification-prefs'], {
-        ...(prev as object),
-        ...patch,
-      });
+      qc.setQueryData(['notification-prefs'], { ...(prev as object), ...patch });
       return { prev };
     },
     onError: (_e, _patch, ctx) => {
@@ -65,100 +70,116 @@ export default function Settings() {
   ];
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }}>
-      <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.md }}>
-        <Text style={[styles.h1, { color: theme.ink }]}>Settings</Text>
+    <PageFrame>
+      <ScreenHeader
+        kicker="Account"
+        title="Settings"
+        subtitle="Appearance, security, notifications, and more."
+      />
 
-        <Card style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
-          <Text style={[styles.h2, { color: theme.ink }]}>Appearance</Text>
-          <Text style={[styles.sub, { color: theme.textMuted }]}>
-            Choose how ShubhMilan looks. System follows your device setting.
-          </Text>
-          <View style={styles.row}>
-            {options.map((o) => (
-              <Pressable key={o.key} onPress={() => setMode(o.key)}>
-                <Chip label={o.label} tone={mode === o.key ? 'primary' : 'neutral'} />
-              </Pressable>
-            ))}
-          </View>
-        </Card>
-
-        {Platform.OS !== 'web' && (
-          <Card style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
-            <Text style={[styles.h2, { color: theme.ink }]}>Security</Text>
-            <View style={styles.pref}>
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: theme.ink, fontWeight: '600' }}>Require Face ID / Touch ID</Text>
-                <Text style={[styles.sub, { color: theme.textMuted, marginBottom: 0 }]}>
-                  Prompt to unlock when the app comes back to the foreground.
-                </Text>
-              </View>
-              <Switch
-                value={appLockEnabled}
-                onValueChange={async (v) => {
-                  setAppLockErr(null);
-                  try {
-                    await setAppLockEnabled(v);
-                  } catch (e) {
-                    setAppLockErr(e instanceof Error ? e.message : 'Could not enable');
-                  }
-                }}
-                trackColor={{ true: theme.primary, false: theme.border }}
-              />
-            </View>
-            {appLockErr ? (
-              <Text style={{ color: theme.danger, fontSize: fontSizes.xs + 1, marginTop: 6 }}>
-                {appLockErr}
-              </Text>
-            ) : null}
-          </Card>
-        )}
-
-        <Card style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
-          <Text style={[styles.h2, { color: theme.ink }]}>Notifications</Text>
-          <Text style={[styles.sub, { color: theme.textMuted }]}>Turn off categories you don&apos;t want pushed to this device.</Text>
-          {(Object.keys(PREF_LABELS) as PrefKey[]).map((k) => (
-            <View key={k} style={styles.pref}>
-              <Text style={{ color: theme.ink, flex: 1 }}>{PREF_LABELS[k]}</Text>
-              <Switch
-                value={prefs.data?.[k] ?? true}
-                onValueChange={(v) => setPref.mutate({ [k]: v } as Partial<Record<PrefKey, boolean>>)}
-                trackColor={{ true: theme.primary, false: theme.border }}
-              />
-            </View>
+      <Card style={{ ...styles.card, backgroundColor: theme.surface, borderColor: theme.border }}>
+        <Text style={[styles.h2, { color: theme.textMuted }]}>Appearance</Text>
+        <Text style={[styles.body, { color: theme.text }]}>
+          Choose how ShubhMilan looks. System follows your device setting.
+        </Text>
+        <View style={styles.chipRow}>
+          {options.map((o) => (
+            <Pressable key={o.key} onPress={() => setMode(o.key)} hitSlop={4}>
+              <Chip label={o.label} tone={mode === o.key ? 'primary' : 'neutral'} />
+            </Pressable>
           ))}
-        </Card>
+        </View>
+      </Card>
 
-        <Card style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
-          <Text style={[styles.h2, { color: theme.ink }]}>Account</Text>
-          <Button title="Verification" variant="outline" onPress={() => router.push('/verify')} block />
-          <Button
-            title="Premium & billing"
-            variant="outline"
-            onPress={() => router.push('/premium')}
-            block
-            style={{ marginTop: spacing.sm }}
-          />
+      {Platform.OS !== 'web' && (
+        <Card style={{ ...styles.card, backgroundColor: theme.surface, borderColor: theme.border }}>
+          <Text style={[styles.h2, { color: theme.textMuted }]}>Security</Text>
+          <View style={[styles.pref, { borderBottomColor: theme.border }]}>
+            <View style={{ flex: 1, paddingRight: spacing.md }}>
+              <Text style={[styles.prefTitle, { color: theme.ink }]}>
+                Require Face ID / Touch ID
+              </Text>
+              <Text style={[styles.prefSub, { color: theme.textMuted }]}>
+                Prompt to unlock when the app comes back to the foreground.
+              </Text>
+            </View>
+            <Switch
+              value={appLockEnabled}
+              onValueChange={async (v) => {
+                setAppLockErr(null);
+                try {
+                  await setAppLockEnabled(v);
+                } catch (e) {
+                  setAppLockErr(e instanceof Error ? e.message : 'Could not enable.');
+                }
+              }}
+              trackColor={{ true: theme.primary, false: theme.border }}
+            />
+          </View>
+          {appLockErr ? <Banner style={{ marginTop: spacing.sm, marginBottom: 0 }}>{appLockErr}</Banner> : null}
         </Card>
+      )}
 
-        <Button title="Sign out" variant="outline" onPress={signOut} block />
-        <Text style={[styles.foot, { color: theme.textMuted }]}>Version 0.1.0 · Trusted matrimony</Text>
-      </ScrollView>
-    </SafeAreaView>
+      <Card style={{ ...styles.card, backgroundColor: theme.surface, borderColor: theme.border }}>
+        <Text style={[styles.h2, { color: theme.textMuted }]}>Notifications</Text>
+        <Text style={[styles.body, { color: theme.text }]}>
+          Turn off categories you don&apos;t want pushed to this device.
+        </Text>
+        {(Object.keys(PREF_LABELS) as PrefKey[]).map((k, i, arr) => (
+          <View
+            key={k}
+            style={[
+              styles.pref,
+              { borderBottomColor: i === arr.length - 1 ? 'transparent' : theme.border },
+            ]}
+          >
+            <Text style={[styles.prefTitle, { color: theme.ink, flex: 1 }]}>{PREF_LABELS[k]}</Text>
+            <Switch
+              value={prefs.data?.[k] ?? true}
+              onValueChange={(v) => setPref.mutate({ [k]: v } as Partial<Record<PrefKey, boolean>>)}
+              trackColor={{ true: theme.primary, false: theme.border }}
+            />
+          </View>
+        ))}
+      </Card>
+
+      <Card style={{ ...styles.card, backgroundColor: theme.surface, borderColor: theme.border }}>
+        <Text style={[styles.h2, { color: theme.textMuted }]}>Account</Text>
+        <Button title="Verification" variant="outline" size="lg" onPress={() => router.push('/verify')} block />
+        <Button
+          title="Premium & billing"
+          variant="outline"
+          size="lg"
+          onPress={() => router.push('/premium')}
+          block
+          style={{ marginTop: spacing.sm }}
+        />
+      </Card>
+
+      <Button title="Sign out" variant="outline" size="lg" onPress={signOut} block style={{ marginTop: spacing.sm }} />
+      <Text style={[styles.foot, { color: theme.textMuted }]}>Version 0.1.0 · Trusted matrimony</Text>
+    </PageFrame>
   );
 }
 
 const styles = StyleSheet.create({
-  h1: { fontSize: fontSizes.xxl, fontWeight: '800' },
-  h2: { fontSize: fontSizes.md, fontWeight: '700', marginBottom: 4 },
-  sub: { marginBottom: spacing.sm },
-  row: { flexDirection: 'row', gap: 8 },
+  card: { marginBottom: spacing.md },
+  h2: {
+    fontSize: fontSizes.sm,
+    fontWeight: '700',
+    marginBottom: spacing.sm,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+  },
+  body: { fontSize: fontSizes.sm, lineHeight: fontSizes.sm * 1.5, marginBottom: spacing.md },
+  chipRow: { flexDirection: 'row', gap: 8 },
   pref: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
-  foot: { textAlign: 'center', fontSize: fontSizes.xs + 1, marginTop: spacing.lg },
+  prefTitle: { fontSize: fontSizes.md, fontWeight: '600' },
+  prefSub: { fontSize: fontSizes.xs, marginTop: 4, lineHeight: fontSizes.xs * 1.45 },
+  foot: { textAlign: 'center', fontSize: fontSizes.xs, marginTop: spacing.xl },
 });

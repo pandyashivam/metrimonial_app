@@ -1,5 +1,6 @@
 import { createApiClient, type TokenProvider } from '@shubhmilan/api-client';
-import * as SecureStore from 'expo-secure-store';
+
+import { secureStorage } from './secure-storage';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
 
@@ -12,20 +13,20 @@ const tokenProvider: TokenProvider = {
   setTokens: (tokens) => {
     cachedAccess = tokens.accessToken;
     cachedRefresh = tokens.refreshToken;
-    void SecureStore.setItemAsync('access', tokens.accessToken);
-    void SecureStore.setItemAsync('refresh', tokens.refreshToken);
+    void secureStorage.setItem('access', tokens.accessToken);
+    void secureStorage.setItem('refresh', tokens.refreshToken);
   },
   clearTokens: () => {
     cachedAccess = null;
     cachedRefresh = null;
-    void SecureStore.deleteItemAsync('access');
-    void SecureStore.deleteItemAsync('refresh');
+    void secureStorage.removeItem('access');
+    void secureStorage.removeItem('refresh');
   },
 };
 
 export async function hydrateTokens() {
-  cachedAccess = (await SecureStore.getItemAsync('access').catch(() => null)) ?? null;
-  cachedRefresh = (await SecureStore.getItemAsync('refresh').catch(() => null)) ?? null;
+  cachedAccess = (await secureStorage.getItem('access')) ?? null;
+  cachedRefresh = (await secureStorage.getItem('refresh')) ?? null;
 }
 
 export const api = createApiClient({ baseUrl: API_URL, tokenProvider });

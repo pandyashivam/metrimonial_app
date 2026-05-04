@@ -1,12 +1,11 @@
-import { Button, Input, colors, fontSizes, spacing } from '@shubhmilan/ui';
+import { Banner, Button, Input, PageFrame, ScreenHeader } from '@shubhmilan/ui';
 import { ProfileInput } from '@shubhmilan/validation';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { api } from '../../src/api';
+import { KeyboardSafe } from '../../src/KeyboardSafe';
 import { useOnboarding } from '../../src/onboarding-store';
 
 /**
@@ -109,16 +108,14 @@ export default function Basics() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ flex: 1 }}
-      >
-        <ScrollView contentContainerStyle={styles.scroll}>
-          <Text style={styles.step}>Step 1 of 6</Text>
-          <Text style={styles.title}>Basics</Text>
-
-          <Controller
+    <KeyboardSafe>
+      <PageFrame>
+        <ScreenHeader
+          kicker="Step 1 of 6"
+          title="The basics"
+          subtitle="A few essentials so we can show you to the right people."
+        />
+        <Controller
             control={control}
             name="fullName"
             rules={{ required: 'Full name is required' }}
@@ -315,29 +312,10 @@ export default function Basics() {
             )}
           />
 
-          {serverErr ? <Text style={styles.err}>{serverErr}</Text> : null}
-          <Button title="Continue" onPress={handleSubmit(onSubmit)} loading={isSubmitting} block />
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        {serverErr ? <Banner>{serverErr}</Banner> : null}
+        <Button title="Continue" size="lg" onPress={handleSubmit(onSubmit)} loading={isSubmitting} block />
+      </PageFrame>
+    </KeyboardSafe>
   );
 }
 
-const styles = StyleSheet.create({
-  scroll: { padding: spacing.xl, paddingBottom: spacing.xxxl },
-  step: {
-    color: colors.primary,
-    fontWeight: '700',
-    letterSpacing: 1,
-    fontSize: fontSizes.xs + 1,
-    textTransform: 'uppercase',
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: colors.ink,
-    marginTop: 4,
-    marginBottom: spacing.lg,
-  },
-  err: { color: colors.danger, marginBottom: spacing.sm, fontWeight: '600' },
-});

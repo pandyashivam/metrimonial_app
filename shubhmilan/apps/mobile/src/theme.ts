@@ -1,7 +1,8 @@
 import { colors, darkColors } from '@shubhmilan/ui';
-import * as SecureStore from 'expo-secure-store';
 import { useColorScheme } from 'react-native';
 import { create } from 'zustand';
+
+import { secureStorage } from './secure-storage';
 
 const STORAGE_KEY = 'shubhmilan.theme.preference';
 
@@ -17,10 +18,10 @@ export const useThemeStore = create<ThemeState>((set) => ({
   mode: 'system',
   setMode: (mode) => {
     set({ mode });
-    SecureStore.setItemAsync(STORAGE_KEY, mode).catch(() => null);
+    void secureStorage.setItem(STORAGE_KEY, mode);
   },
   hydrate: async () => {
-    const stored = await SecureStore.getItemAsync(STORAGE_KEY).catch(() => null);
+    const stored = await secureStorage.getItem(STORAGE_KEY);
     if (stored === 'light' || stored === 'dark' || stored === 'system') {
       set({ mode: stored });
     }

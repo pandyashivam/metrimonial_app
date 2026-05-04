@@ -1,8 +1,20 @@
-import { Button, Card, TrustDonut, VerificationBadge, colors, fontSizes, spacing } from '@shubhmilan/ui';
+import {
+  Banner,
+  Button,
+  Card,
+  Input,
+  PageFrame,
+  ScreenHeader,
+  TrustDonut,
+  VerificationBadge,
+  colors,
+  fontSizes,
+  spacing,
+} from '@shubhmilan/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { api } from '../../src/api';
 
@@ -14,33 +26,48 @@ type Step = {
 };
 
 export default function Verify() {
+  const router = useRouter();
   const qc = useQueryClient();
   const status = useQuery({ queryKey: ['verification'], queryFn: () => api.verification.get() });
   const [emailCode, setEmailCode] = useState('');
   const [phoneCode, setPhoneCode] = useState('');
+  const [notice, setNotice] = useState<{ kind: 'success' | 'info' | 'error'; text: string } | null>(null);
 
   const mut = {
-    reqEmail: useMutation({ mutationFn: () => api.verification.requestEmail() }),
+    reqEmail: useMutation({
+      mutationFn: () => api.verification.requestEmail(),
+      onSuccess: () => setNotice({ kind: 'info', text: 'Code sent to your email.' }),
+      onError: () => setNotice({ kind: 'error', text: "We couldn't send the email. Try again." }),
+    }),
     verEmail: useMutation({
       mutationFn: (c: string) => api.verification.verifyEmail(c),
-      onSuccess: () => qc.invalidateQueries({ queryKey: ['verification'] }),
+      onSuccess: () => {
+        qc.invalidateQueries({ queryKey: ['verification'] });
+        setNotice({ kind: 'success', text: 'Email verified.' });
+      },
+      onError: () => setNotice({ kind: 'error', text: 'Wrong or expired code. Try again.' }),
     }),
-    reqPhone: useMutation({ mutationFn: () => api.verification.requestPhone() }),
+    reqPhone: useMutation({
+      mutationFn: () => api.verification.requestPhone(),
+      onSuccess: () => setNotice({ kind: 'info', text: 'OTP sent to your phone.' }),
+      onError: () => setNotice({ kind: 'error', text: "We couldn't send the OTP. Try again." }),
+    }),
     verPhone: useMutation({
       mutationFn: (c: string) => api.verification.verifyPhone(c),
-      onSuccess: () => qc.invalidateQueries({ queryKey: ['verification'] }),
+      onSuccess: () => {
+        qc.invalidateQueries({ queryKey: ['verification'] });
+        setNotice({ kind: 'success', text: 'Phone verified.' });
+      },
+      onError: () => setNotice({ kind: 'error', text: 'Wrong or expired OTP. Try again.' }),
     }),
     selfie: useMutation({
       mutationFn: () => api.verification.submitSelfie(),
       onSuccess: () => qc.invalidateQueries({ queryKey: ['verification'] }),
     }),
-    video: useMutation({
-      mutationFn: () => api.verification.submitVideo(),
-      onSuccess: () => Alert.alert('Submitted', 'Our team will review your video KYC within 24 hours.'),
-    }),
     background: useMutation({
       mutationFn: () => api.verification.requestBackground(),
-      onSuccess: () => Alert.alert('Requested', 'We will reach out with next steps shortly.'),
+      onSuccess: () =>
+        setNotice({ kind: 'success', text: 'Background check requested. We will email you with next steps.' }),
     }),
   };
 
@@ -55,90 +82,108 @@ export default function Verify() {
   ];
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
-      <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.md }}>
-        <Card>
-          <View style={{ flexDirection: 'row', gap: spacing.md, alignItems: 'center' }}>
-            <TrustDonut score={s?.trustScore ?? 0} size={84} />
-            <View style={{ flex: 1 }}>
-              <VerificationBadge tier={s?.tier ?? 'BASIC'} />
-              <Text style={styles.hint}>Each step increases your trust score and unlocks higher tiers.</Text>
-            </View>
-          </View>
-        </Card>
+    <PageFrame>
+      <ScreenHeader
+        kicker="Trust"
+        title="Verify your profile"
+        subtitle="Each step adds to your trust score. Verified profiles get up to 3× more responses."
+      />
 
-        {steps.map((step) => (
-          <Card key={step.key}>
-            <Text style={styles.stepLabel}>{step.label}</Text>
-            <Text style={styles.stepDesc}>{step.description}</Text>
-            {step.done ? (
-              <Text style={styles.done}>✓ Verified</Text>
-            ) : step.key === 'email' ? (
-              <View style={{ gap: spacing.sm }}>
-                <Button title="Send code" variant="outline" onPress={() => mut.reqEmail.mutate()} />
-                <TextInput
-                  value={emailCode}
-                  onChangeText={setEmailCode}
-                  placeholder="6-digit code"
-                  inputMode="numeric"
-                  maxLength={6}
-                  style={styles.input}
-                />
-                <Button
-                  title="Verify email"
-                  onPress={() => mut.verEmail.mutate(emailCode)}
-                  loading={mut.verEmail.isPending}
-                />
-              </View>
-            ) : step.key === 'phone' ? (
-              <View style={{ gap: spacing.sm }}>
-                <Button title="Send code" variant="outline" onPress={() => mut.reqPhone.mutate()} />
-                <TextInput
-                  value={phoneCode}
-                  onChangeText={setPhoneCode}
-                  placeholder="6-digit code"
-                  inputMode="numeric"
-                  maxLength={6}
-                  style={styles.input}
-                />
-                <Button
-                  title="Verify phone"
-                  onPress={() => mut.verPhone.mutate(phoneCode)}
-                  loading={mut.verPhone.isPending}
-                />
-              </View>
-            ) : step.key === 'selfie' ? (
-              <Button title="Submit selfie" onPress={() => mut.selfie.mutate()} loading={mut.selfie.isPending} />
-            ) : step.key === 'video' ? (
-              <Button title="Start video KYC" onPress={() => mut.video.mutate()} />
-            ) : step.key === 'background' ? (
-              <Button title="Request background check" onPress={() => mut.background.mutate()} />
-            ) : (
-              <Button
-                title="Start Aadhaar flow"
-                onPress={() =>
-                  Alert.alert('KYC', 'Integrate Digio / HyperVerge here, then POST last-4 + providerRef.')
-                }
+      {notice ? (
+        <Banner variant={notice.kind === 'error' ? 'error' : notice.kind === 'success' ? 'success' : 'info'}>
+          {notice.text}
+        </Banner>
+      ) : null}
+
+      <Card style={styles.card}>
+        <View style={styles.summary}>
+          <TrustDonut score={s?.trustScore ?? 0} size={84} />
+          <View style={{ flex: 1, gap: 6 }}>
+            <VerificationBadge tier={s?.tier ?? 'BASIC'} />
+            <Text style={styles.hint}>
+              Each step increases your trust score and unlocks higher tiers.
+            </Text>
+          </View>
+        </View>
+      </Card>
+
+      {steps.map((step) => (
+        <Card key={step.key} style={styles.card}>
+          <Text style={styles.stepLabel}>{step.label}</Text>
+          <Text style={styles.stepDesc}>{step.description}</Text>
+          {step.done ? (
+            <Text style={styles.done}>✓ Verified</Text>
+          ) : step.key === 'email' ? (
+            <View style={{ gap: spacing.sm }}>
+              <Button title="Send code" variant="outline" onPress={() => mut.reqEmail.mutate()} loading={mut.reqEmail.isPending} />
+              <Input
+                value={emailCode}
+                onChangeText={setEmailCode}
+                placeholder="6-digit code"
+                inputMode="numeric"
+                maxLength={6}
               />
-            )}
-          </Card>
-        ))}
-      </ScrollView>
-    </SafeAreaView>
+              <Button
+                title="Verify email"
+                onPress={() => mut.verEmail.mutate(emailCode)}
+                loading={mut.verEmail.isPending}
+                disabled={emailCode.length !== 6}
+              />
+            </View>
+          ) : step.key === 'phone' ? (
+            <View style={{ gap: spacing.sm }}>
+              <Button title="Send OTP" variant="outline" onPress={() => mut.reqPhone.mutate()} loading={mut.reqPhone.isPending} />
+              <Input
+                value={phoneCode}
+                onChangeText={setPhoneCode}
+                placeholder="6-digit code"
+                inputMode="numeric"
+                maxLength={6}
+              />
+              <Button
+                title="Verify phone"
+                onPress={() => mut.verPhone.mutate(phoneCode)}
+                loading={mut.verPhone.isPending}
+                disabled={phoneCode.length !== 6}
+              />
+            </View>
+          ) : step.key === 'selfie' ? (
+            <Button title="Submit selfie" onPress={() => mut.selfie.mutate()} loading={mut.selfie.isPending} />
+          ) : step.key === 'video' ? (
+            <Button title="Record video KYC" onPress={() => router.push('/verify/video')} />
+          ) : step.key === 'background' ? (
+            <Button
+              title="Request background check"
+              onPress={() => mut.background.mutate()}
+              loading={mut.background.isPending}
+            />
+          ) : (
+            <Button
+              title="Verify with Aadhaar"
+              onPress={() =>
+                setNotice({
+                  kind: 'info',
+                  text: 'The Aadhaar flow opens in our verified provider. We will guide you through it from your phone.',
+                })
+              }
+            />
+          )}
+        </Card>
+      ))}
+    </PageFrame>
   );
 }
 
 const styles = StyleSheet.create({
-  hint: { color: colors.textMuted, marginTop: 4 },
-  stepLabel: { fontSize: fontSizes.md, fontWeight: '700', color: colors.ink },
-  stepDesc: { color: colors.textMuted, marginTop: 2, marginBottom: spacing.sm },
-  done: { color: colors.success, fontWeight: '700' },
-  input: {
-    borderWidth: 1,
-    borderColor: '#d8d8df',
-    borderRadius: 8,
-    padding: 11,
-    backgroundColor: '#fff',
-    fontSize: fontSizes.sm + 1,
+  card: { marginBottom: spacing.md },
+  summary: { flexDirection: 'row', gap: spacing.md, alignItems: 'center' },
+  hint: { color: colors.textMuted, fontSize: fontSizes.sm, lineHeight: fontSizes.sm * 1.5 },
+  stepLabel: { fontSize: fontSizes.md, fontWeight: '700', color: colors.ink, marginBottom: 2 },
+  stepDesc: {
+    color: colors.textMuted,
+    fontSize: fontSizes.sm,
+    marginBottom: spacing.md,
+    lineHeight: fontSizes.sm * 1.5,
   },
+  done: { color: colors.success, fontWeight: '700', fontSize: fontSizes.sm },
 });

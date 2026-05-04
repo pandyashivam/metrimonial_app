@@ -752,12 +752,22 @@ Device.init(
   {
     id: { type: DataTypes.STRING(30), primaryKey: true, defaultValue: () => cuid() },
     userId: { type: DataTypes.STRING(30), allowNull: false },
-    fcmToken: { type: DataTypes.STRING, allowNull: false, unique: true },
+    // Long enough to hold a Web Push PushSubscription JSON (~500 chars typical,
+    // ~2 KB safe ceiling) as well as short Expo push tokens. We index by a
+    // 191-char prefix because a fully unique index over the whole field would
+    // exceed MySQL's max key length under utf8mb4.
+    fcmToken: { type: DataTypes.STRING(2048), allowNull: false },
     platform: { type: DataTypes.STRING, allowNull: false },
     lastSeenAt: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
     createdAt: DataTypes.DATE,
   },
-  { sequelize, tableName: 'devices', timestamps: true, updatedAt: false, indexes: [{ fields: ['userId'] }] },
+  {
+    sequelize,
+    tableName: 'devices',
+    timestamps: true,
+    updatedAt: false,
+    indexes: [{ fields: ['userId'] }, { fields: [{ name: 'fcmToken', length: 191 }], unique: true }],
+  },
 );
 
 // ─── Content ──────────────────────────────────────────────────────────

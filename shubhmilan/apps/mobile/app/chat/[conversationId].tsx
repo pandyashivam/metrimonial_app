@@ -2,14 +2,11 @@ import { FontAwesome6 } from '@expo/vector-icons';
 import type { EncryptedMessage } from '@shubhmilan/api-client';
 import { Button, Input, colors, fontSizes, spacing } from '@shubhmilan/ui';
 import { useQuery } from '@tanstack/react-query';
-import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
   Image,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -18,6 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { api } from '../../src/api';
+import { KeyboardSafe } from '../../src/KeyboardSafe';
 import {
   decodeEnvelope,
   decryptMedia,
@@ -29,6 +27,7 @@ import {
   naclUtil,
   type MessageEnvelope,
 } from '../../src/crypto';
+import { pickImageBytes } from '../../src/photo-picker';
 import { getSocket } from '../../src/socket';
 
 interface DecryptedMessage {
@@ -255,26 +254,16 @@ export default function ChatScreen() {
 
   const sendImage = useCallback(async () => {
     if (!mySecret || !peerKey || !conversationId) return;
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) return;
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 0.85,
-      base64: true,
-    });
-    if (result.canceled || !result.assets[0]) return;
-    const asset = result.assets[0];
-    const mime = asset.mimeType ?? 'image/jpeg';
-    const bytes = asset.base64 ? naclUtil.decodeBase64(asset.base64) : null;
-    if (!bytes) return;
+    const picked = await pickImageBytes();
+    if (!picked) return;
+    const { bytes, mime } = picked;
 
     setSending(true);
     try {
       // 1. Encrypt the image bytes with a fresh symmetric key.
       const { ciphertext: mediaCt, symKey, symNonce } = await encryptMedia(bytes);
-      // 2. Upload the encrypted blob to R2 — it's opaque to the server.
-      const blob = new Blob([mediaCt], { type: 'application/octet-stream' });
+      // 2. Upload the encrypted blob to S3/R2 — it's opaque to the server.
+      const blob = new Blob([mediaCt as BlobPart], { type: 'application/octet-stream' });
       const { key } = await api.chat.uploadMedia(blob);
       // 3. Build + E2E-encrypt the envelope (contains the sym key so the peer can decrypt).
       const envelope = encodeEnvelope({
@@ -289,7 +278,7 @@ export default function ChatScreen() {
       await api.chat.send(conversationId, {
         ciphertext,
         nonce,
-        mediaUrl: null,
+        mediaUrl: undefined,
         mediaMime: mime,
       });
       setInput('');
@@ -311,16 +300,29 @@ export default function ChatScreen() {
       <View style={styles.banner}>
         <Text style={styles.bannerText}>{banner}</Text>
       </View>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+      <KeyboardSafe>
         <FlatList
           ref={listRef}
           data={messages}
           keyExtractor={(m) => m.id}
-          contentContainerStyle={{ padding: spacing.md, gap: 8 }}
+          contentContainerStyle={
+            messages.length === 0
+              ? styles.emptyContent
+              : { padding: spacing.md, gap: 8 }
+          }
           onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
+          ListEmptyComponent={
+            <View style={styles.emptyWrap}>
+              <Text style={styles.emptyTitle}>
+                {peerKey ? 'Say hello' : 'Setting up encryption…'}
+              </Text>
+              <Text style={styles.emptyBody}>
+                {peerKey
+                  ? "Conversations start with a kind first message. Mention something from their profile that caught your eye."
+                  : "We're preparing the secure channel. This only takes a moment."}
+              </Text>
+            </View>
+          }
           renderItem={({ item }) => (
             <View
               style={[
@@ -379,7 +381,7 @@ export default function ChatScreen() {
             disabled={!input.trim() || !peerKey}
           />
         </View>
-      </KeyboardAvoidingView>
+      </KeyboardSafe>
     </SafeAreaView>
   );
 }
@@ -422,5 +424,28 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: '#fff',
     alignItems: 'flex-end',
+  },
+  emptyContent: {
+    flexGrow: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.xl,
+  },
+  emptyWrap: {
+    alignItems: 'center',
+    gap: spacing.sm,
+    maxWidth: 360,
+  },
+  emptyTitle: {
+    fontSize: fontSizes.lg,
+    fontWeight: '700',
+    color: colors.ink,
+    textAlign: 'center',
+  },
+  emptyBody: {
+    fontSize: fontSizes.sm,
+    color: colors.textMuted,
+    textAlign: 'center',
+    lineHeight: fontSizes.sm * 1.5,
   },
 });

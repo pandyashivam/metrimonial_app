@@ -1,11 +1,12 @@
 import { Button, Input, colors, spacing } from '@shubhmilan/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text } from 'react-native';
+import { ScrollView, StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { api, tokenProvider } from '../../src/api';
 import { useAuth } from '../../src/auth-store';
+import { KeyboardSafe } from '../../src/KeyboardSafe';
 
 type Purpose = 'SIGNUP' | 'LOGIN' | 'RESET' | 'VERIFY_EMAIL' | 'VERIFY_PHONE';
 
@@ -46,10 +47,7 @@ export default function Otp() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+      <KeyboardSafe>
         <ScrollView contentContainerStyle={styles.scroll}>
           <Text style={styles.title}>Enter OTP</Text>
           <Text style={styles.sub}>We sent a 6-digit code to {target}</Text>
@@ -65,7 +63,7 @@ export default function Otp() {
           <Button title="Verify & continue" onPress={verify} loading={loading} block />
           <Button title="Resend OTP" variant="ghost" onPress={resend} block style={{ marginTop: spacing.sm }} />
         </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardSafe>
     </SafeAreaView>
   );
 }
