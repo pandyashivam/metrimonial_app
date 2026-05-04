@@ -1,9 +1,17 @@
 import { FontAwesome6 } from '@expo/vector-icons';
-import { Button, Card, colors, fontSizes, spacing } from '@shubhmilan/ui';
+import {
+  Banner,
+  Button,
+  PageFrame,
+  ScreenHeader,
+  colors,
+  fontSizes,
+  spacing,
+} from '@shubhmilan/ui';
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { api } from '../../src/api';
@@ -47,45 +55,34 @@ export default function VideoKyc() {
 
   if (done) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg, padding: spacing.lg }}>
-        <Card>
-          <Text style={styles.h1}>Thanks — your video is in the queue</Text>
-          <Text style={styles.sub}>
-            A reviewer will confirm your identity within 24 hours. You&apos;ll get a notification
-            once approved. Your trust score will update automatically.
-          </Text>
-          <Button title="Back to verification" onPress={() => router.back()} block />
-        </Card>
-      </SafeAreaView>
+      <PageFrame centerVertical>
+        <ScreenHeader
+          kicker="Submitted"
+          title="Thanks — your video is in the queue"
+          subtitle="A reviewer will confirm your identity within 24 hours. You'll get a notification once approved, and your trust score will update automatically."
+        />
+        <Button title="Back to verification" size="lg" onPress={() => router.back()} block />
+      </PageFrame>
     );
   }
 
   if (Platform.OS === 'web') {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
-        <ScrollView contentContainerStyle={styles.webScroll}>
-          <View style={styles.webFrame}>
-            <Text style={styles.kicker}>Step 3 — Identity</Text>
-            <Text style={styles.title}>Record a short verification video</Text>
-            <Text style={styles.sub}>
-              Please state your full name and city, and say &quot;I&apos;m joining ShubhMilan
-              today.&quot; Recording is capped at 30 seconds.
-            </Text>
-            {error ? (
-              <View style={styles.banner} accessibilityLiveRegion="polite">
-                <Text style={styles.bannerText}>{error}</Text>
-              </View>
-            ) : null}
-            <WebVideoRecorder
-              onRecorded={(blob) => {
-                void submitRecording(blob);
-              }}
-              onCancel={() => router.back()}
-            />
-            {submitting ? <Text style={styles.uploading}>Uploading recording…</Text> : null}
-          </View>
-        </ScrollView>
-      </SafeAreaView>
+      <PageFrame>
+        <ScreenHeader
+          kicker="Step 3 — Identity"
+          title="Record a short verification video"
+          subtitle={'Please state your full name and city, and say "I\'m joining ShubhMilan today." Recording is capped at 30 seconds.'}
+        />
+        {error ? <Banner>{error}</Banner> : null}
+        <WebVideoRecorder
+          onRecorded={(blob) => {
+            void submitRecording(blob);
+          }}
+          onCancel={() => router.back()}
+        />
+        {submitting ? <Text style={styles.uploading}>Uploading recording…</Text> : null}
+      </PageFrame>
     );
   }
 
@@ -196,41 +193,6 @@ function NativeVideoKyc({
 }
 
 const styles = StyleSheet.create({
-  // shared
-  h1: { fontSize: fontSizes.xl, fontWeight: '800', color: colors.ink, marginBottom: spacing.sm },
-  sub: { color: colors.textMuted, fontSize: fontSizes.md, lineHeight: fontSizes.md * 1.5, marginBottom: spacing.md },
-
-  // web
-  webScroll: { flexGrow: 1, justifyContent: 'flex-start', paddingVertical: spacing.xl },
-  webFrame: {
-    width: '100%',
-    maxWidth: 540,
-    alignSelf: 'center',
-    paddingHorizontal: spacing.xl,
-  },
-  kicker: {
-    color: colors.accentDark,
-    fontWeight: '700',
-    letterSpacing: 1.4,
-    fontSize: fontSizes.xs,
-    textTransform: 'uppercase',
-  },
-  title: {
-    fontSize: fontSizes.xxl,
-    color: colors.ink,
-    fontWeight: '700',
-    lineHeight: fontSizes.xxl * 1.15,
-    marginTop: spacing.xs,
-  },
-  banner: {
-    backgroundColor: colors.danger50,
-    borderColor: colors.danger,
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: spacing.md,
-    marginBottom: spacing.lg,
-  },
-  bannerText: { color: colors.danger, fontSize: fontSizes.sm, fontWeight: '500' },
   uploading: {
     color: colors.textMuted,
     fontSize: fontSizes.sm,
