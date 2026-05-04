@@ -94,7 +94,7 @@ export function BottomSheet({
             accessibilityLabel="Close dialog"
           />
         </Animated.View>
-        <View style={styles.dialogWrap} pointerEvents="box-none">
+        <View style={[styles.dialogWrap, { pointerEvents: 'box-none' }]}>
           <Animated.View
             style={[
               styles.dialog,

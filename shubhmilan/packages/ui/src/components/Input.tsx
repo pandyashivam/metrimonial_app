@@ -23,35 +23,29 @@ export interface InputProps extends TextInputProps {
 /**
  * Input — primary text field for forms.
  *
- * On web we deliberately avoid React-state-driven focus styling: react-native-web
- * 0.19 has a known issue where calling `setState` synchronously inside `onFocus`
- * triggers a re-render that interrupts the browser's focus settle, causing the
- * input to immediately blur. The focus ring is therefore drawn purely by CSS via
- * the `:focus-within` pseudo-class on a `<style>` block we inject once. On native
- * the `setFocused` state still drives the ring through the standard RN style
- * pathway — there's no DOM, so no blur loop.
+ * Web: renders a real native `<input>` (or `<textarea>` for multiline) directly.
+ *      Bypasses react-native-web's TextInput layer, which has known focus-loss
+ *      issues with state updates. The wrap is a normal View; focus styling
+ *      uses CSS :focus-within via an injected stylesheet.
+ *
+ * Native: standard RN TextInput with a useState-driven focus ring.
  *
  * Tap target is 52px tall to satisfy WCAG 2.5.5 and feel premium under thumb.
- * `mode='onBlur'` validation in callers means we only show error after the user
- * leaves the field — never during typing.
  */
 
 export const Input = forwardRef<TextInput, InputProps>(function Input(
   { label, error, hint, required, leftIcon, rightSlot, style, editable = true, ...rest },
   ref,
 ) {
-  // Inject the web focus-ring stylesheet once. Inside useEffect to avoid the
-  // top-level temporal-dead-zone access on STYLE_ID and `colors` constants
-  // declared further down in this module.
-  useEffect(() => {
-    ensureWebFocusRingStyle();
-  }, []);
-
-  // Native-only: track focus in state so the wrap can show the ring.
-  // On web the wrap's `:focus-within` rule does this without a re-render.
-  const [focusedNative, setFocusedNative] = useState(false);
   const showError = !!error;
   const isWeb = Platform.OS === 'web';
+
+  // Native-only: focus state for the burgundy ring. Web uses CSS :focus-within.
+  const [focusedNative, setFocusedNative] = useState(false);
+
+  useEffect(() => {
+    if (isWeb) ensureWebFocusRingStyle();
+  }, [isWeb]);
 
   const wrapStyle = [
     styles.wrap,
@@ -70,27 +64,34 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
       ) : null}
       <View
         style={wrapStyle}
-        // Used by the injected web stylesheet to apply :focus-within styling
-        // without forcing a React re-render.
         {...(isWeb ? { dataSet: { shubhmilanInput: showError ? 'error' : 'normal' } } : {})}
       >
         {leftIcon ? <View style={styles.leftIcon}>{leftIcon}</View> : null}
-        <TextInput
-          ref={ref}
-          editable={editable}
-          placeholderTextColor={colors.textSubtle}
-          selectionColor={colors.primary}
-          style={[styles.input, leftIcon ? null : styles.inputPaddedLeft, style]}
-          {...rest}
-          onFocus={(e) => {
-            if (!isWeb) setFocusedNative(true);
-            rest.onFocus?.(e);
-          }}
-          onBlur={(e) => {
-            if (!isWeb) setFocusedNative(false);
-            rest.onBlur?.(e);
-          }}
-        />
+        {isWeb ? (
+          <WebInput
+            innerRef={ref as unknown as React.Ref<HTMLInputElement | HTMLTextAreaElement>}
+            editable={editable}
+            hasLeftIcon={!!leftIcon}
+            {...rest}
+          />
+        ) : (
+          <TextInput
+            ref={ref}
+            editable={editable}
+            placeholderTextColor={colors.textSubtle}
+            selectionColor={colors.primary}
+            style={[styles.input, leftIcon ? null : styles.inputPaddedLeft, style]}
+            {...rest}
+            onFocus={(e) => {
+              setFocusedNative(true);
+              rest.onFocus?.(e);
+            }}
+            onBlur={(e) => {
+              setFocusedNative(false);
+              rest.onBlur?.(e);
+            }}
+          />
+        )}
         {rightSlot ? <View style={styles.rightSlot}>{rightSlot}</View> : null}
       </View>
       {showError ? (
@@ -105,10 +106,165 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
 });
 
 /**
+ * Web-only renderer that emits a real `<input>` (or `<textarea>` for multiline).
+ *
+ * Translates the subset of TextInput props we use into HTML attributes. We do
+ * this via React.createElement so we don't need to convince TypeScript that
+ * raw HTML JSX tags exist in a React Native environment.
+ */
+interface WebInputProps extends Omit<TextInputProps, 'style'> {
+  innerRef?: React.Ref<HTMLInputElement | HTMLTextAreaElement>;
+  hasLeftIcon: boolean;
+}
+
+function WebInput({
+  innerRef,
+  editable = true,
+  hasLeftIcon,
+  value,
+  defaultValue,
+  onChangeText,
+  onChange,
+  onFocus,
+  onBlur,
+  onSubmitEditing,
+  onKeyPress,
+  placeholder,
+  secureTextEntry,
+  autoCapitalize,
+  autoComplete,
+  autoCorrect,
+  inputMode,
+  keyboardType,
+  maxLength,
+  multiline,
+  numberOfLines,
+  returnKeyType,
+}: WebInputProps) {
+  const inputType = secureTextEntry ? 'password' : inputModeToInputType(inputMode, keyboardType);
+  const autoCompleteHtml = autoCompleteToHtml(autoComplete);
+  const autoCapHtml = autoCapToHtml(autoCapitalize);
+  const enterKey = returnKeyTypeToEnterKey(returnKeyType);
+
+  const baseStyle: React.CSSProperties = {
+    flex: 1,
+    border: 0,
+    outline: 'none',
+    background: 'transparent',
+    color: colors.ink,
+    fontSize: fontSizes.md,
+    fontFamily: 'inherit',
+    padding: '14px 12px',
+    paddingLeft: hasLeftIcon ? 4 : 12,
+    minWidth: 0,
+    width: '100%',
+  };
+
+  const sharedProps = {
+    ref: innerRef as never,
+    value: value as string | undefined,
+    defaultValue: defaultValue as string | undefined,
+    placeholder,
+    disabled: !editable,
+    autoComplete: autoCompleteHtml,
+    autoCapitalize: autoCapHtml,
+    autoCorrect: autoCorrect === false ? 'off' : undefined,
+    spellCheck: autoCorrect === false ? false : undefined,
+    maxLength,
+    enterKeyHint: enterKey,
+    onChange: (e: { target: { value: string } }) => {
+      onChangeText?.(e.target.value);
+      // RN-style synthetic event isn't available here; we only fire the simple
+      // onChangeText path which is what every caller actually uses.
+      void onChange;
+    },
+    onFocus: onFocus as unknown as (e: unknown) => void,
+    onBlur: onBlur as unknown as (e: unknown) => void,
+    onKeyDown: (e: { key: string; target: { value?: string } }) => {
+      if (e.key === 'Enter' && !multiline) {
+        onSubmitEditing?.({ nativeEvent: { text: e.target.value ?? '' } } as never);
+      }
+      onKeyPress?.({ nativeEvent: { key: e.key } } as never);
+    },
+    style: baseStyle,
+  } as const;
+
+  if (multiline) {
+    return React.createElement('textarea', {
+      ...sharedProps,
+      rows: numberOfLines ?? 4,
+      style: { ...baseStyle, resize: 'vertical' as const, minHeight: 96 },
+    });
+  }
+  return React.createElement('input', { ...sharedProps, type: inputType });
+}
+
+function inputModeToInputType(
+  inputMode?: TextInputProps['inputMode'],
+  keyboardType?: TextInputProps['keyboardType'],
+): string {
+  if (inputMode === 'email') return 'email';
+  if (inputMode === 'tel' || keyboardType === 'phone-pad') return 'tel';
+  if (inputMode === 'url') return 'url';
+  if (inputMode === 'numeric' || keyboardType === 'numeric' || keyboardType === 'number-pad') return 'text';
+  if (inputMode === 'decimal') return 'text';
+  if (inputMode === 'search') return 'search';
+  return 'text';
+}
+
+function autoCompleteToHtml(autoComplete?: TextInputProps['autoComplete']): string | undefined {
+  if (!autoComplete) return undefined;
+  // Most RN values map 1:1 to HTML autocomplete tokens.
+  const map: Record<string, string> = {
+    off: 'off',
+    name: 'name',
+    'given-name': 'given-name',
+    'family-name': 'family-name',
+    email: 'email',
+    tel: 'tel',
+    'street-address': 'street-address',
+    postal: 'postal-code',
+    'postal-code': 'postal-code',
+    country: 'country',
+    username: 'username',
+    password: 'current-password',
+    'current-password': 'current-password',
+    'new-password': 'new-password',
+    'one-time-code': 'one-time-code',
+    'cc-number': 'cc-number',
+    'cc-csc': 'cc-csc',
+    'cc-exp': 'cc-exp',
+    'cc-name': 'cc-name',
+  };
+  return map[autoComplete] ?? autoComplete;
+}
+
+function autoCapToHtml(autoCapitalize?: TextInputProps['autoCapitalize']): string | undefined {
+  if (!autoCapitalize) return undefined;
+  if (autoCapitalize === 'characters') return 'characters';
+  if (autoCapitalize === 'words') return 'words';
+  if (autoCapitalize === 'sentences') return 'sentences';
+  if (autoCapitalize === 'none') return 'off';
+  return undefined;
+}
+
+function returnKeyTypeToEnterKey(t?: TextInputProps['returnKeyType']): string | undefined {
+  if (!t) return undefined;
+  const map: Record<string, string> = {
+    done: 'done',
+    go: 'go',
+    next: 'next',
+    search: 'search',
+    send: 'send',
+  };
+  return map[t];
+}
+
+/**
  * PasswordInput — text field with show/hide eye toggle.
  *
  * The eye sits in the rightSlot of the underlying Input so it inherits all the
- * focus/error styling. We use a text "Show / Hide" label instead of an icon dep
+ * focus / error styling. We use a "Show / Hide" text label rather than an icon
  * so the UI package stays icon-library-free.
  */
 export const PasswordInput = forwardRef<TextInput, Omit<InputProps, 'secureTextEntry' | 'rightSlot'>>(
@@ -141,14 +297,18 @@ export const PasswordInput = forwardRef<TextInput, Omit<InputProps, 'secureTextE
 
 const STYLE_ID = 'shubhmilan-input-focus-ring';
 
-/**
- * Inject a single `<style>` block on the web that paints the focus ring via
- * `:focus-within` instead of through React state. Idempotent — running multiple
- * times is a no-op. We reach `document` through `globalThis` rather than the
- * DOM lib so this shared package compiles in native-only tsconfigs too.
- */
+interface WebElement {
+  id: string;
+  appendChild: (child: WebElement) => void;
+}
+interface WebDocument {
+  head: WebElement;
+  getElementById: (id: string) => WebElement | null;
+  createElement: (tag: string) => WebElement;
+  createTextNode: (text: string) => WebElement;
+}
+
 function ensureWebFocusRingStyle(): void {
-  if (Platform.OS !== 'web') return;
   const doc = (globalThis as unknown as { document?: WebDocument }).document;
   if (!doc) return;
   if (doc.getElementById(STYLE_ID)) return;
@@ -169,17 +329,6 @@ function ensureWebFocusRingStyle(): void {
   tag.id = STYLE_ID;
   tag.appendChild(doc.createTextNode(css));
   doc.head.appendChild(tag);
-}
-
-interface WebElement {
-  id: string;
-  appendChild: (child: WebElement) => void;
-}
-interface WebDocument {
-  head: WebElement;
-  getElementById: (id: string) => WebElement | null;
-  createElement: (tag: string) => WebElement;
-  createTextNode: (text: string) => WebElement;
 }
 
 const styles = StyleSheet.create({

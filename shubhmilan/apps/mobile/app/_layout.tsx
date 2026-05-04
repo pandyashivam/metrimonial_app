@@ -20,36 +20,45 @@ const queryClient = new QueryClient({
 
 export default function RootLayout() {
   const [booted, setBooted] = useState(false);
-  const { user, setUser, hydrated, setHydrated } = useAuth();
-  const segments = useSegments();
-  const router = useRouter();
-
-  const syncKeys = useAuth((s) => s.syncEncryptionKeys);
-  const hydrateTheme = useThemeStore((s) => s.hydrate);
-  const hydrateLock = useAppLock((s) => s.hydrate);
-  const lockNow = useAppLock((s) => s.lock);
+  // Selectors so this layout only re-renders on changes to fields it actually
+  // reads. A full `useAuth()` destructure would subscribe to the whole store
+  // and cause the Stack to re-render (and child screens to potentially remount
+  // and steal focus from inputs) whenever any store field changes.
+  const user = useAuth((s) => s.user);
+  const hydrated = useAuth((s) => s.hydrated);
   const locked = useAppLock((s) => s.locked);
   const isDark = useIsDark();
+
+  const segments = useSegments();
+  const router = useRouter();
   const appState = useRef<AppStateStatus>(AppState.currentState);
 
   useEffect(() => {
+    // Run once. We touch stores via getState() rather than as effect deps so
+    // re-renders never re-trigger this bootstrap.
+    let cancelled = false;
     loadWebFonts();
     (async () => {
-      await hydrateTheme();
-      await hydrateLock();
+      await useThemeStore.getState().hydrate();
+      await useAppLock.getState().hydrate();
       await hydrateTokens();
       try {
         const me = await api.me.get();
-        setUser(me);
-        // Ensure E2E encryption keys exist for this device and the server has our public key.
-        await syncKeys();
+        if (cancelled) return;
+        useAuth.getState().setUser(me);
+        await useAuth.getState().syncEncryptionKeys();
       } catch {
-        setUser(null);
+        if (cancelled) return;
+        useAuth.getState().setUser(null);
       }
-      setHydrated(true);
+      if (cancelled) return;
+      useAuth.getState().setHydrated(true);
       setBooted(true);
     })();
-  }, [setUser, setHydrated, syncKeys, hydrateTheme, hydrateLock]);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Lock the app when it goes to the background so a re-open requires biometric unlock.
   useEffect(() => {
@@ -58,12 +67,12 @@ export default function RootLayout() {
         appState.current.match(/active/) &&
         (next === 'background' || next === 'inactive')
       ) {
-        lockNow();
+        useAppLock.getState().lock();
       }
       appState.current = next;
     });
     return () => sub.remove();
-  }, [lockNow]);
+  }, []);
 
   useEffect(() => {
     // Wait for the Stack to mount before navigating; otherwise expo-router
@@ -87,25 +96,25 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
-        <StatusBar style={isDark ? 'light' : 'dark'} />
-        {locked && user ? <LockScreen /> : null}
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(auth)" />
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="profile/[id]" options={{ headerShown: true, title: 'Profile' }} />
-          <Stack.Screen
-            name="chat/[conversationId]"
-            options={{ headerShown: true, title: 'Chat' }}
-          />
-          <Stack.Screen name="kundli/[otherId]" options={{ headerShown: true, title: 'Kundli' }} />
-          <Stack.Screen name="verify/index" options={{ headerShown: true, title: 'Verification' }} />
-          <Stack.Screen name="verify/video" options={{ headerShown: true, title: 'Video KYC' }} />
-          <Stack.Screen name="verify/background" options={{ headerShown: true, title: 'Background check' }} />
-          <Stack.Screen name="settings/index" options={{ headerShown: true, title: 'Settings' }} />
-          <Stack.Screen name="premium" options={{ headerShown: true, title: 'Go Premium' }} />
-          <Stack.Screen name="filters" options={{ headerShown: true, title: 'Filters' }} />
-          <Stack.Screen name="(onboarding)" />
-        </Stack>
+          <StatusBar style={isDark ? 'light' : 'dark'} />
+          {locked && user ? <LockScreen /> : null}
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(auth)" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="profile/[id]" options={{ headerShown: true, title: 'Profile' }} />
+            <Stack.Screen
+              name="chat/[conversationId]"
+              options={{ headerShown: true, title: 'Chat' }}
+            />
+            <Stack.Screen name="kundli/[otherId]" options={{ headerShown: true, title: 'Kundli' }} />
+            <Stack.Screen name="verify/index" options={{ headerShown: true, title: 'Verification' }} />
+            <Stack.Screen name="verify/video" options={{ headerShown: true, title: 'Video KYC' }} />
+            <Stack.Screen name="verify/background" options={{ headerShown: true, title: 'Background check' }} />
+            <Stack.Screen name="settings/index" options={{ headerShown: true, title: 'Settings' }} />
+            <Stack.Screen name="premium" options={{ headerShown: true, title: 'Go Premium' }} />
+            <Stack.Screen name="filters" options={{ headerShown: true, title: 'Filters' }} />
+            <Stack.Screen name="(onboarding)" />
+          </Stack>
         </ToastProvider>
       </QueryClientProvider>
     </SafeAreaProvider>
