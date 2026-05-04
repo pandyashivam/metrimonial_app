@@ -1,4 +1,4 @@
-import React, { forwardRef, useState } from 'react';
+import React, { forwardRef, useEffect, useState } from 'react';
 import {
   Platform,
   Pressable,
@@ -36,12 +36,17 @@ export interface InputProps extends TextInputProps {
  * leaves the field — never during typing.
  */
 
-ensureWebFocusRingStyle();
-
 export const Input = forwardRef<TextInput, InputProps>(function Input(
   { label, error, hint, required, leftIcon, rightSlot, style, editable = true, ...rest },
   ref,
 ) {
+  // Inject the web focus-ring stylesheet once. Inside useEffect to avoid the
+  // top-level temporal-dead-zone access on STYLE_ID and `colors` constants
+  // declared further down in this module.
+  useEffect(() => {
+    ensureWebFocusRingStyle();
+  }, []);
+
   // Native-only: track focus in state so the wrap can show the ring.
   // On web the wrap's `:focus-within` rule does this without a re-render.
   const [focusedNative, setFocusedNative] = useState(false);
@@ -139,12 +144,14 @@ const STYLE_ID = 'shubhmilan-input-focus-ring';
 /**
  * Inject a single `<style>` block on the web that paints the focus ring via
  * `:focus-within` instead of through React state. Idempotent — running multiple
- * times is a no-op.
+ * times is a no-op. We reach `document` through `globalThis` rather than the
+ * DOM lib so this shared package compiles in native-only tsconfigs too.
  */
 function ensureWebFocusRingStyle(): void {
   if (Platform.OS !== 'web') return;
-  if (typeof document === 'undefined') return;
-  if (document.getElementById(STYLE_ID)) return;
+  const doc = (globalThis as unknown as { document?: WebDocument }).document;
+  if (!doc) return;
+  if (doc.getElementById(STYLE_ID)) return;
   const css = `
     [data-shubhmilan-input="normal"]:focus-within {
       border-color: ${colors.primary} !important;
@@ -158,10 +165,21 @@ function ensureWebFocusRingStyle(): void {
       outline: none !important;
     }
   `;
-  const tag = document.createElement('style');
+  const tag = doc.createElement('style');
   tag.id = STYLE_ID;
-  tag.appendChild(document.createTextNode(css));
-  document.head.appendChild(tag);
+  tag.appendChild(doc.createTextNode(css));
+  doc.head.appendChild(tag);
+}
+
+interface WebElement {
+  id: string;
+  appendChild: (child: WebElement) => void;
+}
+interface WebDocument {
+  head: WebElement;
+  getElementById: (id: string) => WebElement | null;
+  createElement: (tag: string) => WebElement;
+  createTextNode: (text: string) => WebElement;
 }
 
 const styles = StyleSheet.create({
