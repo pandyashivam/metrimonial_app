@@ -1,10 +1,23 @@
 :root {
   --primary: #8b1e3f;
-  --bg: #f7f7fa;
-  --surface: #fff;
-  --ink: #1a1a1a;
-  --muted: #6e6e78;
-  --line: #e7e5ea;
+  --primary-dark: #5f1029;
+  --accent: #c8a45c;
+  --accent-dark: #9e7f3f;
+  --bg: #fbf7f2;
+  --surface: #ffffff;
+  --surface-alt: #f5efe7;
+  --ink: #1a1718;
+  --muted: #6b6166;
+  --line: #eae3dc;
+  --hairline: #f0e9e0;
+}
+.sidebar {
+  display: flex;
+  flex-direction: column;
+}
+@keyframes shubhmilanPulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 0.4; }
 }
 * {
   box-sizing: border-box;
