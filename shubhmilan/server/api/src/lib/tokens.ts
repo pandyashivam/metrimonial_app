@@ -9,8 +9,11 @@ export interface AccessTokenClaims {
 }
 
 export function signAccessToken(claims: AccessTokenClaims): string {
+  // jsonwebtoken's `expiresIn` accepts a numeric seconds value or a literal-typed
+  // duration string; our env value is `string`, which doesn't match the literal
+  // template type. Convert to seconds at the boundary.
   return jwt.sign(claims, env.JWT_ACCESS_SECRET, {
-    expiresIn: env.JWT_ACCESS_TTL,
+    expiresIn: ttlToSeconds(env.JWT_ACCESS_TTL),
     issuer: 'shubhmilan',
   });
 }

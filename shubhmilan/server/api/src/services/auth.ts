@@ -1,3 +1,4 @@
+import type { PublicUser } from '@shubhmilan/types';
 import bcrypt from 'bcrypt';
 
 import { User, RefreshToken } from '../db.js';
@@ -56,7 +57,7 @@ export async function revokeAllRefreshTokensForUser(userId: string) {
   );
 }
 
-export function toPublicUser(user: User) {
+export function toPublicUser(user: User): PublicUser {
   return {
     id: user.id,
     email: user.email,

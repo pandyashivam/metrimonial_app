@@ -18,10 +18,14 @@ export async function adminRoutes(app: FastifyInstance) {
 
   async function audit(
     adminUserId: string, action: string, targetType: string | null,
-    targetId: string | null, meta?: Record<string, unknown>,
+    targetId: string | null, meta?: unknown,
   ) {
+    // The AdminLog.meta column is JSON (`unknown` at the model level) — Sequelize's
+    // brand-typed CreationAttributes won't accept a plain `Record<string, unknown>`
+    // without a cast. Funnel everything through `unknown` so callers can pass
+    // arbitrary JSON payloads (objects, arrays, primitives).
     await AdminLog.create({
-      adminUserId, action, targetType, targetId, meta: meta ?? null,
+      adminUserId, action, targetType, targetId, meta: (meta ?? null) as never,
     }).catch(() => null);
   }
 

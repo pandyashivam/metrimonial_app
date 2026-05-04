@@ -220,6 +220,9 @@ importers:
       '@shubhmilan/config':
         specifier: workspace:*
         version: link:../config
+      '@shubhmilan/types':
+        specifier: workspace:*
+        version: link:../types
       '@testing-library/jest-dom':
         specifier: ^6.6.3
         version: 6.9.1

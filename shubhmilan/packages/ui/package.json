@@ -22,6 +22,7 @@
   },
   "devDependencies": {
     "@shubhmilan/config": "workspace:*",
+    "@shubhmilan/types": "workspace:*",
     "@testing-library/react": "^16.0.1",
     "@testing-library/jest-dom": "^6.6.3",
     "@types/react": "~18.2.79",

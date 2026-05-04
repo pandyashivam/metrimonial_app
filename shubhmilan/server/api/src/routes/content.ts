@@ -101,7 +101,7 @@ export async function adminContentRoutes(
           : data.publishedAt
             ? new Date(data.publishedAt)
             : null,
-      meta: data.meta ?? null,
+      meta: (data.meta ?? null) as never,
     });
     await audit(request.auth!.sub, 'CONTENT_CREATE', 'content', row.id, { kind: row.kind, slug: row.slug });
     return ok(reply, row, 201);
@@ -132,7 +132,11 @@ export async function adminContentRoutes(
           ? new Date(parsed.data.publishedAt)
           : existing.publishedAt;
 
-    await existing.update({ ...parsed.data, publishedAt, meta: parsed.data.meta !== undefined ? parsed.data.meta : undefined });
+    await existing.update({
+      ...parsed.data,
+      publishedAt,
+      meta: (parsed.data.meta !== undefined ? parsed.data.meta : undefined) as never,
+    });
     await audit(request.auth!.sub, 'CONTENT_UPDATE', 'content', existing.id, parsed.data);
     return ok(reply, existing);
   });

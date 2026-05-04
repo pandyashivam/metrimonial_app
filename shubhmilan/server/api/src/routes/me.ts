@@ -10,6 +10,16 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
 import { User, Profile, Family, Horoscope, PartnerPreference, Photo, Verification } from '../db.js';
+import {
+  mapDiet,
+  mapDietArray,
+  mapFamilyType,
+  mapFamilyValues,
+  mapGender,
+  mapManglik,
+  mapMaritalStatus,
+  mapYesNo,
+} from '../lib/enum-mapping.js';
 import { fail, ok } from '../lib/response.js';
 import { toPublicUser } from '../services/auth.js';
 
@@ -73,14 +83,19 @@ export async function meRoutes(app: FastifyInstance) {
       return fail(reply, 400, 'VALIDATION', 'Invalid payload', parsed.error.flatten());
     }
     const data = parsed.data;
+    // Translate every UI-facing enum to its DB-side counterpart in one place.
+    // The validation package speaks human ("Anshik (Partial)", "Nuclear"); the
+    // DB speaks SQL ("ANSHIK", "NUCLEAR"). enum-mapping.ts is the only seam.
     const mapped = {
       ...data,
       dob: new Date(data.dob),
-      gender: data.gender.toUpperCase() as 'MALE' | 'FEMALE' | 'OTHER',
-      maritalStatus: data.maritalStatus.replace(/\s/g, '_').toUpperCase() as
-        | 'NEVER_MARRIED' | 'DIVORCED' | 'WIDOWED' | 'AWAITING_DIVORCE',
-      diet: data.diet.replace(/[-\s]/g, '_').toUpperCase() as
-        | 'VEGETARIAN' | 'NON_VEGETARIAN' | 'EGGETARIAN' | 'JAIN_VEGETARIAN' | 'VEGAN',
+      gender: mapGender(data.gender),
+      maritalStatus: mapMaritalStatus(data.maritalStatus),
+      diet: mapDiet(data.diet),
+      smoking: mapYesNo(data.smoking),
+      drinking: mapYesNo(data.drinking),
+      manglik: mapManglik(data.manglik),
+      familyValues: mapFamilyValues(data.familyValues),
     };
 
     const existing = await Profile.findOne({ where: { userId: request.auth!.sub } });
@@ -91,9 +106,6 @@ export async function meRoutes(app: FastifyInstance) {
     const profile = await Profile.create({
       userId: request.auth!.sub,
       ...mapped,
-      smoking: 'NO',
-      drinking: 'NO',
-      manglik: 'UNKNOWN',
     });
     return ok(reply, profile);
   });
@@ -116,16 +128,17 @@ export async function meRoutes(app: FastifyInstance) {
       attributes: ['id'],
     });
     if (!profile) return fail(reply, 404, 'NO_PROFILE', 'Create profile first');
+    const mapped = {
+      ...parsed.data,
+      familyType: mapFamilyType(parsed.data.familyType),
+      siblings: parsed.data.siblings,
+    };
     const existing = await Family.findOne({ where: { profileId: profile.id } });
     if (existing) {
-      await existing.update({ ...parsed.data, siblings: parsed.data.siblings });
+      await existing.update(mapped);
       return ok(reply, existing);
     }
-    const family = await Family.create({
-      profileId: profile.id,
-      ...parsed.data,
-      siblings: parsed.data.siblings,
-    });
+    const family = await Family.create({ profileId: profile.id, ...mapped });
     return ok(reply, family);
   });
 
@@ -178,12 +191,21 @@ export async function meRoutes(app: FastifyInstance) {
       attributes: ['id'],
     });
     if (!profile) return fail(reply, 404, 'NO_PROFILE', 'Create profile first');
+    // PartnerPreference's array columns (`religions`, `castes`, `motherTongues`,
+    // `education`, `occupation`, `cities`, `diet`) are JSON in the DB but the
+    // schemas type each as a specific string union. Sequelize's brand-typed
+    // CreationAttributes won't accept them without a cast — coerce through
+    // `never` at the model boundary like we do for `meta` fields.
+    const mapped = {
+      ...parsed.data,
+      diet: mapDietArray(parsed.data.diet as string[] | undefined),
+    } as never;
     const existing = await PartnerPreference.findOne({ where: { profileId: profile.id } });
     if (existing) {
-      await existing.update(parsed.data);
+      await existing.update(mapped);
       return ok(reply, existing);
     }
-    const pref = await PartnerPreference.create({ profileId: profile.id, ...parsed.data });
+    const pref = await PartnerPreference.create({ profileId: profile.id, ...(mapped as object) } as never);
     return ok(reply, pref);
   });
 
