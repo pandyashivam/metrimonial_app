@@ -5,8 +5,7 @@ const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   API_PORT: z.coerce.number().int().default(4000),
   API_HOST: z.string().default('0.0.0.0'),
-  API_PUBLIC_URL: z.string().url().default('http://localhost:4000'),
-  WEB_PUBLIC_URL: z.string().url().default('http://localhost:3000'),
+  WEB_PUBLIC_URL: z.string().url().default('http://localhost:8081'),
   ADMIN_PUBLIC_URL: z.string().url().default('http://localhost:3001'),
 
   DB_HOST: z.string().default('localhost'),
@@ -16,7 +15,6 @@ const EnvSchema = z.object({
   DB_PASS: z.string().default(''),
 
   JWT_ACCESS_SECRET: z.string().min(16),
-  JWT_REFRESH_SECRET: z.string().min(16),
   JWT_ACCESS_TTL: z.string().default('15m'),
   JWT_REFRESH_TTL: z.string().default('30d'),
 

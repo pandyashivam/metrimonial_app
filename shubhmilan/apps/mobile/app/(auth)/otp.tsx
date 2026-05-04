@@ -1,8 +1,6 @@
-import { Button, Input, colors, spacing } from '@shubhmilan/ui';
+import { Banner, Button, Input, PageFrame, ScreenHeader, spacing } from '@shubhmilan/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { api, tokenProvider } from '../../src/api';
 import { useAuth } from '../../src/auth-store';
@@ -16,10 +14,13 @@ export default function Otp() {
   const setUser = useAuth((s) => s.setUser);
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resendBusy, setResendBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   async function verify() {
     setErr(null);
+    setNotice(null);
     setLoading(true);
     try {
       const res = await api.auth.verifyOtp({
@@ -31,46 +32,65 @@ export default function Otp() {
       setUser(res.user);
       router.replace('/(tabs)/home');
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Verification failed');
+      setErr(e instanceof Error ? e.message : 'That code didn\'t match. Please try again.');
     } finally {
       setLoading(false);
     }
   }
 
   async function resend() {
+    setErr(null);
+    setNotice(null);
+    setResendBusy(true);
     try {
       await api.auth.resendOtp({ target: target!, purpose: (purpose ?? 'SIGNUP') as Purpose });
+      setNotice('We\'ve sent you a fresh code.');
     } catch {
-      /* ignore */
+      setErr('We couldn\'t resend the code. Please try again in a moment.');
+    } finally {
+      setResendBusy(false);
     }
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
-      <KeyboardSafe>
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="always">
-          <Text style={styles.title}>Enter OTP</Text>
-          <Text style={styles.sub}>We sent a 6-digit code to {target}</Text>
-          <Input
-            label="OTP"
-            value={code}
-            onChangeText={setCode}
-            inputMode="numeric"
-            maxLength={6}
-            placeholder="6-digit code"
-          />
-          {err ? <Text style={styles.err}>{err}</Text> : null}
-          <Button title="Verify & continue" onPress={verify} loading={loading} block />
-          <Button title="Resend OTP" variant="ghost" onPress={resend} block style={{ marginTop: spacing.sm }} />
-        </ScrollView>
-      </KeyboardSafe>
-    </SafeAreaView>
+    <KeyboardSafe>
+      <PageFrame centerVertical>
+        <ScreenHeader
+          kicker="Verify"
+          title="Enter your code"
+          subtitle={`We sent a 6-digit code to ${target ?? 'your phone'}.`}
+        />
+        {err ? <Banner>{err}</Banner> : null}
+        {notice ? <Banner variant="success">{notice}</Banner> : null}
+        <Input
+          label="Verification code"
+          value={code}
+          onChangeText={setCode}
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          maxLength={6}
+          placeholder="6-digit code"
+          returnKeyType="go"
+          onSubmitEditing={verify}
+        />
+        <Button
+          title="Verify & continue"
+          size="lg"
+          onPress={verify}
+          loading={loading}
+          disabled={code.length !== 6}
+          block
+        />
+        <Button
+          title={resendBusy ? 'Sending…' : "Didn't get it? Resend code"}
+          variant="ghost"
+          size="lg"
+          onPress={resend}
+          loading={resendBusy}
+          block
+          style={{ marginTop: spacing.sm }}
+        />
+      </PageFrame>
+    </KeyboardSafe>
   );
 }
-
-const styles = StyleSheet.create({
-  scroll: { padding: spacing.xl },
-  title: { fontSize: 26, fontWeight: '800', color: colors.ink },
-  sub: { color: colors.textMuted, marginTop: 6, marginBottom: spacing.lg },
-  err: { color: colors.danger, marginBottom: spacing.sm, fontWeight: '600' },
-});
