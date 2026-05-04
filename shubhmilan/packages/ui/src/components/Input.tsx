@@ -23,23 +23,36 @@ export interface InputProps extends TextInputProps {
 /**
  * Input — primary text field for forms.
  *
- * Visual states: rest, focused (burgundy ring), error (red border), disabled.
+ * On web we deliberately avoid React-state-driven focus styling: react-native-web
+ * 0.19 has a known issue where calling `setState` synchronously inside `onFocus`
+ * triggers a re-render that interrupts the browser's focus settle, causing the
+ * input to immediately blur. The focus ring is therefore drawn purely by CSS via
+ * the `:focus-within` pseudo-class on a `<style>` block we inject once. On native
+ * the `setFocused` state still drives the ring through the standard RN style
+ * pathway — there's no DOM, so no blur loop.
+ *
  * Tap target is 52px tall to satisfy WCAG 2.5.5 and feel premium under thumb.
  * `mode='onBlur'` validation in callers means we only show error after the user
  * leaves the field — never during typing.
  */
+
+ensureWebFocusRingStyle();
+
 export const Input = forwardRef<TextInput, InputProps>(function Input(
   { label, error, hint, required, leftIcon, rightSlot, style, editable = true, ...rest },
   ref,
 ) {
-  const [focused, setFocused] = useState(false);
+  // Native-only: track focus in state so the wrap can show the ring.
+  // On web the wrap's `:focus-within` rule does this without a re-render.
+  const [focusedNative, setFocusedNative] = useState(false);
   const showError = !!error;
+  const isWeb = Platform.OS === 'web';
 
   const wrapStyle = [
     styles.wrap,
-    focused && !showError && styles.wrapFocused,
-    showError && styles.wrapError,
-    !editable && styles.wrapDisabled,
+    !isWeb && focusedNative && !showError ? styles.wrapFocusedNative : null,
+    showError ? styles.wrapError : null,
+    !editable ? styles.wrapDisabled : null,
   ];
 
   return (
@@ -50,7 +63,12 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
           {required ? <Text style={styles.required}> *</Text> : null}
         </Text>
       ) : null}
-      <View style={wrapStyle}>
+      <View
+        style={wrapStyle}
+        // Used by the injected web stylesheet to apply :focus-within styling
+        // without forcing a React re-render.
+        {...(isWeb ? { dataSet: { shubhmilanInput: showError ? 'error' : 'normal' } } : {})}
+      >
         {leftIcon ? <View style={styles.leftIcon}>{leftIcon}</View> : null}
         <TextInput
           ref={ref}
@@ -58,20 +76,20 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
           placeholderTextColor={colors.textSubtle}
           selectionColor={colors.primary}
           style={[styles.input, leftIcon ? null : styles.inputPaddedLeft, style]}
+          {...rest}
           onFocus={(e) => {
-            setFocused(true);
+            if (!isWeb) setFocusedNative(true);
             rest.onFocus?.(e);
           }}
           onBlur={(e) => {
-            setFocused(false);
+            if (!isWeb) setFocusedNative(false);
             rest.onBlur?.(e);
           }}
-          {...rest}
         />
         {rightSlot ? <View style={styles.rightSlot}>{rightSlot}</View> : null}
       </View>
       {showError ? (
-        <Text style={styles.error} accessibilityLiveRegion="polite">
+        <Text style={styles.errorText} accessibilityLiveRegion="polite">
           {error}
         </Text>
       ) : hint ? (
@@ -85,8 +103,8 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
  * PasswordInput — text field with show/hide eye toggle.
  *
  * The eye sits in the rightSlot of the underlying Input so it inherits all the
- * focus/error styling. We use unicode glyphs instead of an icon dep so the UI
- * package stays icon-library-free.
+ * focus/error styling. We use a text "Show / Hide" label instead of an icon dep
+ * so the UI package stays icon-library-free.
  */
 export const PasswordInput = forwardRef<TextInput, Omit<InputProps, 'secureTextEntry' | 'rightSlot'>>(
   function PasswordInput(props, ref) {
@@ -114,10 +132,37 @@ export const PasswordInput = forwardRef<TextInput, Omit<InputProps, 'secureTextE
   },
 );
 
-const FOCUS_OUTLINE = Platform.select({
-  web: { outlineStyle: 'none' as const },
-  default: undefined,
-});
+// ---------- Web focus-ring stylesheet ----------
+
+const STYLE_ID = 'shubhmilan-input-focus-ring';
+
+/**
+ * Inject a single `<style>` block on the web that paints the focus ring via
+ * `:focus-within` instead of through React state. Idempotent — running multiple
+ * times is a no-op.
+ */
+function ensureWebFocusRingStyle(): void {
+  if (Platform.OS !== 'web') return;
+  if (typeof document === 'undefined') return;
+  if (document.getElementById(STYLE_ID)) return;
+  const css = `
+    [data-shubhmilan-input="normal"]:focus-within {
+      border-color: ${colors.primary} !important;
+      box-shadow: 0 0 0 4px ${colors.primaryRing};
+    }
+    [data-shubhmilan-input="error"]:focus-within {
+      box-shadow: 0 0 0 4px ${colors.dangerRing};
+    }
+    [data-shubhmilan-input] input,
+    [data-shubhmilan-input] textarea {
+      outline: none !important;
+    }
+  `;
+  const tag = document.createElement('style');
+  tag.id = STYLE_ID;
+  tag.appendChild(document.createTextNode(css));
+  document.head.appendChild(tag);
+}
 
 const styles = StyleSheet.create({
   container: { marginBottom: spacing.lg },
@@ -137,24 +182,19 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     backgroundColor: colors.surface,
     minHeight: 52,
-    ...(Platform.OS === 'web' ? { transition: 'border-color 150ms ease, box-shadow 150ms ease' as never } : {}),
-  },
-  wrapFocused: {
-    borderColor: colors.primary,
     ...(Platform.OS === 'web'
-      ? { boxShadow: `0 0 0 4px ${colors.primaryRing}` as never }
-      : {
-          shadowColor: colors.primary,
-          shadowOpacity: 0.18,
-          shadowRadius: 0,
-          shadowOffset: { width: 0, height: 0 },
-        }),
+      ? ({ transition: 'border-color 150ms ease, box-shadow 150ms ease' } as never)
+      : {}),
+  },
+  wrapFocusedNative: {
+    borderColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOpacity: 0.18,
+    shadowRadius: 0,
+    shadowOffset: { width: 0, height: 0 },
   },
   wrapError: {
     borderColor: colors.danger,
-    ...(Platform.OS === 'web'
-      ? { boxShadow: `0 0 0 4px ${colors.dangerRing}` as never }
-      : {}),
   },
   wrapDisabled: {
     backgroundColor: colors.surfaceMuted,
@@ -174,7 +214,6 @@ const styles = StyleSheet.create({
     paddingRight: spacing.md,
     fontSize: fontSizes.md,
     color: colors.ink,
-    ...(FOCUS_OUTLINE ?? {}),
   },
   inputPaddedLeft: {
     paddingLeft: spacing.md,
@@ -185,7 +224,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
     lineHeight: fontSizes.xs * 1.4,
   },
-  error: {
+  errorText: {
     fontSize: fontSizes.xs,
     color: colors.danger,
     marginTop: 6,

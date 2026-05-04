@@ -76,7 +76,7 @@ export function PageFrame({
             centerVertical && Platform.OS !== 'web' ? { flexGrow: 1, justifyContent: 'center' } : null,
             centerVertical && Platform.OS === 'web' ? { minHeight: '100%', justifyContent: 'center' as const } : null,
           ]}
-          keyboardShouldPersistTaps="handled"
+          keyboardShouldPersistTaps="always"
           {...scrollProps}
         >
           {inner}

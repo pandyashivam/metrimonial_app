@@ -63,7 +63,7 @@ export default function Signup() {
   return (
     <SafeAreaView style={styles.safe}>
       <KeyboardSafe>
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="always">
           <View style={styles.frame}>
             <Text style={styles.kicker}>Get started</Text>
             <Text style={styles.title}>Create your free profile</Text>

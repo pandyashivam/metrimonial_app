@@ -48,7 +48,7 @@ export default function Otp() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
       <KeyboardSafe>
-        <ScrollView contentContainerStyle={styles.scroll}>
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="always">
           <Text style={styles.title}>Enter OTP</Text>
           <Text style={styles.sub}>We sent a 6-digit code to {target}</Text>
           <Input

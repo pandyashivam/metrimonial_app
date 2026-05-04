@@ -53,7 +53,7 @@ export default function Login() {
   return (
     <SafeAreaView style={styles.safe}>
       <KeyboardSafe>
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="always">
           <View style={styles.frame}>
             <Text style={styles.kicker}>Welcome back</Text>
             <Text style={styles.title}>Sign in to ShubhMilan</Text>
