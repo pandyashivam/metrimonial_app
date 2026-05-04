@@ -87,8 +87,12 @@ export default function Content() {
           status: editor.status,
         });
       } else {
-        if (!editor.kind || !editor.slug || !editor.title || !editor.body) {
-          setError('Kind, slug, title, and body are required.');
+        if (!editor.kind || !editor.slug || !editor.title) {
+          setError('Kind, slug, and title are required.');
+          return;
+        }
+        if (!editor.body || editor.body.trim().length < 10) {
+          setError('Body must be at least 10 characters.');
           return;
         }
         await api.admin.contentCreate({

@@ -109,17 +109,26 @@ function openFilePicker(): Promise<File | null> {
 }
 
 async function resizeOnCanvas(file: File, maxWidth: number, quality: number): Promise<Blob> {
-  const dataUrl = await readAsDataURL(file);
-  const img = await loadImage(dataUrl);
-  const ratio = Math.min(1, maxWidth / img.naturalWidth);
-  const w = Math.round(img.naturalWidth * ratio);
-  const h = Math.round(img.naturalHeight * ratio);
+  // Decode the image with EXIF orientation already applied. Without this,
+  // iPhone selfies (which carry orientation=6 EXIF) end up rotated 90° when
+  // drawn to a canvas — a frequent web upload bug. createImageBitmap +
+  // imageOrientation:'from-image' is supported on Chrome/Edge/Firefox/Safari
+  // 14+. Fall back to the old <img> path for older browsers (orientation
+  // will be ignored, matching previous behaviour).
+  const source = await decodeWithOrientation(file);
+  const ratio = Math.min(1, maxWidth / source.width);
+  const w = Math.round(source.width * ratio);
+  const h = Math.round(source.height * ratio);
   const canvas = document.createElement('canvas');
   canvas.width = w;
   canvas.height = h;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Canvas not supported in this browser');
-  ctx.drawImage(img, 0, 0, w, h);
+  ctx.drawImage(source.bitmap, 0, 0, w, h);
+  // Free GPU memory immediately on browsers that support it.
+  if ('close' in source.bitmap && typeof (source.bitmap as { close?: () => void }).close === 'function') {
+    (source.bitmap as { close: () => void }).close();
+  }
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) => (blob ? resolve(blob) : reject(new Error('Image encoding failed'))),
@@ -127,6 +136,33 @@ async function resizeOnCanvas(file: File, maxWidth: number, quality: number): Pr
       quality,
     );
   });
+}
+
+interface DecodedImage {
+  bitmap: CanvasImageSource;
+  width: number;
+  height: number;
+}
+
+async function decodeWithOrientation(file: File): Promise<DecodedImage> {
+  if (typeof createImageBitmap === 'function') {
+    try {
+      const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' as ImageOrientation });
+      return { bitmap, width: bitmap.width, height: bitmap.height };
+    } catch {
+      // Fall through to the <img> path. Some browsers reject the option but
+      // still provide createImageBitmap for the basic call — try that first.
+      try {
+        const bitmap = await createImageBitmap(file);
+        return { bitmap, width: bitmap.width, height: bitmap.height };
+      } catch {
+        /* fall through to img */
+      }
+    }
+  }
+  const dataUrl = await readAsDataURL(file);
+  const img = await loadImage(dataUrl);
+  return { bitmap: img, width: img.naturalWidth, height: img.naturalHeight };
 }
 
 function readAsDataURL(file: File): Promise<string> {

@@ -1,6 +1,6 @@
 'use client';
 
-import type { CSSProperties, ReactNode } from 'react';
+import { useEffect, useId, useRef, type CSSProperties, type ReactNode } from 'react';
 
 /**
  * Small in-package UI library so admin pages stop hand-rolling the same
@@ -297,6 +297,63 @@ export function Modal({
   children: ReactNode;
   width?: number;
 }) {
+  const titleId = useId();
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  // On open: capture the element that had focus, move focus into the dialog.
+  // On close: restore focus to the previously-focused element. This is the
+  // accessibility behaviour any keyboard-only user expects from a dialog.
+  useEffect(() => {
+    if (!open) return;
+    previousFocusRef.current = (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement)
+      ? document.activeElement
+      : null;
+    const node = dialogRef.current;
+    if (node) {
+      const focusable = node.querySelector<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+      (focusable ?? node).focus();
+    }
+    return () => {
+      previousFocusRef.current?.focus();
+    };
+  }, [open]);
+
+  // Escape closes; Tab cycles within the dialog (lightweight focus trap).
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        onClose();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const node = dialogRef.current;
+      if (!node) return;
+      const focusables = Array.from(
+        node.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((el) => !el.hasAttribute('aria-hidden'));
+      if (focusables.length === 0) return;
+      const first = focusables[0]!;
+      const last = focusables[focusables.length - 1]!;
+      const active = document.activeElement as HTMLElement | null;
+      if (e.shiftKey && active === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, onClose]);
+
   if (!open) return null;
   return (
     <div
@@ -312,10 +369,12 @@ export function Modal({
       }}
     >
       <div
+        ref={dialogRef}
+        tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-label={title}
+        aria-labelledby={titleId}
         style={{
           background: 'var(--surface)',
           borderRadius: 14,
@@ -324,6 +383,7 @@ export function Modal({
           maxHeight: '90vh',
           overflow: 'auto',
           boxShadow: '0 24px 60px rgba(26,23,24,0.25)',
+          outline: 'none',
         }}
       >
         <header
@@ -335,7 +395,7 @@ export function Modal({
             justifyContent: 'space-between',
           }}
         >
-          <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>{title}</h3>
+          <h3 id={titleId} style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>{title}</h3>
           <button
             type="button"
             onClick={onClose}

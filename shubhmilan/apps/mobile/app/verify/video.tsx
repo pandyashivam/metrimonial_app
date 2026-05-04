@@ -45,7 +45,7 @@ export default function VideoKyc() {
       haptics.success();
       setDone(true);
     } catch (err) {
-      console.warn('video kyc upload failed', err);
+      if (__DEV__) console.warn('video kyc upload failed', err);
       haptics.error();
       setError(err instanceof Error ? err.message : 'Upload failed. Please try again.');
     } finally {
@@ -124,7 +124,7 @@ function NativeVideoKyc({
       const blob = await res.blob();
       await onRecorded(blob);
     } catch (err) {
-      console.warn('native video kyc failed', err);
+      if (__DEV__) console.warn('native video kyc failed', err);
       haptics.error();
     } finally {
       setRecording(false);

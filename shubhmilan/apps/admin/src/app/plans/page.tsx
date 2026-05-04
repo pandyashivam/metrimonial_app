@@ -185,6 +185,14 @@ function PlanFormModal({
     setErr(null);
     try {
       if (!form.name.trim()) throw new Error('Name is required.');
+      const price = Number(form.priceRupees);
+      if (!Number.isFinite(price) || price < 0) {
+        throw new Error('Price must be 0 or a positive number.');
+      }
+      const days = Number(form.durationDays);
+      if (!Number.isInteger(days) || days < 1) {
+        throw new Error('Duration must be a whole number of days, at least 1.');
+      }
       await onSave(form);
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Save failed.');

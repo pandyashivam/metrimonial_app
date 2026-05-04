@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import { Op } from 'sequelize';
 import { z } from 'zod';
 
 import { Content } from '../db.js';
@@ -111,6 +112,18 @@ export async function adminContentRoutes(
     if (!parsed.success) return fail(reply, 400, 'VALIDATION', 'Invalid payload');
     const existing = await Content.findByPk(request.params.id);
     if (!existing) return fail(reply, 404, 'NOT_FOUND', 'Not found');
+
+    // Slug + kind together form the unique URL routing key. Block updates that
+    // would land on an existing row's (kind, slug). The POST handler enforces
+    // this on creation; the PATCH handler must enforce it on rename too.
+    const nextKind = parsed.data.kind ?? existing.kind;
+    const nextSlug = parsed.data.slug ?? existing.slug;
+    if (nextKind !== existing.kind || nextSlug !== existing.slug) {
+      const collision = await Content.findOne({
+        where: { kind: nextKind, slug: nextSlug, id: { [Op.ne]: existing.id } as never },
+      });
+      if (collision) return fail(reply, 409, 'CONFLICT', 'Slug already exists for this kind');
+    }
 
     const publishedAt =
       parsed.data.status === 'PUBLISHED' && !existing.publishedAt

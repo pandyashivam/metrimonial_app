@@ -246,7 +246,7 @@ export default function ChatScreen() {
       await api.chat.send(conversationId, { ciphertext, nonce });
       setInput('');
     } catch (err) {
-      console.warn('send failed', err);
+      if (__DEV__) console.warn('send failed', err);
     } finally {
       setSending(false);
     }
@@ -283,7 +283,7 @@ export default function ChatScreen() {
       });
       setInput('');
     } catch (err) {
-      console.warn('send-image failed', err);
+      if (__DEV__) console.warn('send-image failed', err);
     } finally {
       setSending(false);
     }

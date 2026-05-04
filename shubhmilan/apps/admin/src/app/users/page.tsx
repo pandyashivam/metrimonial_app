@@ -25,6 +25,7 @@ interface UserRow {
 }
 
 const PAGE_SIZE = 25;
+type StatusFilter = '' | 'ACTIVE' | 'SUSPENDED' | 'DELETED';
 
 export default function Users() {
   const [users, setUsers] = useState<UserRow[]>([]);
@@ -32,16 +33,18 @@ export default function Users() {
   const [page, setPage] = useState(1);
   const [q, setQ] = useState('');
   const [committedQ, setCommittedQ] = useState('');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  async function load(targetPage: number, query: string) {
+  async function load(targetPage: number, query: string, status: StatusFilter) {
     setLoading(true);
     setError(null);
     try {
       const res = (await api.admin.users({
         q: query || undefined,
+        status: status || undefined,
         limit: PAGE_SIZE,
         offset: (targetPage - 1) * PAGE_SIZE,
       })) as { items: UserRow[]; total: number };
@@ -56,37 +59,30 @@ export default function Users() {
   }
 
   useEffect(() => {
-    load(1, '');
+    load(1, '', '');
   }, []);
+
+  // Filter change resets to page 1.
+  useEffect(() => {
+    load(1, committedQ, statusFilter);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusFilter]);
 
   async function setStatus(id: string, status: 'ACTIVE' | 'SUSPENDED' | 'DELETED') {
     try {
       await api.admin.setUserStatus(id, status);
       setNotice(`Status updated.`);
-      load(page, committedQ);
+      load(page, committedQ, statusFilter);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not update status.');
     }
   }
 
-  async function impersonate(user: UserRow) {
-    const reason = window.prompt(
-      `Impersonate ${user.email}?\n\nThis is logged to AdminLog. Brief reason:`,
-      '',
-    );
-    if (reason === null) return;
-    try {
-      const res = await api.admin.impersonate(user.id, reason || undefined);
-      window.localStorage.setItem('shubhmilan.admin.impersonating', user.email);
-      window.localStorage.setItem('shubhmilan.admin.impersonate.access', res.tokens.accessToken);
-      window.localStorage.setItem('shubhmilan.admin.impersonate.refresh', res.tokens.refreshToken);
-      setNotice(
-        `Impersonation tokens issued for ${user.email}. They're stored under shubhmilan.admin.impersonate.* — use them in a fresh browser profile.`,
-      );
-    } catch (e) {
-      setError('Impersonation failed: ' + (e instanceof Error ? e.message : String(e)));
-    }
-  }
+  // The impersonate POST endpoint stays on the server for compliance flows
+  // (audit-logged, SUPERADMIN-only). The previous "stash tokens in localStorage"
+  // UI was half-finished — there was no working way to actually USE the issued
+  // tokens because admin and the user app live at different origins. We hide
+  // the action from the table until a proper "switch session" flow exists.
 
   return (
     <>
@@ -102,7 +98,7 @@ export default function Users() {
         onSubmit={(e) => {
           e.preventDefault();
           setCommittedQ(q);
-          load(1, q);
+          load(1, q, statusFilter);
         }}
         style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'flex-end' }}
       >
@@ -116,14 +112,29 @@ export default function Users() {
             />
           </Field>
         </div>
+        <div style={{ width: 180 }}>
+          <Field label="Status">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+              style={inputStyle}
+            >
+              <option value="">All</option>
+              <option value="ACTIVE">Active</option>
+              <option value="SUSPENDED">Suspended</option>
+              <option value="DELETED">Deleted</option>
+            </select>
+          </Field>
+        </div>
         <Button type="submit">Search</Button>
-        {committedQ ? (
+        {committedQ || statusFilter ? (
           <Button
             variant="outline"
             onClick={() => {
               setQ('');
               setCommittedQ('');
-              load(1, '');
+              setStatusFilter('');
+              load(1, '', '');
             }}
           >
             Clear
@@ -193,11 +204,6 @@ export default function Users() {
                           Restore
                         </Button>
                       ) : null}
-                      {u.role === 'USER' ? (
-                        <Button size="sm" variant="ghost" onClick={() => impersonate(u)}>
-                          Impersonate
-                        </Button>
-                      ) : null}
                     </div>
                   </td>
                 </tr>
@@ -212,7 +218,7 @@ export default function Users() {
           page={page}
           pageSize={PAGE_SIZE}
           total={total}
-          onChange={(p) => load(p, committedQ)}
+          onChange={(p) => load(p, committedQ, statusFilter)}
         />
       ) : null}
     </>

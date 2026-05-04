@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
-import { AppState, type AppStateStatus } from 'react-native';
+import { AppState, Platform, type AppStateStatus } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { api, hydrateTokens } from '../src/api';
@@ -61,7 +61,11 @@ export default function RootLayout() {
   }, []);
 
   // Lock the app when it goes to the background so a re-open requires biometric unlock.
+  // Web has no real backgrounding (just tab visibility) and no biometric hardware,
+  // so we skip registering the listener entirely there — `useAppLock.enabled` is
+  // already false on web, but skipping the listener saves a useless subscription.
   useEffect(() => {
+    if (Platform.OS === 'web') return;
     const sub = AppState.addEventListener('change', (next) => {
       if (
         appState.current.match(/active/) &&

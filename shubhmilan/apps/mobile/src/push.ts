@@ -76,7 +76,7 @@ async function registerWebPush(): Promise<boolean> {
     });
     return true;
   } catch (err) {
-    console.warn('[push] web registration failed', err);
+    if (__DEV__) console.warn('[push] web registration failed', err);
     return false;
   }
 }
