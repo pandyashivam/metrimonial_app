@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 
 import { api } from '../../lib/api';
+import { formatDateTime } from '../../lib/format';
 import { Banner, Chip, EmptyState, PageHeader, Skeleton } from '../../lib/ui';
 
 interface LogEntry {
@@ -58,7 +59,7 @@ export default function Audit() {
             ) : (
               rows.map((r) => (
                 <tr key={r.id}>
-                  <td>{new Date(r.createdAt).toLocaleString()}</td>
+                  <td>{formatDateTime(r.createdAt)}</td>
                   <td>{r.admin?.email ?? '—'}</td>
                   <td><Chip label={r.action} tone="primary" /></td>
                   <td style={{ color: 'var(--muted)', fontSize: 13 }}>

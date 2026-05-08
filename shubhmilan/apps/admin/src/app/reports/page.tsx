@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 
 import { api } from '../../lib/api';
+import { formatDateTime } from '../../lib/format';
 import {
   Banner,
   Button,
@@ -137,7 +138,7 @@ export default function Reports() {
                     <Chip label={r.reason} tone="warn" />
                   </td>
                   <td style={{ color: 'var(--muted)', maxWidth: 320 }}>{r.detail ?? '—'}</td>
-                  <td>{new Date(r.createdAt).toLocaleString()}</td>
+                  <td>{formatDateTime(r.createdAt)}</td>
                   <td>
                     {r.status === 'OPEN' ? (
                       <div style={{ display: 'flex', gap: 6 }}>

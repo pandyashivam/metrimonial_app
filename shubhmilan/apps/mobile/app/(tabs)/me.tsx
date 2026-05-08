@@ -163,10 +163,11 @@ const styles = StyleSheet.create({
     lineHeight: fontSizes.sm * 1.5,
   },
   bigNumber: {
-    fontSize: 48,
+    fontSize: fontSizes.display,
     fontWeight: '800',
     color: colors.primary,
     marginVertical: 4,
+    lineHeight: fontSizes.display * 1.05,
   },
   bigPct: { fontSize: fontSizes.xl, color: colors.textMuted, fontWeight: '500' },
   progressTrack: {

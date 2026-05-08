@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 
 import { api } from '../../lib/api';
+import { formatDate } from '../../lib/format';
 import {
   Banner,
   Button,
@@ -204,7 +205,7 @@ export default function Content() {
                       tone={r.status === 'PUBLISHED' ? 'success' : r.status === 'DRAFT' ? 'warn' : 'neutral'}
                     />
                   </td>
-                  <td>{new Date(r.updatedAt).toLocaleDateString()}</td>
+                  <td>{formatDate(r.updatedAt)}</td>
                   <td>
                     <div style={{ display: 'flex', gap: 6 }}>
                       <Button size="sm" variant="outline" onClick={() => setEditor(r)}>Edit</Button>

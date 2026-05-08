@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 
 import { api } from '../../lib/api';
+import { formatDate } from '../../lib/format';
 import {
   Banner,
   Chip,
@@ -117,8 +118,8 @@ export default function Transactions() {
                   <td style={{ fontWeight: 600 }}>{t.plan?.name ?? t.planId}</td>
                   <td><Chip label={t.status} tone={statusTone(t.status)} /></td>
                   <td>₹{((t.plan?.priceInr ?? 0) / 100).toLocaleString('en-IN')}</td>
-                  <td>{new Date(t.startsAt).toLocaleDateString()}</td>
-                  <td>{new Date(t.endsAt).toLocaleDateString()}</td>
+                  <td>{formatDate(t.startsAt)}</td>
+                  <td>{formatDate(t.endsAt)}</td>
                   <td style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--muted)' }}>
                     {t.razorpayPaymentId ?? t.razorpayOrderId ?? '—'}
                   </td>

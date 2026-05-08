@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 
 import { api } from '../../lib/api';
+import { formatDateTime } from '../../lib/format';
 import {
   Banner,
   Button,
@@ -214,7 +215,7 @@ export default function Users() {
                       tone={u.status === 'ACTIVE' ? 'success' : u.status === 'SUSPENDED' ? 'warn' : 'danger'}
                     />
                   </td>
-                  <td>{new Date(u.createdAt).toLocaleDateString()}</td>
+                  <td>{formatDateTime(u.createdAt)}</td>
                   <td>
                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                       {u.status !== 'SUSPENDED' && u.role === 'USER' ? (
