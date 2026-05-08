@@ -5,6 +5,7 @@ import type { FastifyInstance } from 'fastify';
 import { Profile, Photo, Verification, ProfileView, Family, Horoscope } from '../db.js';
 import { fail, ok } from '../lib/response.js';
 import { resolveEntitlements } from '../services/plans.js';
+import { publicUrl, signedGetUrl } from '../services/storage.js';
 
 const BASIC_FILTER_KEYS = new Set<string>([
   'gender', 'ageMin', 'ageMax', 'city', 'state', 'cursor', 'limit',
@@ -119,6 +120,24 @@ export async function profileRoutes(app: FastifyInstance) {
       }).catch(() => null);
     }
 
-    return ok(reply, profile);
+    // Photos are returned as model rows (with `r2Key`); the client renders
+    // <Image source={{ uri }} />, so resolve a signed (or public) URL per
+    // photo here. Public photos use a CDN URL; member-only / request-only
+    // are signed for 10 minutes.
+    const photos = profile.photos ?? [];
+    const photosWithUrls = await Promise.all(
+      photos.map(async (p) => ({
+        id: p.id,
+        isPrimary: p.isPrimary,
+        privacy: p.privacy,
+        url: p.privacy === 'PUBLIC' ? publicUrl(p.r2Key) : await signedGetUrl(p.r2Key),
+      })),
+    );
+    // Sort: primary first, then by upload order (model already returns by id).
+    photosWithUrls.sort((a, b) => (a.isPrimary === b.isPrimary ? 0 : a.isPrimary ? -1 : 1));
+
+    const json = profile.toJSON() as Record<string, unknown>;
+    json.photos = photosWithUrls;
+    return ok(reply, json);
   });
 }

@@ -32,6 +32,12 @@ export default function Me() {
     queryKey: ['entitlements'],
     queryFn: () => api.interests.entitlements(),
   });
+  // Used by the "View as others see" CTA so we can deep-link to the public
+  // profile detail screen with the user's own profile id.
+  const myProfile = useQuery({
+    queryKey: ['my-profile'],
+    queryFn: () => api.me.profile(),
+  });
 
   const tier = entitlements.data?.tier ?? 'FREE';
   const remaining = entitlements.data?.interestsRemainingThisMonth ?? -1;
@@ -106,6 +112,21 @@ export default function Me() {
         ) : (
           <Text style={styles.sub}>All sections complete.</Text>
         )}
+        <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md, flexWrap: 'wrap' }}>
+          <Button
+            title="View as others see"
+            variant="outline"
+            size="md"
+            disabled={!myProfile.data?.id}
+            onPress={() => myProfile.data?.id && router.push(`/profile/${myProfile.data.id}`)}
+          />
+          <Button
+            title="Edit profile"
+            variant="ghost"
+            size="md"
+            onPress={() => router.push('/(onboarding)/basics')}
+          />
+        </View>
       </Card>
 
       <Card style={styles.card}>
