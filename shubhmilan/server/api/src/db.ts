@@ -347,6 +347,16 @@ export class Verification extends Model<InferAttributes<Verification>, InferCrea
   declare videoKycVerified: CreationOptional<boolean>;
   declare backgroundVerified: CreationOptional<boolean>;
   declare aadhaarLast4Enc: CreationOptional<string | null>;
+  // S3 object keys for the most recent submission of each step. Admins use
+  // these to render previews in the moderation queue; the user app
+  // overwrites them on each retry so reviewers always see the latest.
+  declare selfieKey: CreationOptional<string | null>;
+  declare videoKey: CreationOptional<string | null>;
+  // Last rejection — surfaced back to the user on /verify so they know what
+  // to fix before resubmitting. Cleared when the step is approved.
+  declare lastRejectionStep: CreationOptional<string | null>;
+  declare lastRejectionReason: CreationOptional<string | null>;
+  declare lastRejectionAt: CreationOptional<Date | null>;
   declare trustScore: CreationOptional<number>;
   declare tier: CreationOptional<typeof VERIFICATION_TIERS[number]>;
   declare createdAt: CreationOptional<Date>;
@@ -364,6 +374,11 @@ Verification.init(
     videoKycVerified: { type: DataTypes.BOOLEAN, defaultValue: false },
     backgroundVerified: { type: DataTypes.BOOLEAN, defaultValue: false },
     aadhaarLast4Enc: { type: DataTypes.TEXT, allowNull: true },
+    selfieKey: { type: DataTypes.STRING(512), allowNull: true },
+    videoKey: { type: DataTypes.STRING(512), allowNull: true },
+    lastRejectionStep: { type: DataTypes.STRING(40), allowNull: true },
+    lastRejectionReason: { type: DataTypes.STRING(500), allowNull: true },
+    lastRejectionAt: { type: DataTypes.DATE, allowNull: true },
     trustScore: { type: DataTypes.INTEGER, defaultValue: 0 },
     tier: { type: DataTypes.ENUM(...VERIFICATION_TIERS), defaultValue: 'BASIC' },
     createdAt: DataTypes.DATE,

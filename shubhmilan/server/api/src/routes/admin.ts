@@ -7,6 +7,7 @@ import { fail, ok } from '../lib/response.js';
 import { adminContentRoutes } from './content.js';
 import { issueTokensForUser } from '../services/auth.js';
 import { pushVerificationApproved } from '../services/push.js';
+import { signedGetUrl } from '../services/storage.js';
 import {
   SETTING_KEYS, getMaintenanceMode, setSetting, type MaintenanceMode,
 } from '../services/settings.js';
@@ -198,9 +199,94 @@ export async function adminRoutes(app: FastifyInstance) {
       return fail(reply, 400, 'VALIDATION', 'Invalid step');
     }
     await markStepSimple(request.params.profileId, step);
+    // Approving a step also clears any prior rejection on it.
+    await Verification.update(
+      {
+        lastRejectionStep: null,
+        lastRejectionReason: null,
+        lastRejectionAt: null,
+      },
+      { where: { profileId: request.params.profileId, lastRejectionStep: step } },
+    );
     await audit(request.auth!.sub, 'VERIFICATION_APPROVE', 'profile', request.params.profileId, { step });
     const profile = await Profile.findByPk(request.params.profileId, { attributes: ['userId'] });
     if (profile?.userId) void pushVerificationApproved(profile.userId, step);
+    return ok(reply, { ok: true as const });
+  });
+
+  /**
+   * Document preview for the verification queue. Returns short-lived signed
+   * URLs for whatever documents the user has submitted (selfie, video). The
+   * background-check artefact is held by the third-party provider, not us;
+   * admin reviewers see the request status only for that step.
+   */
+  app.get<{ Params: { profileId: string } }>(
+    '/verifications/:profileId/documents',
+    async (request, reply) => {
+      const v = await Verification.findOne({ where: { profileId: request.params.profileId } });
+      if (!v) return fail(reply, 404, 'NOT_FOUND', 'No verification record');
+      const [selfieUrl, videoUrl] = await Promise.all([
+        v.selfieKey ? signedGetUrl(v.selfieKey, 600) : null,
+        v.videoKey ? signedGetUrl(v.videoKey, 600) : null,
+      ]);
+      return ok(reply, {
+        selfie: v.selfieKey ? { url: selfieUrl, key: v.selfieKey } : null,
+        video: v.videoKey ? { url: videoUrl, key: v.videoKey } : null,
+      });
+    },
+  );
+
+  /**
+   * Reject a verification step with a free-text reason that's pushed back to
+   * the user. The corresponding step's verified flag is force-cleared so the
+   * user app shows the step as outstanding again.
+   */
+  app.post<{
+    Params: { profileId: string };
+    Body: {
+      step: 'aadhaar' | 'selfie' | 'video' | 'background';
+      reason: string;
+    };
+  }>('/verifications/:profileId/reject', async (request, reply) => {
+    const STEPS = new Set(['aadhaar', 'selfie', 'video', 'background']);
+    const { step, reason } = request.body ?? {};
+    if (!STEPS.has(step)) return fail(reply, 400, 'VALIDATION', 'Invalid step');
+    if (!reason || reason.length < 4 || reason.length > 500) {
+      return fail(reply, 400, 'VALIDATION', 'Reason must be 4–500 characters');
+    }
+    const v = await Verification.findOne({ where: { profileId: request.params.profileId } });
+    if (!v) return fail(reply, 404, 'NOT_FOUND', 'No verification record');
+    const flagField =
+      step === 'aadhaar'
+        ? 'aadhaarVerified'
+        : step === 'selfie'
+          ? 'selfieVerified'
+          : step === 'video'
+            ? 'videoKycVerified'
+            : 'backgroundVerified';
+    await v.update({
+      [flagField]: false,
+      lastRejectionStep: step,
+      lastRejectionReason: reason.trim(),
+      lastRejectionAt: new Date(),
+    });
+    await audit(request.auth!.sub, 'VERIFICATION_REJECT', 'profile', request.params.profileId, {
+      step,
+      reason: reason.trim(),
+    });
+    const profile = await Profile.findByPk(request.params.profileId, { attributes: ['userId'] });
+    if (profile?.userId) {
+      // Re-use the existing verification-update push channel; the body says
+      // "rejected" so the user knows to act.
+      const { sendPush } = await import('../services/push.js');
+      void sendPush({
+        userId: profile.userId,
+        category: 'verification_approved',
+        title: 'Verification needs another look',
+        body: `Your ${step} step was sent back: "${reason.trim()}"`,
+        data: { type: 'verification_rejected', step, url: '/verify' },
+      });
+    }
     return ok(reply, { ok: true as const });
   });
 

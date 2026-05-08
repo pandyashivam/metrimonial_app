@@ -95,6 +95,15 @@ export default function Verify() {
         </Banner>
       ) : null}
 
+      {s?.lastRejectionStep && s?.lastRejectionReason ? (
+        <Banner
+          variant="warn"
+          title={`Your ${s.lastRejectionStep} step needs another look`}
+        >
+          Reviewer feedback: "{s.lastRejectionReason}". Resubmit when you've addressed it.
+        </Banner>
+      ) : null}
+
       <Card style={styles.card}>
         <View style={styles.summary}>
           <TrustDonut score={s?.trustScore ?? 0} size={84} />

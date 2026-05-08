@@ -1,9 +1,14 @@
 import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
+
+import { secureStorage } from './secure-storage';
 
 /**
- * Onboarding draft state. Lives only in memory — persisted to the server whenever the user
- * completes a step. Intentionally not mirrored to MMKV/SecureStore because partial drafts are
- * low-value to retain across app restarts for the free tier.
+ * Onboarding draft state. Persisted via the platform secureStorage adapter so
+ * partial drafts survive app restarts — a major drop-off point for matrimonial
+ * onboarding (six screens worth of decisions). Server-side state lives in the
+ * relevant /me/* tables once each step's "Continue" is tapped; the local
+ * draft is overwritten by the server's source of truth on a successful save.
  */
 export interface OnboardingState {
   // Step 1: basics
@@ -100,8 +105,26 @@ const initial = {
   prefCities: [] as string[],
 };
 
-export const useOnboarding = create<OnboardingState>((set) => ({
-  ...initial,
-  set: (patch) => set(patch),
-  reset: () => set({ ...initial }),
-}));
+export const useOnboarding = create<OnboardingState>()(
+  persist(
+    (set) => ({
+      ...initial,
+      set: (patch) => set(patch),
+      reset: () => set({ ...initial }),
+    }),
+    {
+      name: 'shubhmilan.onboarding.draft',
+      version: 1,
+      storage: createJSONStorage(() => ({
+        getItem: (key) => secureStorage.getItem(key),
+        setItem: (key, value) => secureStorage.setItem(key, value),
+        removeItem: (key) => secureStorage.removeItem(key),
+      })),
+      // Don't persist methods or the trivial defaults — only the user's input.
+      partialize: (state) => {
+        const { set: _set, reset: _reset, ...rest } = state;
+        return rest;
+      },
+    },
+  ),
+);

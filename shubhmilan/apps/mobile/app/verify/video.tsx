@@ -39,9 +39,7 @@ export default function VideoKyc() {
     setError(null);
     try {
       const uploaded = await api.chat.uploadMedia(blob);
-      await api.verification.submitVideo();
-      // TODO: attach `uploaded.key` to the verification row once the endpoint accepts it.
-      void uploaded;
+      await api.verification.submitVideo(uploaded.key);
       haptics.success();
       setDone(true);
     } catch (err) {

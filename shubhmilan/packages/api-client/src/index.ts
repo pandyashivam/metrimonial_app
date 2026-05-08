@@ -417,11 +417,15 @@ export function createApiClient(opts: ApiClientOptions) {
           method: 'POST',
           body: JSON.stringify({ code }),
         }),
-      submitSelfie: () =>
-        request<{ submitted: true }>('/me/verification/selfie/submit', { method: 'POST' }),
-      submitVideo: () =>
+      submitSelfie: (selfieKey?: string) =>
+        request<{ verified: boolean; confidence?: number; status?: 'pending' | 'rejected' }>(
+          '/me/verification/selfie/submit',
+          { method: 'POST', body: JSON.stringify({ selfieKey }) },
+        ),
+      submitVideo: (videoKey?: string) =>
         request<{ submitted: true; status: 'pending' }>('/me/verification/video/submit', {
           method: 'POST',
+          body: JSON.stringify({ videoKey }),
         }),
       requestBackground: () =>
         request<{ submitted: true; status: 'pending' }>('/me/verification/background/request', {
@@ -478,6 +482,16 @@ export function createApiClient(opts: ApiClientOptions) {
           body: JSON.stringify({ status }),
         }),
       pendingVerifications: () => request<unknown>('/admin/verifications/pending'),
+      verificationDocuments: (profileId: string) =>
+        request<{
+          selfie: { url: string | null; key: string } | null;
+          video: { url: string | null; key: string } | null;
+        }>(`/admin/verifications/${encodeURIComponent(profileId)}/documents`),
+      rejectStep: (profileId: string, step: string, reason: string) =>
+        request<{ ok: true }>(`/admin/verifications/${encodeURIComponent(profileId)}/reject`, {
+          method: 'POST',
+          body: JSON.stringify({ step, reason }),
+        }),
       approveStep: (profileId: string, step: string) =>
         request<unknown>(`/admin/verify/${profileId}`, {
           method: 'POST',

@@ -98,6 +98,7 @@ export async function verificationRoutes(app: FastifyInstance) {
   const SelfieBody = z
     .object({
       selfieUrl: z.string().url().optional(),
+      selfieKey: z.string().min(1).max(512).optional(),
     })
     .strict();
 
@@ -118,10 +119,21 @@ export async function verificationRoutes(app: FastifyInstance) {
     });
 
     const existing = await Verification.findOne({ where: { profileId: request.profileId } });
+    const baseUpdate = {
+      selfieVerified: result.matched,
+      selfieKey: parsed.data.selfieKey ?? existing?.selfieKey ?? null,
+      // Submission clears any prior rejection on this step so the user can retry.
+      lastRejectionStep:
+        existing?.lastRejectionStep === 'selfie' ? null : existing?.lastRejectionStep ?? null,
+      lastRejectionReason:
+        existing?.lastRejectionStep === 'selfie' ? null : existing?.lastRejectionReason ?? null,
+      lastRejectionAt:
+        existing?.lastRejectionStep === 'selfie' ? null : existing?.lastRejectionAt ?? null,
+    };
     if (existing) {
-      await existing.update({ selfieVerified: result.matched });
+      await existing.update(baseUpdate);
     } else {
-      await Verification.create({ profileId: request.profileId, selfieVerified: result.matched });
+      await Verification.create({ profileId: request.profileId, ...baseUpdate });
     }
 
     if (result.matched) {
@@ -137,11 +149,26 @@ export async function verificationRoutes(app: FastifyInstance) {
   });
 
   // ---- Video KYC ----
+  const VideoBody = z.object({ videoKey: z.string().min(1).max(512).optional() }).strict();
+
   app.post('/video/submit', async (request, reply) => {
+    const parsed = VideoBody.safeParse(request.body ?? {});
+    if (!parsed.success) return fail(reply, 400, 'VALIDATION', 'Invalid payload');
     if (!request.profileId) return fail(reply, 400, 'NO_PROFILE', 'Create profile first');
     const existing = await Verification.findOne({ where: { profileId: request.profileId } });
-    if (!existing) {
-      await Verification.create({ profileId: request.profileId });
+    const update = {
+      videoKey: parsed.data.videoKey ?? existing?.videoKey ?? null,
+      lastRejectionStep:
+        existing?.lastRejectionStep === 'video' ? null : existing?.lastRejectionStep ?? null,
+      lastRejectionReason:
+        existing?.lastRejectionStep === 'video' ? null : existing?.lastRejectionReason ?? null,
+      lastRejectionAt:
+        existing?.lastRejectionStep === 'video' ? null : existing?.lastRejectionAt ?? null,
+    };
+    if (existing) {
+      await existing.update(update);
+    } else {
+      await Verification.create({ profileId: request.profileId, ...update });
     }
     return ok(reply, { submitted: true as const, status: 'pending' as const });
   });
