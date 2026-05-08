@@ -26,6 +26,7 @@ interface UserRow {
 
 const PAGE_SIZE = 25;
 type StatusFilter = '' | 'ACTIVE' | 'SUSPENDED' | 'DELETED';
+type RoleFilter = '' | 'USER' | 'ADMIN' | 'SUPERADMIN';
 
 export default function Users() {
   const [users, setUsers] = useState<UserRow[]>([]);
@@ -34,17 +35,24 @@ export default function Users() {
   const [q, setQ] = useState('');
   const [committedQ, setCommittedQ] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('');
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  async function load(targetPage: number, query: string, status: StatusFilter) {
+  async function load(
+    targetPage: number,
+    query: string,
+    status: StatusFilter,
+    role: RoleFilter,
+  ) {
     setLoading(true);
     setError(null);
     try {
       const res = (await api.admin.users({
         q: query || undefined,
         status: status || undefined,
+        role: role || undefined,
         limit: PAGE_SIZE,
         offset: (targetPage - 1) * PAGE_SIZE,
       })) as { items: UserRow[]; total: number };
@@ -59,20 +67,20 @@ export default function Users() {
   }
 
   useEffect(() => {
-    load(1, '', '');
+    load(1, '', '', '');
   }, []);
 
   // Filter change resets to page 1.
   useEffect(() => {
-    load(1, committedQ, statusFilter);
+    load(1, committedQ, statusFilter, roleFilter);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statusFilter]);
+  }, [statusFilter, roleFilter]);
 
   async function setStatus(id: string, status: 'ACTIVE' | 'SUSPENDED' | 'DELETED') {
     try {
       await api.admin.setUserStatus(id, status);
       setNotice(`Status updated.`);
-      load(page, committedQ, statusFilter);
+      load(page, committedQ, statusFilter, roleFilter);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not update status.');
     }
@@ -98,11 +106,11 @@ export default function Users() {
         onSubmit={(e) => {
           e.preventDefault();
           setCommittedQ(q);
-          load(1, q, statusFilter);
+          load(1, q, statusFilter, roleFilter);
         }}
-        style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'flex-end' }}
+        style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'flex-end', flexWrap: 'wrap' }}
       >
-        <div style={{ flex: 1 }}>
+        <div style={{ flex: 1, minWidth: 220 }}>
           <Field label="Search">
             <input
               value={q}
@@ -112,7 +120,7 @@ export default function Users() {
             />
           </Field>
         </div>
-        <div style={{ width: 180 }}>
+        <div style={{ width: 160 }}>
           <Field label="Status">
             <select
               value={statusFilter}
@@ -126,15 +134,30 @@ export default function Users() {
             </select>
           </Field>
         </div>
+        <div style={{ width: 160 }}>
+          <Field label="Role">
+            <select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value as RoleFilter)}
+              style={inputStyle}
+            >
+              <option value="">All</option>
+              <option value="USER">User</option>
+              <option value="ADMIN">Admin</option>
+              <option value="SUPERADMIN">Superadmin</option>
+            </select>
+          </Field>
+        </div>
         <Button type="submit">Search</Button>
-        {committedQ || statusFilter ? (
+        {committedQ || statusFilter || roleFilter ? (
           <Button
             variant="outline"
             onClick={() => {
               setQ('');
               setCommittedQ('');
               setStatusFilter('');
-              load(1, '', '');
+              setRoleFilter('');
+              load(1, '', '', '');
             }}
           >
             Clear
@@ -218,7 +241,7 @@ export default function Users() {
           page={page}
           pageSize={PAGE_SIZE}
           total={total}
-          onChange={(p) => load(p, committedQ, statusFilter)}
+          onChange={(p) => load(p, committedQ, statusFilter, roleFilter)}
         />
       ) : null}
     </>

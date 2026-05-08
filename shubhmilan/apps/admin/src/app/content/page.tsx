@@ -105,7 +105,9 @@ export default function Content() {
         });
       }
       setEditor(null);
-      await load(page);
+      // After creating a new row, return to page 1 so the new entry is
+      // visible. After editing an existing row, stay on the current page.
+      await load(editor.id ? page : 1);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Save failed.');
     }
@@ -115,7 +117,10 @@ export default function Content() {
     if (!window.confirm(`Delete "${row.title}"? This can't be undone.`)) return;
     try {
       await api.admin.contentDelete(row.id);
-      await load(page);
+      // If the page just emptied (e.g. last row of last page), bounce to
+      // page 1 instead of showing a stranded empty list.
+      const stillHasItems = rows.length > 1;
+      await load(stillHasItems ? page : 1);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Delete failed.');
     }

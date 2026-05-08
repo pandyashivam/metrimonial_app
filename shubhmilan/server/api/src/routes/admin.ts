@@ -54,6 +54,7 @@ export async function adminRoutes(app: FastifyInstance) {
   const UserList = z.object({
     q: z.string().max(100).optional(),
     status: z.enum(['ACTIVE', 'SUSPENDED', 'DELETED']).optional(),
+    role: z.enum(['USER', 'ADMIN', 'SUPERADMIN']).optional(),
     cursor: z.string().optional(),
     offset: z.coerce.number().int().min(0).optional(),
     limit: z.coerce.number().int().min(1).max(100).default(25),
@@ -65,6 +66,7 @@ export async function adminRoutes(app: FastifyInstance) {
     const q = parsed.data;
     const where: Record<string, unknown> = {};
     if (q.status) where.status = q.status;
+    if (q.role) where.role = q.role;
     if (q.q) {
       where[Op.or as unknown as string] = [
         { email: { [Op.like]: `%${q.q}%` } },
