@@ -82,9 +82,26 @@ export default function RootLayout() {
     // Wait for the Stack to mount before navigating; otherwise expo-router
     // throws "Attempted to navigate before mounting the Root Layout".
     if (!booted || !hydrated) return;
-    const inAuthGroup = segments[0] === '(auth)';
-    if (!user && !inAuthGroup) router.replace('/(auth)/welcome');
-    else if (user && inAuthGroup) router.replace('/(tabs)/home');
+    const group = segments[0];
+    const inAuthGroup = group === '(auth)';
+    const inPublicGroup = group === '(public)';
+
+    // Web: unauthenticated visitors are allowed to browse the marketing surface
+    // (the (public) group) and the auth group. Anywhere else, send them to the
+    // landing page so they can see what ShubhMilan is before signing up.
+    // Native: there is no marketing surface — users see (auth)/welcome cold,
+    // matching every other native app's first-run experience.
+    if (!user) {
+      if (Platform.OS === 'web') {
+        if (!inAuthGroup && !inPublicGroup) router.replace('/');
+      } else {
+        if (!inAuthGroup) router.replace('/(auth)/welcome');
+      }
+      return;
+    }
+    // Authenticated users always go to the tabbed app, even if they land on a
+    // public marketing URL by accident.
+    if (inAuthGroup || inPublicGroup) router.replace('/(tabs)/home');
   }, [booted, hydrated, user, segments, router]);
 
   useEffect(() => {
@@ -103,6 +120,7 @@ export default function RootLayout() {
           <StatusBar style={isDark ? 'light' : 'dark'} />
           {locked && user ? <LockScreen /> : null}
           <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(public)" />
             <Stack.Screen name="(auth)" />
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="profile/[id]" options={{ headerShown: true, title: 'Profile' }} />
