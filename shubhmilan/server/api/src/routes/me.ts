@@ -231,4 +231,78 @@ export async function meRoutes(app: FastifyInstance) {
     const percent = Math.round((completed / sections) * 100);
     return ok(reply, { percent, missing });
   });
+
+  /**
+   * Data export — returns the user's full record as JSON for the legal
+   * "Export your data" promise on the privacy page. The async ZIP-by-email
+   * version listed in the policy will follow; this synchronous JSON dump is
+   * enough to honour the right of access today.
+   */
+  app.get('/export', async (request, reply) => {
+    const userId = request.auth!.sub;
+    const user = await User.findByPk(userId);
+    if (!user) return fail(reply, 404, 'NOT_FOUND', 'User not found');
+    const profile = await Profile.findOne({
+      where: { userId },
+      include: [
+        { model: Photo, as: 'photos' },
+        { model: Family, as: 'family' },
+        { model: Horoscope, as: 'horoscope' },
+        { model: PartnerPreference, as: 'preference' },
+        { model: Verification, as: 'verification' },
+      ],
+    });
+    return reply
+      .header('content-disposition', `attachment; filename="shubhmilan-export-${userId}.json"`)
+      .send({
+        user: {
+          id: user.id,
+          email: user.email,
+          phone: user.phone,
+          role: user.role,
+          status: user.status,
+          emailVerifiedAt: user.emailVerifiedAt,
+          phoneVerifiedAt: user.phoneVerifiedAt,
+          createdAt: user.createdAt,
+        },
+        profile: profile ? profile.toJSON() : null,
+        exportedAt: new Date().toISOString(),
+      });
+  });
+
+  /**
+   * Account deletion — soft-deletes the user (sets status='DELETED' and
+   * Sequelize's paranoid `deletedAt`). Profile, family, horoscope, photos,
+   * verifications, refresh tokens, devices, and partner-preferences are all
+   * cascade-removed by FK rules. Invariants:
+   *   • Cannot be undone via this endpoint — restore is admin-only.
+   *   • Idempotent — calling on an already-deleted user is a no-op success.
+   */
+  app.delete('/', async (request, reply) => {
+    const userId = request.auth!.sub;
+    const user = await User.findByPk(userId);
+    if (!user) return ok(reply, { ok: true as const });
+    if (user.role !== 'USER') {
+      return fail(reply, 403, 'FORBIDDEN', 'Admin and superadmin accounts cannot be self-deleted');
+    }
+    await user.update({ status: 'DELETED' });
+    await user.destroy();
+    return ok(reply, { ok: true as const });
+  });
+
+  /**
+   * Toggle profile visibility — hide / show in search and discovery surfaces.
+   * Today this maps to `User.status` (ACTIVE → discoverable, SUSPENDED →
+   * hidden). When a dedicated `hidden` column lands on Profile we'll switch
+   * the implementation; the public contract stays the same.
+   */
+  app.patch<{ Body: { hidden: boolean } }>('/visibility', async (request, reply) => {
+    const userId = request.auth!.sub;
+    const hidden = !!request.body?.hidden;
+    const user = await User.findByPk(userId);
+    if (!user) return fail(reply, 404, 'NOT_FOUND', 'User not found');
+    if (user.role !== 'USER') return fail(reply, 403, 'FORBIDDEN', 'Admin accounts cannot be hidden');
+    await user.update({ status: hidden ? 'SUSPENDED' : 'ACTIVE' });
+    return ok(reply, { hidden });
+  });
 }

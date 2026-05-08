@@ -1,5 +1,6 @@
 import {
   Banner,
+  BottomSheet,
   Button,
   Card,
   Chip,
@@ -46,6 +47,43 @@ export default function Settings() {
   const appLockEnabled = useAppLock((s) => s.enabled);
   const setAppLockEnabled = useAppLock((s) => s.setEnabled);
   const [appLockErr, setAppLockErr] = useState<string | null>(null);
+  const [hidden, setHidden] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const visibility = useMutation({
+    mutationFn: (next: boolean) => api.me.setVisibility(next),
+    onMutate: (next) => setHidden(next),
+    onError: () => setHidden((h) => !h), // revert
+  });
+
+  const exporting = useMutation({
+    mutationFn: async () => {
+      const data = await api.me.exportData();
+      if (Platform.OS === 'web' && typeof document !== 'undefined') {
+        // Trigger a browser download with the JSON dump.
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `shubhmilan-export-${Date.now()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      }
+      return data;
+    },
+  });
+
+  const deleting = useMutation({
+    mutationFn: () => api.me.deleteAccount(),
+    onSuccess: () => {
+      setConfirmDelete(false);
+      // Sign out so the layout's auth-guard bounces the user back to /(auth)/welcome
+      // (or the marketing landing page on web).
+      void signOut();
+    },
+  });
 
   const prefs = useQuery({
     queryKey: ['notification-prefs'],
@@ -144,6 +182,25 @@ export default function Settings() {
       </Card>
 
       <Card style={{ ...styles.card, backgroundColor: theme.surface, borderColor: theme.border }}>
+        <Text style={[styles.h2, { color: theme.textMuted }]}>Privacy</Text>
+        <View style={[styles.pref, { borderBottomColor: theme.border }]}>
+          <View style={{ flex: 1, paddingRight: spacing.md }}>
+            <Text style={[styles.prefTitle, { color: theme.ink }]}>Hide my profile from search</Text>
+            <Text style={[styles.prefSub, { color: theme.textMuted }]}>
+              Existing matches and conversations stay; you simply stop appearing in new search and
+              discovery results.
+            </Text>
+          </View>
+          <Switch
+            value={hidden}
+            onValueChange={(v) => visibility.mutate(v)}
+            trackColor={{ true: theme.primary, false: theme.border }}
+            disabled={visibility.isPending}
+          />
+        </View>
+      </Card>
+
+      <Card style={{ ...styles.card, backgroundColor: theme.surface, borderColor: theme.border }}>
         <Text style={[styles.h2, { color: theme.textMuted }]}>Account</Text>
         <Button title="Verification" variant="outline" size="lg" onPress={() => router.push('/verify')} block />
         <Button
@@ -154,13 +211,78 @@ export default function Settings() {
           block
           style={{ marginTop: spacing.sm }}
         />
+        <Button
+          title={exporting.isPending ? 'Preparing export…' : 'Export my data (JSON)'}
+          variant="outline"
+          size="lg"
+          loading={exporting.isPending}
+          onPress={() => exporting.mutate()}
+          block
+          style={{ marginTop: spacing.sm }}
+        />
+      </Card>
+
+      <Card style={{ ...styles.card, backgroundColor: theme.surface, borderColor: theme.danger }}>
+        <Text style={[styles.h2, { color: theme.danger }]}>Danger zone</Text>
+        <Text style={[styles.body, { color: theme.text }]}>
+          Deleting your account cannot be undone from inside the app. We erase your profile,
+          conversations, and uploaded media within 30 days.
+        </Text>
+        <Button
+          title={deleting.isPending ? 'Deleting…' : 'Delete my account'}
+          variant="danger"
+          size="lg"
+          loading={deleting.isPending}
+          onPress={() => setConfirmDelete(true)}
+          block
+        />
       </Card>
 
       <Button title="Sign out" variant="outline" size="lg" onPress={signOut} block style={{ marginTop: spacing.sm }} />
       <Text style={[styles.foot, { color: theme.textMuted }]}>Version 0.1.0 · Trusted matrimony</Text>
+
+      <BottomSheet open={confirmDelete} onClose={() => setConfirmDelete(false)}>
+        <Text style={dangerSheetStyles.title}>Delete your account?</Text>
+        <Text style={dangerSheetStyles.body}>
+          Your profile, conversations, and uploaded media will be deleted within 30 days. We will
+          send a confirmation email to <Text style={{ fontWeight: '700' }}>{useAuth.getState().user?.email}</Text>.
+          This action is final.
+        </Text>
+        <Button
+          title="Yes, delete my account"
+          variant="danger"
+          size="lg"
+          loading={deleting.isPending}
+          onPress={() => deleting.mutate()}
+          block
+          style={{ marginTop: spacing.md }}
+        />
+        <Button
+          title="Cancel"
+          variant="ghost"
+          size="lg"
+          onPress={() => setConfirmDelete(false)}
+          block
+          style={{ marginTop: spacing.sm }}
+        />
+      </BottomSheet>
     </PageFrame>
   );
 }
+
+const dangerSheetStyles = StyleSheet.create({
+  title: {
+    fontSize: fontSizes.xl,
+    fontWeight: '700',
+    color: '#1A1718',
+    marginBottom: spacing.sm,
+  },
+  body: {
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizes.sm * 1.55,
+    color: '#3A3236',
+  },
+});
 
 const styles = StyleSheet.create({
   card: { marginBottom: spacing.md },

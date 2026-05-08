@@ -198,6 +198,13 @@ export function createApiClient(opts: ApiClientOptions) {
         request<unknown>('/me/horoscope', { method: 'PUT', body: JSON.stringify(body) }),
       verification: () => request<VerificationStatus>('/me/verification'),
       completeness: () => request<{ percent: number; missing: string[] }>('/me/completeness'),
+      exportData: () => request<unknown>('/me/export'),
+      deleteAccount: () => request<{ ok: true }>('/me', { method: 'DELETE' }),
+      setVisibility: (hidden: boolean) =>
+        request<{ hidden: boolean }>('/me/visibility', {
+          method: 'PATCH',
+          body: JSON.stringify({ hidden }),
+        }),
       viewers: () => request<{ id: string; fullName: string; viewedAt: string }[]>('/me/viewers'),
       publicKey: () => request<{ publicKey: string | null }>('/me/public-key'),
       uploadPublicKey: (publicKey: string) =>

@@ -1,5 +1,6 @@
 import {
   Banner,
+  BottomSheet,
   Button,
   Card,
   Chip,
@@ -52,6 +53,29 @@ export default function ProfileDetail() {
     onMutate: () => haptics.light(),
     onSuccess: () => haptics.success(),
   });
+  const block = useMutation({
+    mutationFn: () => api.block.add(id!),
+    onSuccess: () => {
+      haptics.success();
+      router.back();
+    },
+  });
+  const report = useMutation({
+    mutationFn: ({ reason, detail }: { reason: string; detail?: string }) =>
+      api.report.create(id!, reason, detail),
+    onSuccess: () => {
+      haptics.success();
+      setSafetySheet(false);
+      setReportNotice('Thanks — our moderation team will review this within 24 hours.');
+    },
+    onError: (e) => {
+      haptics.error();
+      setReportNotice(e instanceof Error ? e.message : "We couldn't submit your report.");
+    },
+  });
+
+  const [safetySheet, setSafetySheet] = useState(false);
+  const [reportNotice, setReportNotice] = useState<string | null>(null);
 
   if (profile.isLoading) {
     return (
@@ -129,7 +153,22 @@ export default function ProfileDetail() {
       />
       <View style={styles.tierRow}>
         <VerificationBadge tier={tier} />
+        <Pressable
+          onPress={() => setSafetySheet(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Profile safety options"
+          hitSlop={8}
+          style={({ pressed }) => [styles.safetyTrigger, pressed ? { opacity: 0.7 } : null]}
+        >
+          <Text style={styles.safetyTriggerText}>⋯</Text>
+        </Pressable>
       </View>
+
+      {reportNotice ? (
+        <Banner variant={report.isError ? 'error' : 'success'} title="Reported">
+          {reportNotice}
+        </Banner>
+      ) : null}
 
       {photos.length > 0 ? <PhotoGallery photos={photos} /> : null}
 
@@ -230,9 +269,106 @@ export default function ProfileDetail() {
           loading={shortlist.isPending}
         />
       </View>
+
+      <SafetySheet
+        open={safetySheet}
+        onClose={() => setSafetySheet(false)}
+        onReport={(reason) => report.mutate({ reason })}
+        onBlock={() => block.mutate()}
+        reporting={report.isPending}
+        blocking={block.isPending}
+      />
     </PageFrame>
   );
 }
+
+function SafetySheet({
+  open,
+  onClose,
+  onReport,
+  onBlock,
+  reporting,
+  blocking,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onReport: (reason: string) => void;
+  onBlock: () => void;
+  reporting: boolean;
+  blocking: boolean;
+}) {
+  const REASONS = [
+    'Fake or impersonation',
+    'Inappropriate photos',
+    'Asking for money',
+    'Already married / dishonest',
+    'Harassment or abusive language',
+    'Other',
+  ];
+  return (
+    <BottomSheet open={open} onClose={onClose}>
+      <Text style={sheetStyles.title}>Safety</Text>
+      <Text style={sheetStyles.sub}>
+        Reports are reviewed by our moderation team within 24 hours. Block prevents this person
+        from ever seeing you again.
+      </Text>
+      <Text style={sheetStyles.sectionLabel}>Report this profile</Text>
+      <View style={{ gap: 6 }}>
+        {REASONS.map((r) => (
+          <Pressable
+            key={r}
+            onPress={() => onReport(r)}
+            disabled={reporting}
+            style={({ pressed }) => [
+              sheetStyles.option,
+              pressed ? { backgroundColor: colors.surfaceAlt } : null,
+              reporting ? { opacity: 0.5 } : null,
+            ]}
+          >
+            <Text style={sheetStyles.optionText}>{r}</Text>
+          </Pressable>
+        ))}
+      </View>
+      <View style={{ marginTop: spacing.lg, gap: spacing.sm }}>
+        <Button
+          title="Block this profile"
+          variant="danger"
+          size="lg"
+          loading={blocking}
+          onPress={onBlock}
+          block
+        />
+        <Button title="Cancel" variant="ghost" size="lg" onPress={onClose} block />
+      </View>
+    </BottomSheet>
+  );
+}
+
+const sheetStyles = StyleSheet.create({
+  title: { fontSize: fontSizes.xl, fontWeight: '700', color: colors.ink, marginBottom: 4 },
+  sub: {
+    color: colors.textMuted,
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizes.sm * 1.5,
+    marginBottom: spacing.md,
+  },
+  sectionLabel: {
+    fontSize: fontSizes.xs,
+    color: colors.textMuted,
+    fontWeight: '700',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+    marginTop: spacing.sm,
+  },
+  option: {
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    backgroundColor: colors.surface,
+  },
+  optionText: { color: colors.ink, fontSize: fontSizes.md },
+});
 
 function Facts({ rows }: { rows: Array<[string, string]> }) {
   return (
@@ -295,7 +431,23 @@ function PhotoGallery({ photos }: { photos: Photo[] }) {
 }
 
 const styles = StyleSheet.create({
-  tierRow: { marginBottom: spacing.lg, marginTop: -spacing.md },
+  tierRow: {
+    marginBottom: spacing.lg,
+    marginTop: -spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  safetyTrigger: {
+    width: 36,
+    height: 36,
+    borderRadius: 999,
+    backgroundColor: colors.surfaceAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  safetyTriggerText: { fontSize: 22, color: colors.textMuted, marginTop: -8, fontWeight: '700' },
   card: { marginBottom: spacing.md },
   h2: {
     fontSize: fontSizes.sm,

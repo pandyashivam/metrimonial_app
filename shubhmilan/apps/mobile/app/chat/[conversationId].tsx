@@ -323,32 +323,55 @@ export default function ChatScreen() {
               </Text>
             </View>
           }
-          renderItem={({ item }) => (
-            <View
-              style={[
-                styles.bubble,
-                item.senderProfileId === myProfileId ? styles.bubbleMine : styles.bubbleThem,
-              ]}
-            >
-              {item.media ? (
-                <Image
-                  source={{ uri: item.media.uri }}
-                  style={styles.bubbleImage}
-                  accessibilityLabel="Chat photo"
-                />
-              ) : null}
-              {item.text ? (
-              <Text
-                style={[
-                  styles.bubbleText,
-                  { color: item.senderProfileId === myProfileId ? '#fff' : colors.ink },
-                ]}
-              >
-                {item.text}
-              </Text>
-              ) : null}
-            </View>
-          )}
+          renderItem={({ item, index }) => {
+            const prev = index > 0 ? messages[index - 1] : null;
+            const showSeparator = !prev || !sameDay(prev.createdAt, item.createdAt);
+            const isMine = item.senderProfileId === myProfileId;
+            return (
+              <>
+                {showSeparator ? (
+                  <View style={styles.daySeparator}>
+                    <View style={styles.dayLine} />
+                    <Text style={styles.dayLabel}>{formatDayLabel(item.createdAt)}</Text>
+                    <View style={styles.dayLine} />
+                  </View>
+                ) : null}
+                <View
+                  style={[
+                    styles.bubble,
+                    isMine ? styles.bubbleMine : styles.bubbleThem,
+                  ]}
+                >
+                  {item.media ? (
+                    <Image
+                      source={{ uri: item.media.uri }}
+                      style={styles.bubbleImage}
+                      accessibilityLabel="Chat photo"
+                    />
+                  ) : null}
+                  {item.text ? (
+                    <Text
+                      style={[
+                        styles.bubbleText,
+                        { color: isMine ? '#fff' : colors.ink },
+                      ]}
+                    >
+                      {item.text}
+                    </Text>
+                  ) : null}
+                  <Text
+                    style={[
+                      styles.bubbleMeta,
+                      { color: isMine ? 'rgba(255,255,255,0.75)' : colors.textSubtle },
+                    ]}
+                  >
+                    {formatTime(item.createdAt)}
+                    {isMine && item.readAt ? ' · Read' : ''}
+                  </Text>
+                </View>
+              </>
+            );
+          }}
         />
         {peerTyping && (
           <Text style={styles.typing}>Typing…</Text>
@@ -386,6 +409,34 @@ export default function ChatScreen() {
   );
 }
 
+function sameDay(a?: string | Date | null, b?: string | Date | null): boolean {
+  if (!a || !b) return false;
+  const da = new Date(a);
+  const db = new Date(b);
+  return (
+    da.getFullYear() === db.getFullYear() &&
+    da.getMonth() === db.getMonth() &&
+    da.getDate() === db.getDate()
+  );
+}
+
+function formatTime(iso?: string | Date | null): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+}
+
+function formatDayLabel(iso?: string | Date | null): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const today = new Date();
+  if (sameDay(d, today)) return 'Today';
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+  if (sameDay(d, yesterday)) return 'Yesterday';
+  return d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
 const styles = StyleSheet.create({
   banner: { padding: 10, backgroundColor: colors.primary50, alignItems: 'center' },
   bannerText: { color: colors.primary, fontSize: fontSizes.xs + 1, fontWeight: '600' },
@@ -398,6 +449,22 @@ const styles = StyleSheet.create({
   bubbleMine: { alignSelf: 'flex-end', backgroundColor: colors.primary },
   bubbleThem: { alignSelf: 'flex-start', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   bubbleText: { fontSize: fontSizes.sm + 1 },
+  bubbleMeta: { fontSize: 11, marginTop: 4, textAlign: 'right', letterSpacing: 0.2 },
+  daySeparator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    gap: spacing.sm,
+  },
+  dayLine: { flex: 1, height: 1, backgroundColor: colors.hairline },
+  dayLabel: {
+    color: colors.textMuted,
+    fontSize: fontSizes.xs,
+    fontWeight: '600',
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+  },
   bubbleImage: {
     width: 220,
     height: 220,
